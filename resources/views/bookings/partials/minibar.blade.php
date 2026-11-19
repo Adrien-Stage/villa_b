@@ -24,7 +24,10 @@
             @droit('bookings.minibar.request')
                 <form method="POST" action="{{ route('bookings.minibar.request', $booking) }}">
                     @csrf
-                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-xs font-semibold rounded-lg hover:bg-amber-700 transition-colors">
+                    <button
+                        type="submit"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white text-xs
+                            font-semibold rounded-lg hover:bg-amber-700 transition-colors">
                         <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i> Demander le contrôle (départ)
                     </button>
                 </form>

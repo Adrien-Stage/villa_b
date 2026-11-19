@@ -31,7 +31,8 @@ Route::get('/manifest.webmanifest', [App\Http\Controllers\PwaController::class, 
 // par la règle nginx des fichiers statiques (try_files $uri =404) et n'arriverait
 // jamais jusqu'à Laravel, l'icône étant générée à la volée. Le type est de toute
 // façon annoncé par l'en-tête Content-Type et par le champ « type » du manifeste.
-Route::get('/pwa/icon/{size}', [App\Http\Controllers\PwaController::class, 'icon'])->whereNumber('size')->name('pwa.icon');
+Route::get('/pwa/icon/{size}', [App\Http\Controllers\PwaController::class, 'icon'])->whereNumber('size')
+    ->name('pwa.icon');
 // Chemin historique demandé d'office par les navigateurs, les marque-pages et
 // les aperçus de lien — et référencé comme icône par les notifications push.
 // Il servait un fichier vide de 0 octet hérité du squelette Laravel.
@@ -66,8 +67,10 @@ Route::get('/', function () {
 // ===== PORTAIL CLIENT (QR MENU) =====
 Route::prefix('portal')->name('portal.')->middleware('module:restaurant')->group(function () {
     Route::get('/{tenant:slug}/restaurant', [RestaurantPortalController::class, 'menu'])->name('restaurant.menu');
-    Route::post('/{tenant:slug}/restaurant/orders', [RestaurantPortalController::class, 'store'])->name('restaurant.store');
-    Route::get('/{tenant:slug}/restaurant/orders/{order}', [RestaurantPortalController::class, 'order'])->whereNumber('order')->name('restaurant.order');
+    Route::post('/{tenant:slug}/restaurant/orders', [RestaurantPortalController::class, 'store'])
+        ->name('restaurant.store');
+    Route::get('/{tenant:slug}/restaurant/orders/{order}', [RestaurantPortalController::class, 'order'])
+        ->whereNumber('order')->name('restaurant.order');
 });
 
 // Toutes les routes de l'app nécessitent d'être connecté et vérifié
@@ -101,7 +104,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('settings.services.store');
         Route::put('/settings/services/{serviceItem}', [App\Http\Controllers\ServiceCatalogController::class, 'update'])
             ->name('settings.services.update');
-        Route::delete('/settings/services/{serviceItem}', [App\Http\Controllers\ServiceCatalogController::class, 'destroy'])
+        Route::delete('/settings/services/{serviceItem}', [App\Http\Controllers\ServiceCatalogController::class,
+            'destroy'])
             ->name('settings.services.destroy');
 
         Route::get('/settings/services-export', [App\Http\Controllers\SettingsCsvController::class, 'exportServices'])
@@ -113,15 +117,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Réservé au manager : ces conventions engagent des remises.
         Route::post('/settings/partners', [App\Http\Controllers\PartnerOrganizationController::class, 'store'])
             ->name('settings.partners.store');
-        Route::put('/settings/partners/{partnerOrganization}', [App\Http\Controllers\PartnerOrganizationController::class, 'update'])
+        Route::put('/settings/partners/{partnerOrganization}',
+            [App\Http\Controllers\PartnerOrganizationController::class, 'update'])
             ->name('settings.partners.update');
-        Route::delete('/settings/partners/{partnerOrganization}', [App\Http\Controllers\PartnerOrganizationController::class, 'destroy'])
+        Route::delete('/settings/partners/{partnerOrganization}',
+            [App\Http\Controllers\PartnerOrganizationController::class, 'destroy'])
             ->name('settings.partners.destroy');
         Route::get('/settings/partners-export', [App\Http\Controllers\SettingsCsvController::class, 'exportPartners'])
             ->name('settings.partners.export');
         Route::post('/settings/partners-import', [App\Http\Controllers\SettingsCsvController::class, 'importPartners'])
             ->name('settings.partners.import');
-        Route::get('/settings/partners/{partnerOrganization}/attachments/{attachment}', [App\Http\Controllers\PartnerOrganizationController::class, 'attachment'])
+        Route::get('/settings/partners/{partnerOrganization}/attachments/{attachment}',
+            [App\Http\Controllers\PartnerOrganizationController::class, 'attachment'])
             ->name('settings.partners.attachments.show');
 
         // Packs d'hébergement (onglet "Hébergement" des paramètres).
@@ -129,7 +136,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('settings.packages.store');
         Route::put('/settings/packages/{roomPackage}', [App\Http\Controllers\RoomPackageController::class, 'update'])
             ->name('settings.packages.update');
-        Route::delete('/settings/packages/{roomPackage}', [App\Http\Controllers\RoomPackageController::class, 'destroy'])
+        Route::delete('/settings/packages/{roomPackage}', [App\Http\Controllers\RoomPackageController::class,
+            'destroy'])
             ->name('settings.packages.destroy');
         Route::get('/settings/packages-export', [App\Http\Controllers\SettingsCsvController::class, 'exportPackages'])
             ->name('settings.packages.export');
@@ -137,13 +145,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('settings.packages.import');
 
         // Politiques d'annulation (onglet "Hébergement" des paramètres).
-        Route::post('/settings/cancellation-policies', [App\Http\Controllers\CancellationPolicyController::class, 'store'])
+        Route::post('/settings/cancellation-policies', [App\Http\Controllers\CancellationPolicyController::class,
+            'store'])
             ->name('settings.cancellation_policies.store');
-        Route::put('/settings/cancellation-policies/{cancellationPolicy}', [App\Http\Controllers\CancellationPolicyController::class, 'update'])
+        Route::put('/settings/cancellation-policies/{cancellationPolicy}',
+            [App\Http\Controllers\CancellationPolicyController::class, 'update'])
             ->name('settings.cancellation_policies.update');
-        Route::delete('/settings/cancellation-policies/{cancellationPolicy}', [App\Http\Controllers\CancellationPolicyController::class, 'destroy'])
+        Route::delete('/settings/cancellation-policies/{cancellationPolicy}',
+            [App\Http\Controllers\CancellationPolicyController::class, 'destroy'])
             ->name('settings.cancellation_policies.destroy');
-        Route::post('/settings/cancellation-policies/{cancellationPolicy}/default', [App\Http\Controllers\CancellationPolicyController::class, 'setDefault'])
+        Route::post('/settings/cancellation-policies/{cancellationPolicy}/default',
+            [App\Http\Controllers\CancellationPolicyController::class, 'setDefault'])
             ->name('settings.cancellation_policies.default');
     });
 
@@ -154,7 +166,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/partners/{partner}/deposit', [$wallets, 'show'])->name('partners.wallet.show');
         Route::post('/partners/{partner}/deposit/credit', [$wallets, 'credit'])->name('partners.wallet.credit');
         Route::post('/partners/{partner}/deposit/debit', [$wallets, 'debit'])->name('partners.wallet.debit');
-        Route::post('/partners/{partner}/deposit/{entry}/reverse', [$wallets, 'reverse'])->name('partners.wallet.reverse');
+        Route::post('/partners/{partner}/deposit/{entry}/reverse', [$wallets, 'reverse'])
+            ->name('partners.wallet.reverse');
         Route::get('/partners/{partner}/deposit/{entry}/proof', [$wallets, 'proof'])->name('partners.wallet.proof');
     });
 
@@ -162,7 +175,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/ai-chat', [App\Http\Controllers\AiAssistantController::class, 'chat'])->name('ai.chat');
 
     // --- REPRISE DE CAISSE (HEBERGEMENT & BOUTIQUE) ---
-    Route::post('/cash-register/resume', [\App\Http\Controllers\Reception\CashRegisterController::class, 'resume'])->name('cash_register.resume');
+    Route::post('/cash-register/resume', [\App\Http\Controllers\Reception\CashRegisterController::class, 'resume'])
+        ->name('cash_register.resume');
 
     // --- NOTIFICATIONS INTERNES ---
     Route::prefix('notifications')->name('notifications.')->group(function () {
@@ -174,8 +188,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Abonnements Web Push (notifications système)
     Route::prefix('push')->name('push.')->group(function () {
         Route::get('/vapid-key', [\App\Http\Controllers\PushSubscriptionController::class, 'vapidKey'])->name('vapid');
-        Route::post('/subscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'store'])->name('subscribe');
-        Route::post('/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy'])->name('unsubscribe');
+        Route::post('/subscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'store'])
+            ->name('subscribe');
+        Route::post('/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy'])
+            ->name('unsubscribe');
     });
 
     // --- TICKETS DE SUPPORT (bouton « Suggestion » de la barre supérieure) ---
@@ -193,16 +209,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- DISCUSSION INTERNE ---
     Route::prefix('discussions')->name('discussions.')->middleware('module:discussions')->group(function () {
         Route::get('/', [DiscussionController::class, 'index'])->name('index');
-        Route::get('/conversations/list', [DiscussionController::class, 'conversationsList'])->name('conversations.list');
+        Route::get('/conversations/list', [DiscussionController::class, 'conversationsList'])
+            ->name('conversations.list');
         Route::get('/unread-summary', [DiscussionController::class, 'unreadSummary'])->name('unreadSummary');
         Route::post('/conversations', [DiscussionController::class, 'createConversation'])->name('conversations.store');
-        Route::patch('/conversations/{conversation}', [DiscussionController::class, 'updateGroup'])->name('conversations.update');
-        Route::post('/conversations/{conversation}/members', [DiscussionController::class, 'addGroupMembers'])->name('conversations.members.store');
-        Route::delete('/conversations/{conversation}/members/{member}', [DiscussionController::class, 'removeGroupMember'])->name('conversations.members.destroy');
-        Route::post('/conversations/{conversation}/leave', [DiscussionController::class, 'leaveGroup'])->name('conversations.leave');
-        Route::get('/conversations/{conversation}/poll', [DiscussionController::class, 'poll'])->name('conversations.poll');
-        Route::post('/conversations/{conversation}/archive', [DiscussionController::class, 'archiveConversation'])->name('conversations.archive');
-        Route::delete('/conversations/{conversation}', [DiscussionController::class, 'destroyConversation'])->name('conversations.destroy');
+        Route::patch('/conversations/{conversation}', [DiscussionController::class, 'updateGroup'])
+            ->name('conversations.update');
+        Route::post('/conversations/{conversation}/members', [DiscussionController::class, 'addGroupMembers'])
+            ->name('conversations.members.store');
+        Route::delete('/conversations/{conversation}/members/{member}', [DiscussionController::class,
+            'removeGroupMember'])->name('conversations.members.destroy');
+        Route::post('/conversations/{conversation}/leave', [DiscussionController::class, 'leaveGroup'])
+            ->name('conversations.leave');
+        Route::get('/conversations/{conversation}/poll', [DiscussionController::class, 'poll'])
+            ->name('conversations.poll');
+        Route::post('/conversations/{conversation}/archive', [DiscussionController::class, 'archiveConversation'])
+            ->name('conversations.archive');
+        Route::delete('/conversations/{conversation}', [DiscussionController::class, 'destroyConversation'])
+            ->name('conversations.destroy');
         Route::delete('/messages/{message}', [DiscussionController::class, 'destroyMessage'])->name('messages.destroy');
         Route::post('/', [DiscussionController::class, 'store'])->name('store');
     });
@@ -215,8 +239,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Mot de passe provisoire : l'employé choisit le sien avant d'aller plus
     // loin (ExigerNouveauMotDePasse).
-    Route::get('/mot-de-passe/nouveau', [App\Http\Controllers\Auth\NouveauMotDePasseController::class, 'edit'])->name('password.nouveau');
-    Route::put('/mot-de-passe/nouveau', [App\Http\Controllers\Auth\NouveauMotDePasseController::class, 'update'])->name('password.nouveau.update');
+    Route::get('/mot-de-passe/nouveau', [App\Http\Controllers\Auth\NouveauMotDePasseController::class, 'edit'])
+        ->name('password.nouveau');
+    Route::put('/mot-de-passe/nouveau', [App\Http\Controllers\Auth\NouveauMotDePasseController::class, 'update'])
+        ->name('password.nouveau.update');
 
     // --- CHAMBRES ---
     // Chambres : géré par manager/réception. Le housekeeping change les statuts
@@ -227,20 +253,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Import / export CSV — déclarés avant /{room} pour ne pas être
         // capturés par le binding de modèle (sinon "export" = id de chambre)
-        Route::get('/export',         [\App\Http\Controllers\RoomCsvController::class, 'exportRooms'])->middleware('permission')->name('export');
-        Route::post('/import',        [\App\Http\Controllers\RoomCsvController::class, 'importRooms'])->middleware('permission')->name('import');
-        Route::get('/types/export',   [\App\Http\Controllers\RoomCsvController::class, 'exportTypes'])->middleware('permission')->name('types.export');
-        Route::post('/types/import',  [\App\Http\Controllers\RoomCsvController::class, 'importTypes'])->middleware('permission')->name('types.import');
+        Route::get('/export',         [\App\Http\Controllers\RoomCsvController::class, 'exportRooms'])
+            ->middleware('permission')->name('export');
+        Route::post('/import',        [\App\Http\Controllers\RoomCsvController::class, 'importRooms'])
+            ->middleware('permission')->name('import');
+        Route::get('/types/export',   [\App\Http\Controllers\RoomCsvController::class, 'exportTypes'])
+            ->middleware('permission')->name('types.export');
+        Route::post('/types/import',  [\App\Http\Controllers\RoomCsvController::class, 'importTypes'])
+            ->middleware('permission')->name('types.import');
 
         Route::get('/{room}',          [RoomController::class, 'show'])->name('show');
         Route::put('/{room}',          [RoomController::class, 'update'])->middleware('permission')->name('update');
         Route::delete('/{room}',       [RoomController::class, 'destroy'])->middleware('permission')->name('destroy');
-        Route::delete('/{room}/images/{image}', [RoomController::class, 'destroyImage'])->middleware('permission')->name('images.destroy');
+        Route::delete('/{room}/images/{image}', [RoomController::class, 'destroyImage'])->middleware('permission')
+            ->name('images.destroy');
 
         // Types de chambres - seulement manager
-        Route::post('/types/store',         [RoomController::class, 'storeType'])->middleware('permission')->name('types.store');
-        Route::put('/types/{roomType}',     [RoomController::class, 'updateType'])->middleware('permission')->name('types.update');
-        Route::delete('/types/{roomType}',  [RoomController::class, 'destroyType'])->middleware('permission')->name('types.destroy');
+        Route::post('/types/store',         [RoomController::class, 'storeType'])->middleware('permission')
+            ->name('types.store');
+        Route::put('/types/{roomType}',     [RoomController::class, 'updateType'])->middleware('permission')
+            ->name('types.update');
+        Route::delete('/types/{roomType}',  [RoomController::class, 'destroyType'])->middleware('permission')
+            ->name('types.destroy');
     });
 
     // --- PILOTAGE (contrôle de gestion) ---
@@ -256,7 +290,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/budget/{annee}/valider', [$c, 'validateBudget'])->whereNumber('annee')->name('budget.valider');
         Route::get('/previsions', [$c, 'forecast'])->name('forecast.index');
         Route::put('/previsions/{annee}', [$c, 'updateForecast'])->whereNumber('annee')->name('forecast.update');
-        Route::post('/previsions/{annee}/valider', [$c, 'validateForecast'])->whereNumber('annee')->name('forecast.valider');
+        Route::post('/previsions/{annee}/valider', [$c, 'validateForecast'])->whereNumber('annee')
+            ->name('forecast.valider');
     });
 
     // --- GRILLE TARIFAIRE DES CHAMBRES ---
@@ -275,7 +310,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- FICHES TECHNIQUES DES CHAMBRES (marge sur une chambre louée) ---
     // Donnée de gestion : réservée au manager et au comptable. Préfixe hors du
     // groupe « rooms » pour ne pas heurter sa route rooms/{room}.
-    Route::prefix('hebergement/fiches-techniques')->name('rooms.cost_sheets.')->middleware('permission')->group(function () {
+    Route::prefix('hebergement/fiches-techniques')->name('rooms.cost_sheets.')->middleware('permission')
+        ->group(function () {
         $c = App\Http\Controllers\RoomCostSheetController::class;
 
         Route::get('/', [$c, 'index'])->name('index');
@@ -291,8 +327,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/{roomType}/hypotheses', [$c, 'updateAssumptions'])->whereNumber('roomType')->name('assumptions');
         Route::post('/{roomType}/demarrage-rapide', [$c, 'applyStarter'])->whereNumber('roomType')->name('starter');
         Route::post('/{roomType}/postes', [$c, 'storeItem'])->whereNumber('roomType')->name('items.store');
-        Route::put('/{roomType}/postes/{item}', [$c, 'updateItem'])->whereNumber('roomType')->whereNumber('item')->name('items.update');
-        Route::delete('/{roomType}/postes/{item}', [$c, 'destroyItem'])->whereNumber('roomType')->whereNumber('item')->name('items.destroy');
+        Route::put('/{roomType}/postes/{item}', [$c, 'updateItem'])->whereNumber('roomType')->whereNumber('item')
+            ->name('items.update');
+        Route::delete('/{roomType}/postes/{item}', [$c, 'destroyItem'])->whereNumber('roomType')->whereNumber('item')
+            ->name('items.destroy');
     });
     Route::post('/rooms/{room}/status',  [RoomController::class, 'updateStatus'])
         ->middleware('permission')
@@ -308,9 +346,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // --- MODE POS RÉCEPTION ---
     Route::prefix('reception/pos')->name('reception.pos.')->middleware('permission')->group(function () {
         Route::get('/', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'index'])->name('index');
-        Route::post('/sales', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'store'])->name('sales.store');
-        Route::get('/sales/{sale}/receipt', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'receipt'])->name('receipt');
-        Route::get('/history', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'history'])->name('history');
+        Route::post('/sales', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'store'])
+            ->name('sales.store');
+        Route::get('/sales/{sale}/receipt', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'receipt'])
+            ->name('receipt');
+        Route::get('/history', [\App\Http\Controllers\Reception\ReceptionPosController::class, 'history'])
+            ->name('history');
     });
 
     // --- RÉSERVATIONS ---
@@ -321,35 +362,52 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // --- BROUILLONS DE RÉSERVATION ---
         Route::prefix('drafts')->name('drafts.')->group(function () {
-            Route::get('/',                    [\App\Http\Controllers\BookingDraftController::class, 'index'])->name('index');
-            Route::post('/save',               [\App\Http\Controllers\BookingDraftController::class, 'save'])->name('save');
-            Route::get('/{token}/resume',      [\App\Http\Controllers\BookingDraftController::class, 'resume'])->name('resume');
-            Route::get('/{token}/continue',    [\App\Http\Controllers\BookingDraftController::class, 'continue'])->name('continue');
-            Route::delete('/{token}',          [\App\Http\Controllers\BookingDraftController::class, 'destroy'])->name('destroy');
+            Route::get('/',                    [\App\Http\Controllers\BookingDraftController::class, 'index'])
+                ->name('index');
+            Route::post('/save',               [\App\Http\Controllers\BookingDraftController::class, 'save'])
+                ->name('save');
+            Route::get('/{token}/resume',      [\App\Http\Controllers\BookingDraftController::class, 'resume'])
+                ->name('resume');
+            Route::get('/{token}/continue',    [\App\Http\Controllers\BookingDraftController::class, 'continue'])
+                ->name('continue');
+            Route::delete('/{token}',          [\App\Http\Controllers\BookingDraftController::class, 'destroy'])
+                ->name('destroy');
         });
 
         
         // Caisse Réception
-        Route::get('/cash-register', [\App\Http\Controllers\Reception\CashRegisterController::class, 'index'])->name('cash_register.index');
-        Route::get('/cash-register/open', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showOpenForm'])->name('cash_register.open');
-        Route::post('/cash-register/open', [\App\Http\Controllers\Reception\CashRegisterController::class, 'open'])->name('cash_register.open.store');
-        Route::post('/cash-register/disbursements', [\App\Http\Controllers\Reception\CashRegisterController::class, 'storeDisbursement'])->name('cash_register.disbursements.store');
+        Route::get('/cash-register', [\App\Http\Controllers\Reception\CashRegisterController::class, 'index'])
+            ->name('cash_register.index');
+        Route::get('/cash-register/open', [\App\Http\Controllers\Reception\CashRegisterController::class,
+            'showOpenForm'])->name('cash_register.open');
+        Route::post('/cash-register/open', [\App\Http\Controllers\Reception\CashRegisterController::class, 'open'])
+            ->name('cash_register.open.store');
+        Route::post('/cash-register/disbursements', [\App\Http\Controllers\Reception\CashRegisterController::class,
+            'storeDisbursement'])->name('cash_register.disbursements.store');
         // Fermeture : celui qui a ouvert la caisse la ferme (le contrôleur
         // scope la session à auth()->id()) — pas de restriction de rôle.
-        Route::get('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'showCloseForm'])->name('cash_register.close');
-        Route::post('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'close'])->name('cash_register.close.store');
+        Route::get('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class,
+            'showCloseForm'])->name('cash_register.close');
+        Route::post('/cash-register/close', [\App\Http\Controllers\Reception\CashRegisterController::class, 'close'])
+            ->name('cash_register.close.store');
 
         // Passation de service : en fin de quart, le réceptionniste remet le
         // tiroir et ses consignes ; celui qui lui succède les reprend après
         // avoir lu ce que le quart a fait. Déclarées avant /{booking}.
-        Route::get('/passations', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'index'])->name('handovers.index');
+        Route::get('/passations', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'index'])
+            ->name('handovers.index');
         Route::middleware('caisse')->group(function () {
-            Route::get('/passation/remettre', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'create'])->name('handovers.create');
-            Route::post('/passation/remettre', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'store'])->name('handovers.store');
+            Route::get('/passation/remettre', [\App\Http\Controllers\Reception\ShiftHandoverController::class,
+                'create'])->name('handovers.create');
+            Route::post('/passation/remettre', [\App\Http\Controllers\Reception\ShiftHandoverController::class,
+                'store'])->name('handovers.store');
         });
-        Route::get('/passations/{handover}', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'show'])->whereNumber('handover')->name('handovers.show');
-        Route::get('/passations/{handover}/reprendre', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'take'])->whereNumber('handover')->name('handovers.take');
-        Route::post('/passations/{handover}/reprendre', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'takeStore'])->whereNumber('handover')->name('handovers.take.store');
+        Route::get('/passations/{handover}', [\App\Http\Controllers\Reception\ShiftHandoverController::class, 'show'])
+            ->whereNumber('handover')->name('handovers.show');
+        Route::get('/passations/{handover}/reprendre', [\App\Http\Controllers\Reception\ShiftHandoverController::class,
+            'take'])->whereNumber('handover')->name('handovers.take');
+        Route::post('/passations/{handover}/reprendre', [\App\Http\Controllers\Reception\ShiftHandoverController::class,
+            'takeStore'])->whereNumber('handover')->name('handovers.take.store');
 
         Route::get('/{booking}',               [BookingController::class, 'show'])->name('show');
         Route::get('/{booking}/summary',       [BookingController::class, 'summary'])->name('summary');
@@ -357,7 +415,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Envoi du code de check-in : hors caisse, expédier un courriel
         // n'engage aucun mouvement d'espèces.
-        Route::post('/{booking}/code-checkin', [BookingController::class, 'sendCheckinCode'])->name('checkin_code.send');
+        Route::post('/{booking}/code-checkin', [BookingController::class, 'sendCheckinCode'])
+            ->name('checkin_code.send');
 
         // Validation d'un séjour offert : aucun argent ne circule, et la
         // traçabilité ne vient pas du verrou de caisse mais de l'écriture au
@@ -367,11 +426,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // redirigeant en silence : l'approbation semblait aboutir sans l'avoir
         // fait.
         Route::post('/{booking}/approve',      [BookingController::class, 'approve'])->name('approve');
-        Route::get('/{booking}/cancellation-receipt', [BookingController::class, 'cancellationReceipt'])->name('cancellation_receipt');
+        Route::get('/{booking}/cancellation-receipt', [BookingController::class, 'cancellationReceipt'])
+            ->name('cancellation_receipt');
 
         // Départ du client : la réception demande le relevé du mini-bar avant
         // de clore la note. Rien n'est encaissé : la caisse n'est pas exigée.
-        Route::post('/{booking}/mini-bar',     [App\Http\Controllers\BookingMinibarController::class, 'request'])->name('minibar.request');
+        Route::post('/{booking}/mini-bar',     [App\Http\Controllers\BookingMinibarController::class, 'request'])
+            ->name('minibar.request');
 
         // Actions métier : impossibles tant que la caisse n'est pas ouverte
         Route::middleware('caisse')->group(function () {
@@ -380,35 +441,49 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{booking}/checkout',     [BookingController::class, 'checkOut'])->name('checkOut');
             Route::post('/{booking}/confirm',      [BookingController::class, 'confirm'])->name('confirm');
             Route::post('/{booking}/cancel',       [BookingController::class, 'cancel'])->name('cancel');
-            Route::post('/{booking}/folio',        [BookingController::class, 'addFolioItem'])->middleware('permission')->name('folio.add');
-            Route::delete('/{booking}/folio/{folioItem}', [BookingController::class, 'removeFolioItem'])->middleware('permission')->name('folio.remove');
-            Route::post('/{booking}/payment', [BookingController::class, 'addPayment'])->middleware('permission')->name('payment.add');
+            Route::post('/{booking}/folio',        [BookingController::class, 'addFolioItem'])->middleware('permission')
+                ->name('folio.add');
+            Route::delete('/{booking}/folio/{folioItem}', [BookingController::class, 'removeFolioItem'])
+                ->middleware('permission')->name('folio.remove');
+            Route::post('/{booking}/payment', [BookingController::class, 'addPayment'])->middleware('permission')
+                ->name('payment.add');
         });
     });
 
     Route::prefix('groups')->name('groups.')->middleware('permission')->group(function () {
         Route::get('/',                          [GroupBookingController::class, 'index'])->name('index');
-        Route::get('/create',                    [GroupBookingController::class, 'create'])->middleware('permission')->name('create');
-        Route::post('/',                         [GroupBookingController::class, 'store'])->middleware('permission')->name('store');
+        Route::get('/create',                    [GroupBookingController::class, 'create'])->middleware('permission')
+            ->name('create');
+        Route::post('/',                         [GroupBookingController::class, 'store'])->middleware('permission')
+            ->name('store');
         Route::get('/{groupBooking}',            [GroupBookingController::class, 'show'])->name('show');
-        Route::post('/{groupBooking}/room',      [GroupBookingController::class, 'addRoom'])->middleware('permission')->name('addRoom');
-        Route::delete('/{groupBooking}/room/{booking}', [GroupBookingController::class, 'removeRoom'])->middleware('permission')->name('removeRoom');
+        Route::post('/{groupBooking}/room',      [GroupBookingController::class, 'addRoom'])->middleware('permission')
+            ->name('addRoom');
+        Route::delete('/{groupBooking}/room/{booking}', [GroupBookingController::class, 'removeRoom'])
+            ->middleware('permission')->name('removeRoom');
         Route::post('/{groupBooking}/checkin',   [GroupBookingController::class, 'checkInAll'])->name('checkInAll');
         Route::post('/{groupBooking}/checkout',  [GroupBookingController::class, 'checkOutAll'])->name('checkOutAll');
         Route::post('/{groupBooking}/folio', [GroupBookingController::class, 'addGroupFolioItem'])->name('folio.add');
-        Route::post('/{groupBooking}/payment', [GroupBookingController::class, 'addGroupPayment'])->middleware('permission')->name('payment.add');
-        Route::get('/{groupBooking}/invoice', [GroupBookingController::class, 'invoice'])->middleware('permission')->name('invoice');
-        Route::get('/{groupBooking}/edit',   [GroupBookingController::class, 'edit'])->middleware('permission')->name('edit');
-        Route::put('/{groupBooking}',        [GroupBookingController::class, 'update'])->middleware('permission')->name('update');
-        Route::post('/{groupBooking}/cancel', [GroupBookingController::class, 'cancel'])->middleware('permission')->name('cancel');
+        Route::post('/{groupBooking}/payment', [GroupBookingController::class, 'addGroupPayment'])
+            ->middleware('permission')->name('payment.add');
+        Route::get('/{groupBooking}/invoice', [GroupBookingController::class, 'invoice'])->middleware('permission')
+            ->name('invoice');
+        Route::get('/{groupBooking}/edit',   [GroupBookingController::class, 'edit'])->middleware('permission')
+            ->name('edit');
+        Route::put('/{groupBooking}',        [GroupBookingController::class, 'update'])->middleware('permission')
+            ->name('update');
+        Route::post('/{groupBooking}/cancel', [GroupBookingController::class, 'cancel'])->middleware('permission')
+            ->name('cancel');
     });
 
     // --- CLIENTS ---
     Route::prefix('customers')->name('customers.')->middleware('permission')->group(function () {
         Route::get('/',               [CustomerController::class, 'index'])->name('index');
         // Import / export CSV — déclarés avant /{customer} pour ne pas être capturés par le binding.
-        Route::get('/export',         [App\Http\Controllers\CustomerCsvController::class, 'export'])->middleware('permission')->name('export');
-        Route::post('/import',        [App\Http\Controllers\CustomerCsvController::class, 'import'])->middleware('permission')->name('import');
+        Route::get('/export',         [App\Http\Controllers\CustomerCsvController::class, 'export'])
+            ->middleware('permission')->name('export');
+        Route::post('/import',        [App\Http\Controllers\CustomerCsvController::class, 'import'])
+            ->middleware('permission')->name('import');
         Route::get('/create',         [CustomerController::class, 'create'])->middleware('permission')->name('create');
         Route::post('/',              [CustomerController::class, 'store'])->middleware('permission')->name('store');
         Route::get('/{customer}',     [CustomerController::class, 'show'])->name('show');
@@ -417,12 +492,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // --- HOUSEKEEPING ---
-    Route::prefix('housekeeping')->name('housekeeping.')->middleware(['permission', 'module:housekeeping'])->group(function () {
+    Route::prefix('housekeeping')->name('housekeeping.')->middleware(['permission', 'module:housekeeping'])
+        ->group(function () {
         Route::get('/',                    [HousekeepingController::class, 'index'])->name('index');
         // Qui a nettoyé, contrôlé, rechargé quelle chambre, et à quelle heure.
         Route::get('/suivi',               [HousekeepingController::class, 'journal'])->name('journal.index');
-        Route::post('/teams',              [HousekeepingController::class, 'storeTeam'])->middleware('permission')->name('teams.store');
-        Route::post('/assignments',        [HousekeepingController::class, 'assignRooms'])->middleware('permission')->name('assignments.store');
+        Route::post('/teams',              [HousekeepingController::class, 'storeTeam'])->middleware('permission')
+            ->name('teams.store');
+        Route::post('/assignments',        [HousekeepingController::class, 'assignRooms'])->middleware('permission')
+            ->name('assignments.store');
         Route::post('/{room}/clean',       [HousekeepingController::class, 'markCleaning'])->name('clean');
         Route::post('/{room}/ready',       [HousekeepingController::class, 'markReady'])->name('ready');
         Route::post('/{room}/inspect',     [HousekeepingController::class, 'markInspected'])->name('inspect');
@@ -430,22 +508,33 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/{room}/reject',      [HousekeepingController::class, 'rejectCleaning'])->name('reject');
         Route::post('/{room}/issue',       [HousekeepingController::class, 'reportIssue'])->name('issue');
         Route::post('/{room}/resolve-issue', [HousekeepingController::class, 'resolveIssue'])->name('resolve_issue');
-        Route::post('/{room}/transmettre-technique', [HousekeepingController::class, 'escalateToTechnique'])->name('transmettre_technique');
+        Route::post('/{room}/transmettre-technique', [HousekeepingController::class, 'escalateToTechnique'])
+            ->name('transmettre_technique');
         // Recouche d'une chambre occupée : le client la garde.
         Route::post('/{room}/recouche',    [HousekeepingController::class, 'markStayoverDone'])->name('stayover');
 
         // Mini-bars : réglages (articles, prix, dépôt, dotations), puis le
         // mini-bar de chaque chambre — relevé des consommations et rechargement.
-        Route::get('/mini-bars',                        [App\Http\Controllers\HousekeepingMinibarController::class, 'index'])->name('minibar.index');
-        Route::post('/mini-bars/depot',                 [App\Http\Controllers\HousekeepingMinibarController::class, 'depot'])->name('minibar.depot');
-        Route::post('/mini-bars/articles',              [App\Http\Controllers\HousekeepingMinibarController::class, 'storeArticle'])->name('minibar.articles.store');
-        Route::put('/mini-bars/articles/{article}',     [App\Http\Controllers\HousekeepingMinibarController::class, 'updateArticle'])->whereNumber('article')->name('minibar.articles.update');
-        Route::put('/mini-bars/dotations/{roomType}',   [App\Http\Controllers\HousekeepingMinibarController::class, 'updateStandards'])->whereNumber('roomType')->name('minibar.standards.update');
-        Route::get('/{room}/mini-bar',                  [App\Http\Controllers\HousekeepingMinibarController::class, 'show'])->whereNumber('room')->name('minibar.rooms.show');
-        Route::put('/{room}/mini-bar/dotation',         [App\Http\Controllers\HousekeepingMinibarController::class, 'updateRoom'])->whereNumber('room')->name('minibar.rooms.update');
-        Route::post('/{room}/mini-bar/releve',          [App\Http\Controllers\HousekeepingMinibarController::class, 'check'])->whereNumber('room')->name('minibar.check');
-        Route::post('/{room}/mini-bar/recharge',        [App\Http\Controllers\HousekeepingMinibarController::class, 'restock'])->whereNumber('room')->name('minibar.restock');
-        Route::post('/{room}/mini-bar/defectueux',      [App\Http\Controllers\HousekeepingMinibarController::class, 'reportDefective'])->whereNumber('room')->name('minibar.defective');
+        Route::get('/mini-bars',                        [App\Http\Controllers\HousekeepingMinibarController::class,
+            'index'])->name('minibar.index');
+        Route::post('/mini-bars/depot',                 [App\Http\Controllers\HousekeepingMinibarController::class,
+            'depot'])->name('minibar.depot');
+        Route::post('/mini-bars/articles',              [App\Http\Controllers\HousekeepingMinibarController::class,
+            'storeArticle'])->name('minibar.articles.store');
+        Route::put('/mini-bars/articles/{article}',     [App\Http\Controllers\HousekeepingMinibarController::class,
+            'updateArticle'])->whereNumber('article')->name('minibar.articles.update');
+        Route::put('/mini-bars/dotations/{roomType}',   [App\Http\Controllers\HousekeepingMinibarController::class,
+            'updateStandards'])->whereNumber('roomType')->name('minibar.standards.update');
+        Route::get('/{room}/mini-bar',                  [App\Http\Controllers\HousekeepingMinibarController::class,
+            'show'])->whereNumber('room')->name('minibar.rooms.show');
+        Route::put('/{room}/mini-bar/dotation',         [App\Http\Controllers\HousekeepingMinibarController::class,
+            'updateRoom'])->whereNumber('room')->name('minibar.rooms.update');
+        Route::post('/{room}/mini-bar/releve',          [App\Http\Controllers\HousekeepingMinibarController::class,
+            'check'])->whereNumber('room')->name('minibar.check');
+        Route::post('/{room}/mini-bar/recharge',        [App\Http\Controllers\HousekeepingMinibarController::class,
+            'restock'])->whereNumber('room')->name('minibar.restock');
+        Route::post('/{room}/mini-bar/defectueux',      [App\Http\Controllers\HousekeepingMinibarController::class,
+            'reportDefective'])->whereNumber('room')->name('minibar.defective');
     });
 
     // --- RESTAURANT (menus) ---
@@ -455,161 +544,261 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('module:restaurant')->name('restaurant.courant');
 
     // Lecture (manager peut consulter), Écriture réservée au staff restaurant
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])
+        ->group(function () {
         Route::get('/menus', [RestaurantMenuController::class, 'index'])->name('menus.index');
-        Route::get('/menus-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportMenus'])->name('menus.export');
-        Route::get('/breakfast', [App\Http\Controllers\RestaurantBreakfastController::class, 'index'])->name('breakfast.index');
-        Route::post('/breakfast/{entitlement}/serve', [App\Http\Controllers\RestaurantBreakfastController::class, 'serve'])->whereNumber('entitlement')->name('breakfast.serve');
+        Route::get('/menus-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportMenus'])
+            ->name('menus.export');
+        Route::get('/breakfast', [App\Http\Controllers\RestaurantBreakfastController::class, 'index'])
+            ->name('breakfast.index');
+        Route::post('/breakfast/{entitlement}/serve', [App\Http\Controllers\RestaurantBreakfastController::class,
+            'serve'])->whereNumber('entitlement')->name('breakfast.serve');
         Route::get('/orders', [RestaurantOrderController::class, 'index'])->name('orders.index');
-        Route::get('/orders/{order}', [RestaurantOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
-        Route::get('/kitchen', [App\Http\Controllers\RestaurantKitchenController::class, 'index'])->name('kitchen.index');
+        Route::get('/orders/{order}', [RestaurantOrderController::class, 'show'])->whereNumber('order')
+            ->name('orders.show');
+        Route::get('/kitchen', [App\Http\Controllers\RestaurantKitchenController::class, 'index'])
+            ->name('kitchen.index');
         // Chaque restaurant a son bar : les boissons y sont préparées.
         Route::get('/bar', [App\Http\Controllers\RestaurantKitchenController::class, 'bar'])->name('bar.index');
-        Route::get('/bar/depot', [App\Http\Controllers\RestaurantBarController::class, 'depot'])->name('bar.depot.index');
+        Route::get('/bar/depot', [App\Http\Controllers\RestaurantBarController::class, 'depot'])
+            ->name('bar.depot.index');
         Route::get('/bar/carte', [App\Http\Controllers\RestaurantBarController::class, 'menu'])->name('bar.menu.index');
-        Route::get('/bar/ventes', [App\Http\Controllers\RestaurantBarController::class, 'sales'])->name('bar.sales.index');
-        Route::get('/bar/bouteilles/{bottle}', [App\Http\Controllers\RestaurantBarController::class, 'bottle'])->whereNumber('bottle')->name('bar.bottles.show');
-        Route::post('/bar/bouteilles', [App\Http\Controllers\RestaurantBarController::class, 'open'])->name('bar.open_bottle');
-        Route::post('/bar/bouteilles/{bottle}/comptage', [App\Http\Controllers\RestaurantBarController::class, 'count'])->whereNumber('bottle')->name('bar.count_bottle');
-        Route::post('/bar/bouteilles/{bottle}/attribution', [App\Http\Controllers\RestaurantBarController::class, 'allocate'])->whereNumber('bottle')->name('bar.allocate_volume');
-        Route::put('/bar/carte/{item}', [App\Http\Controllers\RestaurantBarController::class, 'configure'])->whereNumber('item')->name('bar.configure');
+        Route::get('/bar/ventes', [App\Http\Controllers\RestaurantBarController::class, 'sales'])
+            ->name('bar.sales.index');
+        Route::get('/bar/bouteilles/{bottle}', [App\Http\Controllers\RestaurantBarController::class, 'bottle'])
+            ->whereNumber('bottle')->name('bar.bottles.show');
+        Route::post('/bar/bouteilles', [App\Http\Controllers\RestaurantBarController::class, 'open'])
+            ->name('bar.open_bottle');
+        Route::post('/bar/bouteilles/{bottle}/comptage', [App\Http\Controllers\RestaurantBarController::class, 'count'])
+            ->whereNumber('bottle')->name('bar.count_bottle');
+        Route::post('/bar/bouteilles/{bottle}/attribution', [App\Http\Controllers\RestaurantBarController::class,
+            'allocate'])->whereNumber('bottle')->name('bar.allocate_volume');
+        Route::put('/bar/carte/{item}', [App\Http\Controllers\RestaurantBarController::class, 'configure'])
+            ->whereNumber('item')->name('bar.configure');
     });
 
     // Gestion du restaurant : coûts, stocks et inventaires. La salle en est
     // écartée — masquer le lien sans fermer l'URL n'aurait rien masqué.
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
-        Route::get('/pantry-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportPantry'])->name('pantry.export');
-        Route::get('/recipes-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportRecipes'])->name('recipes.export');
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])
+        ->group(function () {
+        Route::get('/pantry-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportPantry'])
+            ->name('pantry.export');
+        Route::get('/recipes-export', [App\Http\Controllers\RestaurantCsvController::class, 'exportRecipes'])
+            ->name('recipes.export');
         Route::get('/pantry', [RestaurantPantryController::class, 'index'])->name('pantry.index');
-        Route::get('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'index'])->name('recipes.index');
-        Route::get('/recipes/recueil', [App\Http\Controllers\RestaurantRecipeController::class, 'printAll'])->name('recipes.recueil');
-        Route::get('/recipes/{recipe}/print', [App\Http\Controllers\RestaurantRecipeController::class, 'print'])->whereNumber('recipe')->name('recipes.print');
-        Route::get('/bar/menu/{item}/print', [App\Http\Controllers\RestaurantRecipeController::class, 'printBarDrink'])->whereNumber('item')->name('bar.menu.print');
-        Route::get('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'index'])->name('stock_counts.index');
-        Route::get('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'show'])->whereNumber('stockCount')->name('stock_counts.show');
+        Route::get('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'index'])
+            ->name('recipes.index');
+        Route::get('/recipes/recueil', [App\Http\Controllers\RestaurantRecipeController::class, 'printAll'])
+            ->name('recipes.recueil');
+        Route::get('/recipes/{recipe}/print', [App\Http\Controllers\RestaurantRecipeController::class, 'print'])
+            ->whereNumber('recipe')->name('recipes.print');
+        Route::get('/bar/menu/{item}/print', [App\Http\Controllers\RestaurantRecipeController::class, 'printBarDrink'])
+            ->whereNumber('item')->name('bar.menu.print');
+        Route::get('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'index'])
+            ->name('stock_counts.index');
+        Route::get('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'show'])
+            ->whereNumber('stockCount')->name('stock_counts.show');
         Route::get('/waste', [App\Http\Controllers\RestaurantWasteController::class, 'index'])->name('waste.index');
-        Route::get('/waste/create', [App\Http\Controllers\RestaurantWasteController::class, 'create'])->name('waste.create');
-        Route::get('/waste/{waste}', [App\Http\Controllers\RestaurantWasteController::class, 'show'])->whereNumber('waste')->name('waste.show');
-        Route::get('/waste/{waste}/print', [App\Http\Controllers\RestaurantWasteController::class, 'print'])->whereNumber('waste')->name('waste.print');
-        Route::get('/consumption', [App\Http\Controllers\RestaurantConsumptionController::class, 'index'])->name('consumption.index');
+        Route::get('/waste/create', [App\Http\Controllers\RestaurantWasteController::class, 'create'])
+            ->name('waste.create');
+        Route::get('/waste/{waste}', [App\Http\Controllers\RestaurantWasteController::class, 'show'])
+            ->whereNumber('waste')->name('waste.show');
+        Route::get('/waste/{waste}/print', [App\Http\Controllers\RestaurantWasteController::class, 'print'])
+            ->whereNumber('waste')->name('waste.print');
+        Route::get('/consumption', [App\Http\Controllers\RestaurantConsumptionController::class, 'index'])
+            ->name('consumption.index');
     });
 
     // Cuisine : réception des bons et signalement des plats prêts (cuisinier + chef)
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
-        Route::post('/orders/{order}/preparing', [RestaurantOrderController::class, 'markPreparing'])->whereNumber('order')->name('orders.preparing');
-        Route::post('/orders/{order}/ready', [RestaurantOrderController::class, 'markReady'])->whereNumber('order')->name('orders.ready');
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])
+        ->group(function () {
+        Route::post('/orders/{order}/preparing', [RestaurantOrderController::class, 'markPreparing'])
+            ->whereNumber('order')->name('orders.preparing');
+        Route::post('/orders/{order}/ready', [RestaurantOrderController::class, 'markReady'])->whereNumber('order')
+            ->name('orders.ready');
     });
 
     // Salle : prise de service, transmission en cuisine, service (serveur + chef)
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
-        Route::post('/shifts/open', [App\Http\Controllers\RestaurantShiftController::class, 'open'])->name('shifts.open');
-        Route::post('/shifts/close', [App\Http\Controllers\RestaurantShiftController::class, 'close'])->name('shifts.close');
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])
+        ->group(function () {
+        Route::post('/shifts/open', [App\Http\Controllers\RestaurantShiftController::class, 'open'])
+            ->name('shifts.open');
+        Route::post('/shifts/close', [App\Http\Controllers\RestaurantShiftController::class, 'close'])
+            ->name('shifts.close');
 
-        Route::post('/orders/{order}/send-to-kitchen', [RestaurantOrderController::class, 'sendToKitchen'])->whereNumber('order')->name('orders.send_to_kitchen');
-        Route::post('/orders/{order}/served', [RestaurantOrderController::class, 'markServed'])->whereNumber('order')->name('orders.served');
-        Route::post('/orders/{order}/bar-ready', [App\Http\Controllers\RestaurantKitchenController::class, 'barReady'])->whereNumber('order')->name('orders.bar_ready');
-        Route::post('/orders/{order}/claim', [RestaurantOrderController::class, 'claim'])->whereNumber('order')->name('orders.claim');
-        Route::post('/orders/{order}/reassign', [RestaurantOrderController::class, 'reassign'])->whereNumber('order')->name('orders.reassign');
+        Route::post('/orders/{order}/send-to-kitchen', [RestaurantOrderController::class, 'sendToKitchen'])
+            ->whereNumber('order')->name('orders.send_to_kitchen');
+        Route::post('/orders/{order}/served', [RestaurantOrderController::class, 'markServed'])->whereNumber('order')
+            ->name('orders.served');
+        Route::post('/orders/{order}/bar-ready', [App\Http\Controllers\RestaurantKitchenController::class, 'barReady'])
+            ->whereNumber('order')->name('orders.bar_ready');
+        Route::post('/orders/{order}/claim', [RestaurantOrderController::class, 'claim'])->whereNumber('order')
+            ->name('orders.claim');
+        Route::post('/orders/{order}/reassign', [RestaurantOrderController::class, 'reassign'])->whereNumber('order')
+            ->name('orders.reassign');
     });
 
     // Écriture RESTAURANT — manager exclu
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])
+        ->group(function () {
         Route::post('/orders', [RestaurantOrderController::class, 'store'])->name('orders.store');
-        Route::post('/orders/{order}/status', [RestaurantOrderController::class, 'updateStatus'])->whereNumber('order')->name('orders.status');
+        Route::post('/orders/{order}/status', [RestaurantOrderController::class, 'updateStatus'])->whereNumber('order')
+            ->name('orders.status');
         // Le serveur n'ouvre plus le garde-manger : il n'a plus à en sortir
         // des mouvements de stock.
-        Route::post('/pantry/items/{item}/movements', [RestaurantPantryController::class, 'storeMovement'])->middleware('permission')->name('pantry.movements.store');
+        Route::post('/pantry/items/{item}/movements', [RestaurantPantryController::class, 'storeMovement'])
+            ->middleware('permission')->name('pantry.movements.store');
 
         Route::middleware('permission')->group(function () {
-            Route::post('/menus/categories', [RestaurantMenuController::class, 'storeCategory'])->name('menus.categories.store');
-            Route::put('/menus/categories/{category}', [RestaurantMenuController::class, 'updateCategory'])->name('menus.categories.update');
-            Route::delete('/menus/categories/{category}', [RestaurantMenuController::class, 'destroyCategory'])->name('menus.categories.destroy');
+            Route::post('/menus/categories', [RestaurantMenuController::class, 'storeCategory'])
+                ->name('menus.categories.store');
+            Route::put('/menus/categories/{category}', [RestaurantMenuController::class, 'updateCategory'])
+                ->name('menus.categories.update');
+            Route::delete('/menus/categories/{category}', [RestaurantMenuController::class, 'destroyCategory'])
+                ->name('menus.categories.destroy');
 
-            Route::post('/menus-import', [App\Http\Controllers\RestaurantCsvController::class, 'importMenus'])->name('menus.import');
-            Route::post('/pantry-import', [App\Http\Controllers\RestaurantCsvController::class, 'importPantry'])->name('pantry.import');
-            Route::post('/recipes-import', [App\Http\Controllers\RestaurantCsvController::class, 'importRecipes'])->name('recipes.import');
+            Route::post('/menus-import', [App\Http\Controllers\RestaurantCsvController::class, 'importMenus'])
+                ->name('menus.import');
+            Route::post('/pantry-import', [App\Http\Controllers\RestaurantCsvController::class, 'importPantry'])
+                ->name('pantry.import');
+            Route::post('/recipes-import', [App\Http\Controllers\RestaurantCsvController::class, 'importRecipes'])
+                ->name('recipes.import');
             Route::post('/menus/items', [RestaurantMenuController::class, 'storeItem'])->name('menus.items.store');
-            Route::put('/menus/items/{item}', [RestaurantMenuController::class, 'updateItem'])->name('menus.items.update');
-            Route::delete('/menus/items/{item}', [RestaurantMenuController::class, 'destroyItem'])->name('menus.items.destroy');
+            Route::put('/menus/items/{item}', [RestaurantMenuController::class, 'updateItem'])
+                ->name('menus.items.update');
+            Route::delete('/menus/items/{item}', [RestaurantMenuController::class, 'destroyItem'])
+                ->name('menus.items.destroy');
 
-            Route::post('/pantry/categories', [RestaurantPantryController::class, 'storeCategory'])->name('pantry.categories.store');
-            Route::put('/pantry/categories/{category}', [RestaurantPantryController::class, 'updateCategory'])->name('pantry.categories.update');
-            Route::delete('/pantry/categories/{category}', [RestaurantPantryController::class, 'destroyCategory'])->name('pantry.categories.destroy');
+            Route::post('/pantry/categories', [RestaurantPantryController::class, 'storeCategory'])
+                ->name('pantry.categories.store');
+            Route::put('/pantry/categories/{category}', [RestaurantPantryController::class, 'updateCategory'])
+                ->name('pantry.categories.update');
+            Route::delete('/pantry/categories/{category}', [RestaurantPantryController::class, 'destroyCategory'])
+                ->name('pantry.categories.destroy');
 
             Route::post('/pantry/items', [RestaurantPantryController::class, 'storeItem'])->name('pantry.items.store');
-            Route::put('/pantry/items/{item}', [RestaurantPantryController::class, 'updateItem'])->name('pantry.items.update');
-            Route::delete('/pantry/items/{item}', [RestaurantPantryController::class, 'destroyItem'])->name('pantry.items.destroy');
+            Route::put('/pantry/items/{item}', [RestaurantPantryController::class, 'updateItem'])
+                ->name('pantry.items.update');
+            Route::delete('/pantry/items/{item}', [RestaurantPantryController::class, 'destroyItem'])
+                ->name('pantry.items.destroy');
 
             // Réception de marchandise : saisie en unités d'achat, valorisée.
-            Route::post('/pantry/items/{item}/receive', [RestaurantPantryController::class, 'receive'])->name('pantry.items.receive');
+            Route::post('/pantry/items/{item}/receive', [RestaurantPantryController::class, 'receive'])
+                ->name('pantry.items.receive');
 
             // Fiches techniques
-            Route::post('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'store'])->name('recipes.store');
-            Route::put('/recipes/{recipe}', [App\Http\Controllers\RestaurantRecipeController::class, 'update'])->name('recipes.update');
-            Route::delete('/recipes/{recipe}', [App\Http\Controllers\RestaurantRecipeController::class, 'destroy'])->name('recipes.destroy');
-            Route::post('/recipes/{recipe}/produce', [App\Http\Controllers\RestaurantRecipeController::class, 'produce'])->name('recipes.produce');
+            Route::post('/recipes', [App\Http\Controllers\RestaurantRecipeController::class, 'store'])
+                ->name('recipes.store');
+            Route::put('/recipes/{recipe}', [App\Http\Controllers\RestaurantRecipeController::class, 'update'])
+                ->name('recipes.update');
+            Route::delete('/recipes/{recipe}', [App\Http\Controllers\RestaurantRecipeController::class, 'destroy'])
+                ->name('recipes.destroy');
+            Route::post('/recipes/{recipe}/produce', [App\Http\Controllers\RestaurantRecipeController::class,
+                'produce'])->name('recipes.produce');
 
             // Inventaire physique
-            Route::post('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'store'])->name('stock_counts.store');
-            Route::put('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'update'])->name('stock_counts.update');
-            Route::post('/stock-counts/{stockCount}/soumettre', [App\Http\Controllers\RestaurantStockCountController::class, 'submit'])->whereNumber('stockCount')->name('stock_counts.submit');
-            Route::post('/stock-counts/{stockCount}/rejeter', [App\Http\Controllers\RestaurantStockCountController::class, 'reject'])->whereNumber('stockCount')->name('stock_counts.reject');
-            Route::post('/stock-counts/{stockCount}/close', [App\Http\Controllers\RestaurantStockCountController::class, 'close'])->name('stock_counts.close');
-            Route::post('/stock-counts/{stockCount}/annuler', [App\Http\Controllers\RestaurantStockCountController::class, 'cancel'])->whereNumber('stockCount')->name('stock_counts.cancel');
-            Route::delete('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class, 'destroy'])->name('stock_counts.destroy');
+            Route::post('/stock-counts', [App\Http\Controllers\RestaurantStockCountController::class, 'store'])
+                ->name('stock_counts.store');
+            Route::put('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class,
+                'update'])->name('stock_counts.update');
+            Route::post('/stock-counts/{stockCount}/soumettre',
+                [App\Http\Controllers\RestaurantStockCountController::class, 'submit'])->whereNumber('stockCount')
+                ->name('stock_counts.submit');
+            Route::post('/stock-counts/{stockCount}/rejeter',
+                [App\Http\Controllers\RestaurantStockCountController::class, 'reject'])->whereNumber('stockCount')
+                ->name('stock_counts.reject');
+            Route::post('/stock-counts/{stockCount}/close', [App\Http\Controllers\RestaurantStockCountController::class,
+                'close'])->name('stock_counts.close');
+            Route::post('/stock-counts/{stockCount}/annuler',
+                [App\Http\Controllers\RestaurantStockCountController::class, 'cancel'])->whereNumber('stockCount')
+                ->name('stock_counts.cancel');
+            Route::delete('/stock-counts/{stockCount}', [App\Http\Controllers\RestaurantStockCountController::class,
+                'destroy'])->name('stock_counts.destroy');
 
             // Déclaration de pertes & gaspillage
-            Route::post('/waste', [App\Http\Controllers\RestaurantWasteController::class, 'store'])->name('waste.store');
+            Route::post('/waste', [App\Http\Controllers\RestaurantWasteController::class, 'store'])
+                ->name('waste.store');
         });
     });
 
     // --- RESTAURANT (facturation interne) ---
     // Lecture (manager peut consulter)
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])
+        ->group(function () {
         Route::get('/billing', [RestaurantBillingController::class, 'index'])->name('billing.index');
-        Route::get('/billing/{order}', [RestaurantBillingController::class, 'show'])->whereNumber('order')->name('billing.show');
-        Route::get('/billing/{order}/receipt', [RestaurantBillingController::class, 'receipt'])->whereNumber('order')->name('billing.receipt');
+        Route::get('/billing/{order}', [RestaurantBillingController::class, 'show'])->whereNumber('order')
+            ->name('billing.show');
+        Route::get('/billing/{order}/receipt', [RestaurantBillingController::class, 'receipt'])->whereNumber('order')
+            ->name('billing.receipt');
 
         // Caisse du restaurant : une par restaurant, une session par personne.
-        Route::get('/cash-register', [App\Http\Controllers\RestaurantCashRegisterController::class, 'index'])->name('cash_register.index');
-        Route::get('/cash-register/open', [App\Http\Controllers\RestaurantCashRegisterController::class, 'showOpenForm'])->name('cash_register.open');
-        Route::get('/cash-register/close', [App\Http\Controllers\RestaurantCashRegisterController::class, 'showCloseForm'])->name('cash_register.close');
+        Route::get('/cash-register', [App\Http\Controllers\RestaurantCashRegisterController::class, 'index'])
+            ->name('cash_register.index');
+        Route::get('/cash-register/open', [App\Http\Controllers\RestaurantCashRegisterController::class,
+            'showOpenForm'])->name('cash_register.open');
+        Route::get('/cash-register/close', [App\Http\Controllers\RestaurantCashRegisterController::class,
+            'showCloseForm'])->name('cash_register.close');
     });
 
     // Écriture facturation — manager exclu
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
-        Route::post('/billing/{order}/paid', [RestaurantBillingController::class, 'markPaid'])->whereNumber('order')->name('billing.paid');
-        Route::post('/billing/{order}/unpaid', [RestaurantBillingController::class, 'markUnpaid'])->whereNumber('order')->name('billing.unpaid');
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])
+        ->group(function () {
+        Route::post('/billing/{order}/paid', [RestaurantBillingController::class, 'markPaid'])->whereNumber('order')
+            ->name('billing.paid');
+        Route::post('/billing/{order}/unpaid', [RestaurantBillingController::class, 'markUnpaid'])->whereNumber('order')
+            ->name('billing.unpaid');
 
-        Route::post('/cash-register/open', [App\Http\Controllers\RestaurantCashRegisterController::class, 'open'])->name('cash_register.open.store');
-        Route::post('/cash-register/close', [App\Http\Controllers\RestaurantCashRegisterController::class, 'close'])->name('cash_register.close.store');
-        Route::post('/cash-register/disbursements', [App\Http\Controllers\RestaurantCashRegisterController::class, 'storeDisbursement'])->name('cash_register.disbursements.store');
+        Route::post('/cash-register/open', [App\Http\Controllers\RestaurantCashRegisterController::class, 'open'])
+            ->name('cash_register.open.store');
+        Route::post('/cash-register/close', [App\Http\Controllers\RestaurantCashRegisterController::class, 'close'])
+            ->name('cash_register.close.store');
+        Route::post('/cash-register/disbursements', [App\Http\Controllers\RestaurantCashRegisterController::class,
+            'storeDisbursement'])->name('cash_register.disbursements.store');
     });
 
     // --- RESTAURANTS MULTIPLES ---
     // Les restaurants de l'hôtel, leurs salles et leurs équipes ; le buffet au
     // forfait ; les banquets réservés dans l'un ou l'autre restaurant.
-    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])->group(function () {
-        Route::get('/restaurants', [App\Http\Controllers\RestaurantSetupController::class, 'index'])->name('restaurants.index');
-        Route::post('/restaurants', [App\Http\Controllers\RestaurantSetupController::class, 'store'])->name('restaurants.store');
-        Route::put('/restaurants/{restaurant}', [App\Http\Controllers\RestaurantSetupController::class, 'update'])->whereNumber('restaurant')->name('restaurants.update');
-        Route::put('/restaurants/{restaurant}/equipe', [App\Http\Controllers\RestaurantSetupController::class, 'updateTeam'])->whereNumber('restaurant')->name('restaurants.team.update');
-        Route::post('/restaurants/{restaurant}/salles', [App\Http\Controllers\RestaurantSetupController::class, 'storeSpace'])->whereNumber('restaurant')->name('restaurants.spaces.store');
-        Route::put('/salles/{space}', [App\Http\Controllers\RestaurantSetupController::class, 'updateSpace'])->whereNumber('space')->name('restaurants.spaces.update');
+    Route::prefix('restaurant')->name('restaurant.')->middleware(['permission', 'module:restaurant'])
+        ->group(function () {
+        Route::get('/restaurants', [App\Http\Controllers\RestaurantSetupController::class, 'index'])
+            ->name('restaurants.index');
+        Route::post('/restaurants', [App\Http\Controllers\RestaurantSetupController::class, 'store'])
+            ->name('restaurants.store');
+        Route::put('/restaurants/{restaurant}', [App\Http\Controllers\RestaurantSetupController::class, 'update'])
+            ->whereNumber('restaurant')->name('restaurants.update');
+        Route::put('/restaurants/{restaurant}/equipe', [App\Http\Controllers\RestaurantSetupController::class,
+            'updateTeam'])->whereNumber('restaurant')->name('restaurants.team.update');
+        Route::post('/restaurants/{restaurant}/salles', [App\Http\Controllers\RestaurantSetupController::class,
+            'storeSpace'])->whereNumber('restaurant')->name('restaurants.spaces.store');
+        Route::put('/salles/{space}', [App\Http\Controllers\RestaurantSetupController::class, 'updateSpace'])
+            ->whereNumber('space')->name('restaurants.spaces.update');
 
-        Route::get('/buffets', [App\Http\Controllers\RestaurantBuffetController::class, 'index'])->name('buffets.index');
-        Route::post('/buffets', [App\Http\Controllers\RestaurantBuffetController::class, 'store'])->name('buffets.store');
-        Route::get('/buffets/{buffet}', [App\Http\Controllers\RestaurantBuffetController::class, 'show'])->whereNumber('buffet')->name('buffets.show');
-        Route::post('/buffets/{buffet}/entries', [App\Http\Controllers\RestaurantBuffetController::class, 'storeEntry'])->whereNumber('buffet')->name('buffets.entries.store');
-        Route::post('/buffets/{buffet}/close', [App\Http\Controllers\RestaurantBuffetController::class, 'close'])->whereNumber('buffet')->name('buffets.close');
+        Route::get('/buffets', [App\Http\Controllers\RestaurantBuffetController::class, 'index'])
+            ->name('buffets.index');
+        Route::post('/buffets', [App\Http\Controllers\RestaurantBuffetController::class, 'store'])
+            ->name('buffets.store');
+        Route::get('/buffets/{buffet}', [App\Http\Controllers\RestaurantBuffetController::class, 'show'])
+            ->whereNumber('buffet')->name('buffets.show');
+        Route::post('/buffets/{buffet}/entries', [App\Http\Controllers\RestaurantBuffetController::class, 'storeEntry'])
+            ->whereNumber('buffet')->name('buffets.entries.store');
+        Route::post('/buffets/{buffet}/close', [App\Http\Controllers\RestaurantBuffetController::class, 'close'])
+            ->whereNumber('buffet')->name('buffets.close');
 
-        Route::get('/banquets', [App\Http\Controllers\RestaurantBanquetController::class, 'index'])->name('banquets.index');
-        Route::post('/banquets', [App\Http\Controllers\RestaurantBanquetController::class, 'store'])->name('banquets.store');
-        Route::get('/banquets/{banquet}', [App\Http\Controllers\RestaurantBanquetController::class, 'show'])->whereNumber('banquet')->name('banquets.show');
-        Route::get('/banquets/{banquet}/imprimer', [App\Http\Controllers\RestaurantBanquetController::class, 'print'])->whereNumber('banquet')->name('banquets.print');
-        Route::put('/banquets/{banquet}', [App\Http\Controllers\RestaurantBanquetController::class, 'update'])->whereNumber('banquet')->name('banquets.update');
-        Route::post('/banquets/{banquet}/status', [App\Http\Controllers\RestaurantBanquetController::class, 'status'])->whereNumber('banquet')->name('banquets.status');
-        Route::post('/banquets/{banquet}/payments', [App\Http\Controllers\RestaurantBanquetController::class, 'storePayment'])->whereNumber('banquet')->name('banquets.payments.store');
+        Route::get('/banquets', [App\Http\Controllers\RestaurantBanquetController::class, 'index'])
+            ->name('banquets.index');
+        Route::post('/banquets', [App\Http\Controllers\RestaurantBanquetController::class, 'store'])
+            ->name('banquets.store');
+        Route::get('/banquets/{banquet}', [App\Http\Controllers\RestaurantBanquetController::class, 'show'])
+            ->whereNumber('banquet')->name('banquets.show');
+        Route::get('/banquets/{banquet}/imprimer', [App\Http\Controllers\RestaurantBanquetController::class, 'print'])
+            ->whereNumber('banquet')->name('banquets.print');
+        Route::put('/banquets/{banquet}', [App\Http\Controllers\RestaurantBanquetController::class, 'update'])
+            ->whereNumber('banquet')->name('banquets.update');
+        Route::post('/banquets/{banquet}/status', [App\Http\Controllers\RestaurantBanquetController::class, 'status'])
+            ->whereNumber('banquet')->name('banquets.status');
+        Route::post('/banquets/{banquet}/payments', [App\Http\Controllers\RestaurantBanquetController::class,
+            'storePayment'])->whereNumber('banquet')->name('banquets.payments.store');
     });
 
     Route::prefix('invoices')->name('invoices.')->middleware('permission')->group(function () {
@@ -636,19 +825,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // semaine ; chacun consulte ses quarts.
     Route::middleware('permission')->group(function () {
         Route::get('/planning', [App\Http\Controllers\PlanningController::class, 'index'])->name('planning.index');
-        Route::post('/planning/affectations', [App\Http\Controllers\PlanningController::class, 'store'])->name('planning.affectations.store');
-        Route::delete('/planning/affectations/{affectation}', [App\Http\Controllers\PlanningController::class, 'destroy'])->whereNumber('affectation')->name('planning.affectations.destroy');
-        Route::post('/planning/recopier', [App\Http\Controllers\PlanningController::class, 'recopier'])->name('planning.recopier');
-        Route::post('/planning/publier', [App\Http\Controllers\PlanningController::class, 'publier'])->name('planning.publier');
+        Route::post('/planning/affectations', [App\Http\Controllers\PlanningController::class, 'store'])
+            ->name('planning.affectations.store');
+        Route::delete('/planning/affectations/{affectation}', [App\Http\Controllers\PlanningController::class,
+            'destroy'])->whereNumber('affectation')->name('planning.affectations.destroy');
+        Route::post('/planning/recopier', [App\Http\Controllers\PlanningController::class, 'recopier'])
+            ->name('planning.recopier');
+        Route::post('/planning/publier', [App\Http\Controllers\PlanningController::class, 'publier'])
+            ->name('planning.publier');
 
         // Les régimes et quarts de l'hôtel, définis par la direction (Paramètres › Horaires & quarts).
-        Route::post('/settings/regimes', [App\Http\Controllers\WorkRegimeController::class, 'store'])->name('settings.regimes.store');
-        Route::put('/settings/regimes/{regime}', [App\Http\Controllers\WorkRegimeController::class, 'update'])->whereNumber('regime')->name('settings.regimes.update');
-        Route::delete('/settings/regimes/{regime}', [App\Http\Controllers\WorkRegimeController::class, 'destroy'])->whereNumber('regime')->name('settings.regimes.destroy');
+        Route::post('/settings/regimes', [App\Http\Controllers\WorkRegimeController::class, 'store'])
+            ->name('settings.regimes.store');
+        Route::put('/settings/regimes/{regime}', [App\Http\Controllers\WorkRegimeController::class, 'update'])
+            ->whereNumber('regime')->name('settings.regimes.update');
+        Route::delete('/settings/regimes/{regime}', [App\Http\Controllers\WorkRegimeController::class, 'destroy'])
+            ->whereNumber('regime')->name('settings.regimes.destroy');
 
-        Route::post('/settings/quarts', [App\Http\Controllers\WorkShiftController::class, 'store'])->name('settings.quarts.store');
-        Route::put('/settings/quarts/{quart}', [App\Http\Controllers\WorkShiftController::class, 'update'])->whereNumber('quart')->name('settings.quarts.update');
-        Route::delete('/settings/quarts/{quart}', [App\Http\Controllers\WorkShiftController::class, 'destroy'])->whereNumber('quart')->name('settings.quarts.destroy');
+        Route::post('/settings/quarts', [App\Http\Controllers\WorkShiftController::class, 'store'])
+            ->name('settings.quarts.store');
+        Route::put('/settings/quarts/{quart}', [App\Http\Controllers\WorkShiftController::class, 'update'])
+            ->whereNumber('quart')->name('settings.quarts.update');
+        Route::delete('/settings/quarts/{quart}', [App\Http\Controllers\WorkShiftController::class, 'destroy'])
+            ->whereNumber('quart')->name('settings.quarts.destroy');
     });
 
     // --- UTILISATEURS (staff) ---
@@ -658,14 +857,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{user}', [UserManagementController::class, 'show'])->whereNumber('user')->name('show');
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
         Route::post('/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('toggleStatus');
-        Route::post('/{user}/reinitialiser-mot-de-passe', [UserManagementController::class, 'resetPassword'])->whereNumber('user')->name('resetPassword');
-        Route::post('/{user}/renvoyer-bienvenue', [App\Http\Controllers\MailNotificationController::class, 'resendWelcome'])->whereNumber('user')->name('resendWelcome');
+        Route::post('/{user}/reinitialiser-mot-de-passe', [UserManagementController::class, 'resetPassword'])
+            ->whereNumber('user')->name('resetPassword');
+        Route::post('/{user}/renvoyer-bienvenue', [App\Http\Controllers\MailNotificationController::class,
+            'resendWelcome'])->whereNumber('user')->name('resendWelcome');
     });
 
     // --- NOTIFICATIONS EMAIL (MailerSend) ---
     Route::prefix('notifications/mail')->name('mail.')->middleware('auth')->group(function () {
         Route::post('/test', [App\Http\Controllers\MailNotificationController::class, 'sendTest'])->name('test');
-        Route::post('/purchase-orders/{order}', [App\Http\Controllers\MailNotificationController::class, 'sendPurchaseOrder'])->whereNumber('order')->name('purchase_order');
+        Route::post('/purchase-orders/{order}', [App\Http\Controllers\MailNotificationController::class,
+            'sendPurchaseOrder'])->whereNumber('order')->name('purchase_order');
     });
 
     // --- ADMINISTRATION (service informatique) ---
@@ -678,15 +880,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/droits', [$droits, 'update'])->name('droits.update');
         Route::post('/droits/apercu', [$droits, 'apercu'])->name('droits.apercu');
         Route::post('/droits/exceptions', [$droits, 'storeException'])->name('droits.exceptions.store');
-        Route::delete('/droits/exceptions/{grant}', [$droits, 'destroyException'])->whereNumber('grant')->name('droits.exceptions.destroy');
+        Route::delete('/droits/exceptions/{grant}', [$droits, 'destroyException'])->whereNumber('grant')
+            ->name('droits.exceptions.destroy');
 
         $interventions = App\Http\Controllers\InterventionController::class;
         Route::get('/interventions', [$interventions, 'index'])->name('interventions.index');
         Route::post('/interventions', [$interventions, 'store'])->name('interventions.store');
-        Route::post('/interventions/{intervention}/terminer', [$interventions, 'terminer'])->whereNumber('intervention')->name('interventions.terminer');
+        Route::post('/interventions/{intervention}/terminer', [$interventions, 'terminer'])->whereNumber('intervention')
+            ->name('interventions.terminer');
 
-        Route::get('/journal-audit', [App\Http\Controllers\AuditJournalController::class, 'index'])->name('audit.index');
-        Route::get('/support/sessions', [App\Http\Controllers\SupportSessionController::class, 'index'])->name('support.sessions.index');
+        Route::get('/journal-audit', [App\Http\Controllers\AuditJournalController::class, 'index'])
+            ->name('audit.index');
+        Route::get('/support/sessions', [App\Http\Controllers\SupportSessionController::class, 'index'])
+            ->name('support.sessions.index');
     });
 
     // --- COMPTABILITÉ (comptabilité de caisse : hébergement + resto + boutique) ---
@@ -795,49 +1001,76 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/articles', [$eco . 'StockItemController', 'index'])->name('items.index');
             Route::post('/articles', [$eco . 'StockItemController', 'store'])->name('items.store');
             // Import / export CSV — avant /articles/{item} (contrainte numérique, pas de collision).
-            Route::get('/articles-export', [App\Http\Controllers\StockItemCsvController::class, 'export'])->name('items.export');
-            Route::post('/articles-import', [App\Http\Controllers\StockItemCsvController::class, 'import'])->name('items.import');
-            Route::get('/articles/{item}', [$eco . 'StockItemController', 'show'])->whereNumber('item')->name('items.show');
-            Route::put('/articles/{item}', [$eco . 'StockItemController', 'update'])->whereNumber('item')->name('items.update');
-            Route::post('/articles/{item}/ajustement', [$eco . 'StockItemController', 'adjust'])->whereNumber('item')->name('items.adjust');
-            Route::post('/articles/{item}/reprise', [$eco . 'StockItemController', 'opening'])->whereNumber('item')->name('items.opening');
-            Route::post('/articles/{item}/fournisseurs', [$eco . 'StockItemController', 'linkSupplier'])->whereNumber('item')->name('items.suppliers.link');
-            Route::delete('/articles/{item}/fournisseurs/{supplier}', [$eco . 'StockItemController', 'unlinkSupplier'])->whereNumber('item')->whereNumber('supplier')->name('items.suppliers.unlink');
+            Route::get('/articles-export', [App\Http\Controllers\StockItemCsvController::class, 'export'])
+                ->name('items.export');
+            Route::post('/articles-import', [App\Http\Controllers\StockItemCsvController::class, 'import'])
+                ->name('items.import');
+            Route::get('/articles/{item}', [$eco . 'StockItemController', 'show'])->whereNumber('item')
+                ->name('items.show');
+            Route::put('/articles/{item}', [$eco . 'StockItemController', 'update'])->whereNumber('item')
+                ->name('items.update');
+            Route::post('/articles/{item}/ajustement', [$eco . 'StockItemController', 'adjust'])->whereNumber('item')
+                ->name('items.adjust');
+            Route::post('/articles/{item}/reprise', [$eco . 'StockItemController', 'opening'])->whereNumber('item')
+                ->name('items.opening');
+            Route::post('/articles/{item}/fournisseurs', [$eco . 'StockItemController', 'linkSupplier'])
+                ->whereNumber('item')->name('items.suppliers.link');
+            Route::delete('/articles/{item}/fournisseurs/{supplier}', [$eco . 'StockItemController', 'unlinkSupplier'])
+                ->whereNumber('item')->whereNumber('supplier')->name('items.suppliers.unlink');
             // Transformation : conditionnements de l'article et ouverture d'unités fermées.
-            Route::get('/articles/{item}/transformation', [$eco . 'StockItemTransformationController', 'show'])->whereNumber('item')->name('items.transformation.show');
-            Route::post('/articles/{item}/conditionnements', [$eco . 'StockItemTransformationController', 'packagings'])->whereNumber('item')->name('items.transformation.packagings');
-            Route::post('/articles/{item}/ouverture', [$eco . 'StockItemTransformationController', 'open'])->whereNumber('item')->name('items.transformation.open');
-            Route::post('/articles/{item}/decoupe', [$eco . 'StockItemTransformationController', 'cut'])->whereNumber('item')->name('items.transformation.cut');
+            Route::get('/articles/{item}/transformation', [$eco . 'StockItemTransformationController', 'show'])
+                ->whereNumber('item')->name('items.transformation.show');
+            Route::post('/articles/{item}/conditionnements', [$eco . 'StockItemTransformationController', 'packagings'])
+                ->whereNumber('item')->name('items.transformation.packagings');
+            Route::post('/articles/{item}/ouverture', [$eco . 'StockItemTransformationController', 'open'])
+                ->whereNumber('item')->name('items.transformation.open');
+            Route::post('/articles/{item}/decoupe', [$eco . 'StockItemTransformationController', 'cut'])
+                ->whereNumber('item')->name('items.transformation.cut');
             Route::get('/decoupes/{cut}', [$eco . 'StockCutController', 'show'])->whereNumber('cut')->name('cuts.show');
-            Route::get('/decoupes/{cut}/imprimer', [$eco . 'StockCutController', 'print'])->whereNumber('cut')->name('cuts.print');
-            Route::delete('/articles/{item}', [$eco . 'StockItemController', 'destroy'])->whereNumber('item')->name('items.destroy');
+            Route::get('/decoupes/{cut}/imprimer', [$eco . 'StockCutController', 'print'])->whereNumber('cut')
+                ->name('cuts.print');
+            Route::delete('/articles/{item}', [$eco . 'StockItemController', 'destroy'])->whereNumber('item')
+                ->name('items.destroy');
 
             // Unités de stockage des articles (réglées dans Paramètres › Économat)
             Route::post('/unites', [$eco . 'StockUnitController', 'store'])->name('units.store');
-            Route::put('/unites/{unite}', [$eco . 'StockUnitController', 'update'])->whereNumber('unite')->name('units.update');
-            Route::delete('/unites/{unite}', [$eco . 'StockUnitController', 'destroy'])->whereNumber('unite')->name('units.destroy');
+            Route::put('/unites/{unite}', [$eco . 'StockUnitController', 'update'])->whereNumber('unite')
+                ->name('units.update');
+            Route::delete('/unites/{unite}', [$eco . 'StockUnitController', 'destroy'])->whereNumber('unite')
+                ->name('units.destroy');
 
             // Zones de rangement de l'économat (Paramètres › Économat), et la zone d'un article.
             Route::post('/zones', [$eco . 'StorageZoneController', 'store'])->name('zones.store');
-            Route::put('/zones/{zone}', [$eco . 'StorageZoneController', 'update'])->whereNumber('zone')->name('zones.update');
-            Route::delete('/zones/{zone}', [$eco . 'StorageZoneController', 'destroy'])->whereNumber('zone')->name('zones.destroy');
-            Route::put('/articles/{item}/zone', [$eco . 'StorageZoneController', 'moveItem'])->whereNumber('item')->name('items.zone');
+            Route::put('/zones/{zone}', [$eco . 'StorageZoneController', 'update'])->whereNumber('zone')
+                ->name('zones.update');
+            Route::delete('/zones/{zone}', [$eco . 'StorageZoneController', 'destroy'])->whereNumber('zone')
+                ->name('zones.destroy');
+            Route::put('/articles/{item}/zone', [$eco . 'StorageZoneController', 'moveItem'])->whereNumber('item')
+                ->name('items.zone');
 
             // Sorties de matériel hors de l'établissement (prêt, réparation, don…)
             Route::get('/sorties-externes', [$eco . 'ExternalIssueController', 'index'])->name('external_issues.index');
-            Route::get('/sorties-externes/export', [$eco . 'ExternalIssueController', 'export'])->name('external_issues.export');
-            Route::get('/sorties-externes/nouvelle', [$eco . 'ExternalIssueController', 'create'])->name('external_issues.create');
-            Route::post('/sorties-externes', [$eco . 'ExternalIssueController', 'store'])->name('external_issues.store');
-            Route::get('/sorties-externes/{sortie}', [$eco . 'ExternalIssueController', 'show'])->whereNumber('sortie')->name('external_issues.show');
-            Route::get('/sorties-externes/{sortie}/imprimer', [$eco . 'ExternalIssueController', 'print'])->whereNumber('sortie')->name('external_issues.print');
-            Route::post('/sorties-externes/{sortie}/annuler', [$eco . 'ExternalIssueController', 'cancel'])->whereNumber('sortie')->name('external_issues.cancel');
+            Route::get('/sorties-externes/export', [$eco . 'ExternalIssueController', 'export'])
+                ->name('external_issues.export');
+            Route::get('/sorties-externes/nouvelle', [$eco . 'ExternalIssueController', 'create'])
+                ->name('external_issues.create');
+            Route::post('/sorties-externes', [$eco . 'ExternalIssueController', 'store'])
+                ->name('external_issues.store');
+            Route::get('/sorties-externes/{sortie}', [$eco . 'ExternalIssueController', 'show'])->whereNumber('sortie')
+                ->name('external_issues.show');
+            Route::get('/sorties-externes/{sortie}/imprimer', [$eco . 'ExternalIssueController', 'print'])
+                ->whereNumber('sortie')->name('external_issues.print');
+            Route::post('/sorties-externes/{sortie}/annuler', [$eco . 'ExternalIssueController', 'cancel'])
+                ->whereNumber('sortie')->name('external_issues.cancel');
 
             // Classeur Excel d'un magasin (central ou dépôt) : export, import avec aperçu.
             Route::get('/classeur', [$eco . 'StockWorkbookController', 'index'])->name('classeur.index');
             Route::get('/classeur/export', [$eco . 'StockWorkbookController', 'export'])->name('classeur.export');
             Route::post('/classeur/import', [$eco . 'StockWorkbookController', 'import'])->name('classeur.import');
-            Route::get('/classeur/imports/{import}', [$eco . 'StockWorkbookController', 'show'])->whereNumber('import')->name('classeur.show');
-            Route::post('/classeur/imports/{import}/confirmer', [$eco . 'StockWorkbookController', 'confirm'])->whereNumber('import')->name('classeur.confirm');
+            Route::get('/classeur/imports/{import}', [$eco . 'StockWorkbookController', 'show'])->whereNumber('import')
+                ->name('classeur.show');
+            Route::post('/classeur/imports/{import}/confirmer', [$eco . 'StockWorkbookController', 'confirm'])
+                ->whereNumber('import')->name('classeur.confirm');
 
             // Mouvements de stock : tous les articles, ou la fiche de stock d'un seul
             Route::get('/mouvements', [$eco . 'StockMovementController', 'index'])->name('movements.index');
@@ -846,100 +1079,155 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Catégories d'articles et leur compte de stock
             Route::get('/categories', [$eco . 'StockCategoryController', 'index'])->name('categories.index');
             Route::post('/categories', [$eco . 'StockCategoryController', 'store'])->name('categories.store');
-            Route::put('/categories/{category}', [$eco . 'StockCategoryController', 'update'])->whereNumber('category')->name('categories.update');
-            Route::delete('/categories/{category}', [$eco . 'StockCategoryController', 'destroy'])->whereNumber('category')->name('categories.destroy');
+            Route::put('/categories/{category}', [$eco . 'StockCategoryController', 'update'])->whereNumber('category')
+                ->name('categories.update');
+            Route::delete('/categories/{category}', [$eco . 'StockCategoryController', 'destroy'])
+                ->whereNumber('category')->name('categories.destroy');
 
             // Dépôts de service (étages, mini-bar, bar, pâtisserie…)
             Route::get('/depots', [$eco . 'ServiceStoreController', 'index'])->name('stores.index');
             Route::post('/depots', [$eco . 'ServiceStoreController', 'store'])->name('stores.store');
-            Route::get('/depots/{store}', [$eco . 'ServiceStoreController', 'show'])->whereNumber('store')->name('stores.show');
-            Route::put('/depots/{store}', [$eco . 'ServiceStoreController', 'update'])->whereNumber('store')->name('stores.update');
-            Route::delete('/depots/{store}', [$eco . 'ServiceStoreController', 'destroy'])->whereNumber('store')->name('stores.destroy');
+            Route::get('/depots/{store}', [$eco . 'ServiceStoreController', 'show'])->whereNumber('store')
+                ->name('stores.show');
+            Route::put('/depots/{store}', [$eco . 'ServiceStoreController', 'update'])->whereNumber('store')
+                ->name('stores.update');
+            Route::delete('/depots/{store}', [$eco . 'ServiceStoreController', 'destroy'])->whereNumber('store')
+                ->name('stores.destroy');
             // Bons de transfert : l'économat approvisionne ses propres dépôts.
-            Route::get('/depots/{store}/approvisionner', [$eco . 'StockTransferController', 'create'])->whereNumber('store')->name('transfers.create');
-            Route::post('/depots/{store}/approvisionner', [$eco . 'StockTransferController', 'store'])->whereNumber('store')->name('transfers.store');
-            Route::get('/transferts/{transfert}', [$eco . 'StockTransferController', 'show'])->whereNumber('transfert')->name('transfers.show');
-            Route::get('/transferts/{transfert}/imprimer', [$eco . 'StockTransferController', 'print'])->whereNumber('transfert')->name('transfers.print');
-            Route::post('/transferts/{transfert}/annuler', [$eco . 'StockTransferController', 'cancel'])->whereNumber('transfert')->name('transfers.cancel');
-            Route::post('/depots/{store}/inventaires', [$eco . 'ServiceStoreCountController', 'store'])->whereNumber('store')->name('stores.counts.store');
-            Route::get('/depots/inventaires/{count}', [$eco . 'ServiceStoreCountController', 'show'])->whereNumber('count')->name('stores.counts.show');
-            Route::put('/depots/inventaires/{count}', [$eco . 'ServiceStoreCountController', 'update'])->whereNumber('count')->name('stores.counts.update');
-            Route::post('/depots/inventaires/{count}/soumettre', [$eco . 'ServiceStoreCountController', 'submit'])->whereNumber('count')->name('stores.counts.submit');
-            Route::post('/depots/inventaires/{count}/rejeter', [$eco . 'ServiceStoreCountController', 'reject'])->whereNumber('count')->name('stores.counts.reject');
-            Route::post('/depots/inventaires/{count}/cloturer', [$eco . 'ServiceStoreCountController', 'close'])->whereNumber('count')->name('stores.counts.close');
-            Route::post('/depots/inventaires/{count}/annuler', [$eco . 'ServiceStoreCountController', 'cancel'])->whereNumber('count')->name('stores.counts.cancel');
+            Route::get('/depots/{store}/approvisionner', [$eco . 'StockTransferController', 'create'])
+                ->whereNumber('store')->name('transfers.create');
+            Route::post('/depots/{store}/approvisionner', [$eco . 'StockTransferController', 'store'])
+                ->whereNumber('store')->name('transfers.store');
+            Route::get('/transferts/{transfert}', [$eco . 'StockTransferController', 'show'])->whereNumber('transfert')
+                ->name('transfers.show');
+            Route::get('/transferts/{transfert}/imprimer', [$eco . 'StockTransferController', 'print'])
+                ->whereNumber('transfert')->name('transfers.print');
+            Route::post('/transferts/{transfert}/annuler', [$eco . 'StockTransferController', 'cancel'])
+                ->whereNumber('transfert')->name('transfers.cancel');
+            Route::post('/depots/{store}/inventaires', [$eco . 'ServiceStoreCountController', 'store'])
+                ->whereNumber('store')->name('stores.counts.store');
+            Route::get('/depots/inventaires/{count}', [$eco . 'ServiceStoreCountController', 'show'])
+                ->whereNumber('count')->name('stores.counts.show');
+            Route::put('/depots/inventaires/{count}', [$eco . 'ServiceStoreCountController', 'update'])
+                ->whereNumber('count')->name('stores.counts.update');
+            Route::post('/depots/inventaires/{count}/soumettre', [$eco . 'ServiceStoreCountController', 'submit'])
+                ->whereNumber('count')->name('stores.counts.submit');
+            Route::post('/depots/inventaires/{count}/rejeter', [$eco . 'ServiceStoreCountController', 'reject'])
+                ->whereNumber('count')->name('stores.counts.reject');
+            Route::post('/depots/inventaires/{count}/cloturer', [$eco . 'ServiceStoreCountController', 'close'])
+                ->whereNumber('count')->name('stores.counts.close');
+            Route::post('/depots/inventaires/{count}/annuler', [$eco . 'ServiceStoreCountController', 'cancel'])
+                ->whereNumber('count')->name('stores.counts.cancel');
 
             // Fournisseurs
             Route::get('/fournisseurs', [$eco . 'SupplierController', 'index'])->name('suppliers.index');
-            Route::get('/fournisseurs/{supplier}', [$eco . 'SupplierController', 'show'])->whereNumber('supplier')->name('suppliers.show');
+            Route::get('/fournisseurs/{supplier}', [$eco . 'SupplierController', 'show'])->whereNumber('supplier')
+                ->name('suppliers.show');
             Route::post('/fournisseurs', [$eco . 'SupplierController', 'store'])->name('suppliers.store');
             Route::put('/fournisseurs/{supplier}', [$eco . 'SupplierController', 'update'])->name('suppliers.update');
-            Route::delete('/fournisseurs/{supplier}', [$eco . 'SupplierController', 'destroy'])->name('suppliers.destroy');
+            Route::delete('/fournisseurs/{supplier}', [$eco . 'SupplierController', 'destroy'])
+                ->name('suppliers.destroy');
 
             // Bons de commande
             Route::get('/bons', [$eco . 'PurchaseOrderController', 'index'])->name('orders.index');
             Route::get('/bons/export', [$eco . 'PurchaseOrderController', 'export'])->name('orders.export');
             Route::get('/bons/nouveau', [$eco . 'PurchaseOrderController', 'create'])->name('orders.create');
             Route::post('/bons', [$eco . 'PurchaseOrderController', 'store'])->name('orders.store');
-            Route::get('/bons/articles/{item}/fournisseurs', [$eco . 'PurchaseOrderController', 'fournisseurs'])->whereNumber('item')->name('orders.fournisseurs');
-            Route::get('/bons/{order}', [$eco . 'PurchaseOrderController', 'show'])->whereNumber('order')->name('orders.show');
-            Route::get('/bons/{order}/imprimer', [$eco . 'PurchaseOrderController', 'print'])->whereNumber('order')->name('orders.print');
-            Route::post('/bons/{order}/envoyer', [$eco . 'PurchaseOrderController', 'send'])->whereNumber('order')->name('orders.send');
+            Route::get('/bons/articles/{item}/fournisseurs', [$eco . 'PurchaseOrderController', 'fournisseurs'])
+                ->whereNumber('item')->name('orders.fournisseurs');
+            Route::get('/bons/{order}', [$eco . 'PurchaseOrderController', 'show'])->whereNumber('order')
+                ->name('orders.show');
+            Route::get('/bons/{order}/imprimer', [$eco . 'PurchaseOrderController', 'print'])->whereNumber('order')
+                ->name('orders.print');
+            Route::post('/bons/{order}/envoyer', [$eco . 'PurchaseOrderController', 'send'])->whereNumber('order')
+                ->name('orders.send');
             // Bon parvenu au fournisseur sans email : main propre, téléphone, WhatsApp.
-            Route::post('/bons/{order}/transmis', [$eco . 'PurchaseOrderController', 'transmit'])->whereNumber('order')->name('orders.transmit');
-            Route::post('/bons/{order}/reception', [$eco . 'PurchaseOrderController', 'receive'])->whereNumber('order')->name('orders.receive');
-            Route::post('/bons/{order}/annuler', [$eco . 'PurchaseOrderController', 'cancel'])->whereNumber('order')->name('orders.cancel');
+            Route::post('/bons/{order}/transmis', [$eco . 'PurchaseOrderController', 'transmit'])->whereNumber('order')
+                ->name('orders.transmit');
+            Route::post('/bons/{order}/reception', [$eco . 'PurchaseOrderController', 'receive'])->whereNumber('order')
+                ->name('orders.receive');
+            Route::post('/bons/{order}/annuler', [$eco . 'PurchaseOrderController', 'cancel'])->whereNumber('order')
+                ->name('orders.cancel');
 
             // Bons de réception (Goods Receipts)
             Route::get('/receptions', [$eco . 'GoodsReceiptController', 'index'])->name('receipts.index');
             Route::get('/receptions/export', [$eco . 'GoodsReceiptController', 'export'])->name('receipts.export');
             // Réception directe : marchandise arrivée sans bon de commande.
-            Route::get('/receptions/directe', [$eco . 'GoodsReceiptController', 'createDirect'])->name('receipts.direct.create');
-            Route::post('/receptions/directe', [$eco . 'GoodsReceiptController', 'storeDirect'])->name('receipts.direct.store');
-            Route::get('/bons/{order}/receptionner', [$eco . 'GoodsReceiptController', 'create'])->whereNumber('order')->name('receipts.create');
-            Route::post('/bons/{order}/receptionner', [$eco . 'GoodsReceiptController', 'store'])->whereNumber('order')->name('receipts.store');
-            Route::get('/receptions/{receipt}', [$eco . 'GoodsReceiptController', 'show'])->whereNumber('receipt')->name('receipts.show');
-            Route::get('/receptions/{receipt}/imprimer', [$eco . 'GoodsReceiptController', 'print'])->whereNumber('receipt')->name('receipts.print');
-            Route::post('/receptions/{receipt}/annuler', [$eco . 'GoodsReceiptController', 'cancel'])->whereNumber('receipt')->name('receipts.cancel');
+            Route::get('/receptions/directe', [$eco . 'GoodsReceiptController', 'createDirect'])
+                ->name('receipts.direct.create');
+            Route::post('/receptions/directe', [$eco . 'GoodsReceiptController', 'storeDirect'])
+                ->name('receipts.direct.store');
+            Route::get('/bons/{order}/receptionner', [$eco . 'GoodsReceiptController', 'create'])->whereNumber('order')
+                ->name('receipts.create');
+            Route::post('/bons/{order}/receptionner', [$eco . 'GoodsReceiptController', 'store'])->whereNumber('order')
+                ->name('receipts.store');
+            Route::get('/receptions/{receipt}', [$eco . 'GoodsReceiptController', 'show'])->whereNumber('receipt')
+                ->name('receipts.show');
+            Route::get('/receptions/{receipt}/imprimer', [$eco . 'GoodsReceiptController', 'print'])
+                ->whereNumber('receipt')->name('receipts.print');
+            Route::post('/receptions/{receipt}/annuler', [$eco . 'GoodsReceiptController', 'cancel'])
+                ->whereNumber('receipt')->name('receipts.cancel');
             // Bordereaux de livraison : joints, ouverts, retirés (vers la corbeille).
-            Route::post('/receptions/{receipt}/bordereaux', [$eco . 'GoodsReceiptAttachmentController', 'store'])->whereNumber('receipt')->name('receipts.attachments.store');
-            Route::get('/receptions/{receipt}/bordereaux/{attachment}', [$eco . 'GoodsReceiptAttachmentController', 'show'])->whereNumber('receipt')->whereNumber('attachment')->name('receipts.attachments.show');
-            Route::delete('/receptions/{receipt}/bordereaux/{attachment}', [$eco . 'GoodsReceiptAttachmentController', 'destroy'])->whereNumber('receipt')->whereNumber('attachment')->name('receipts.attachments.destroy');
+            Route::post('/receptions/{receipt}/bordereaux', [$eco . 'GoodsReceiptAttachmentController', 'store'])
+                ->whereNumber('receipt')->name('receipts.attachments.store');
+            Route::get('/receptions/{receipt}/bordereaux/{attachment}', [$eco . 'GoodsReceiptAttachmentController',
+                'show'])->whereNumber('receipt')->whereNumber('attachment')->name('receipts.attachments.show');
+            Route::delete('/receptions/{receipt}/bordereaux/{attachment}', [$eco . 'GoodsReceiptAttachmentController',
+                'destroy'])->whereNumber('receipt')->whereNumber('attachment')->name('receipts.attachments.destroy');
 
             // Traitement des demandes d'achat (approbation / rejet / conversion)
-            Route::post('/demandes-achat/{purchaseRequest}/approuver', [$eco . 'PurchaseRequestController', 'approve'])->whereNumber('purchaseRequest')->name('purchase_requests.approve');
-            Route::post('/demandes-achat/{purchaseRequest}/refuser', [$eco . 'PurchaseRequestController', 'reject'])->whereNumber('purchaseRequest')->name('purchase_requests.reject');
-            Route::post('/demandes-achat/{purchaseRequest}/convertir', [$eco . 'PurchaseRequestController', 'convert'])->whereNumber('purchaseRequest')->name('purchase_requests.convert');
+            Route::post('/demandes-achat/{purchaseRequest}/approuver', [$eco . 'PurchaseRequestController', 'approve'])
+                ->whereNumber('purchaseRequest')->name('purchase_requests.approve');
+            Route::post('/demandes-achat/{purchaseRequest}/refuser', [$eco . 'PurchaseRequestController', 'reject'])
+                ->whereNumber('purchaseRequest')->name('purchase_requests.reject');
+            Route::post('/demandes-achat/{purchaseRequest}/convertir', [$eco . 'PurchaseRequestController', 'convert'])
+                ->whereNumber('purchaseRequest')->name('purchase_requests.convert');
 
             // Traitement des demandes (validation / livraison)
-            Route::post('/demandes/{requisition}/valider', [$eco . 'StockRequisitionController', 'approve'])->whereNumber('requisition')->name('requisitions.approve');
-            Route::post('/demandes/{requisition}/refuser', [$eco . 'StockRequisitionController', 'reject'])->whereNumber('requisition')->name('requisitions.reject');
-            Route::post('/demandes/{requisition}/livrer', [$eco . 'StockRequisitionController', 'deliver'])->whereNumber('requisition')->name('requisitions.deliver');
+            Route::post('/demandes/{requisition}/valider', [$eco . 'StockRequisitionController', 'approve'])
+                ->whereNumber('requisition')->name('requisitions.approve');
+            Route::post('/demandes/{requisition}/refuser', [$eco . 'StockRequisitionController', 'reject'])
+                ->whereNumber('requisition')->name('requisitions.reject');
+            Route::post('/demandes/{requisition}/livrer', [$eco . 'StockRequisitionController', 'deliver'])
+                ->whereNumber('requisition')->name('requisitions.deliver');
 
             // Fiches de comptage par service (inventaire général)
             Route::get('/fiches-comptage', [$eco . 'CountSheetController', 'index'])->name('count_sheets.index');
-            Route::get('/fiches-comptage/imprimer', [$eco . 'CountSheetController', 'print'])->name('count_sheets.print');
+            Route::get('/fiches-comptage/imprimer', [$eco . 'CountSheetController', 'print'])
+                ->name('count_sheets.print');
 
             // Inventaires physiques & PV d'écarts
             Route::get('/inventaires', [$eco . 'StockCountController', 'index'])->name('stock_counts.index');
             Route::get('/inventaires/nouveau', [$eco . 'StockCountController', 'create'])->name('stock_counts.create');
             // Fichier de comptage (Excel) à remplir après le comptage, puis à importer.
-            Route::get('/inventaires/fichier-comptage', [$eco . 'StockCountController', 'fichier'])->name('stock_counts.export');
-            Route::post('/inventaires/{stockCount}/import', [$eco . 'StockCountController', 'import'])->whereNumber('stockCount')->name('stock_counts.import');
+            Route::get('/inventaires/fichier-comptage', [$eco . 'StockCountController', 'fichier'])
+                ->name('stock_counts.export');
+            Route::post('/inventaires/{stockCount}/import', [$eco . 'StockCountController', 'import'])
+                ->whereNumber('stockCount')->name('stock_counts.import');
             Route::post('/inventaires', [$eco . 'StockCountController', 'store'])->name('stock_counts.store');
-            Route::get('/inventaires/{stockCount}', [$eco . 'StockCountController', 'show'])->whereNumber('stockCount')->name('stock_counts.show');
-            Route::put('/inventaires/{stockCount}', [$eco . 'StockCountController', 'update'])->whereNumber('stockCount')->name('stock_counts.update');
-            Route::post('/inventaires/{stockCount}/soumettre', [$eco . 'StockCountController', 'submit'])->whereNumber('stockCount')->name('stock_counts.submit');
-            Route::post('/inventaires/{stockCount}/rejeter', [$eco . 'StockCountController', 'reject'])->whereNumber('stockCount')->name('stock_counts.reject');
-            Route::post('/inventaires/{stockCount}/cloturer', [$eco . 'StockCountController', 'close'])->whereNumber('stockCount')->name('stock_counts.close');
-            Route::post('/inventaires/{stockCount}/annuler', [$eco . 'StockCountController', 'cancel'])->whereNumber('stockCount')->name('stock_counts.cancel');
-            Route::get('/inventaires/{stockCount}/pv', [$eco . 'StockCountController', 'report'])->whereNumber('stockCount')->name('stock_counts.report');
+            Route::get('/inventaires/{stockCount}', [$eco . 'StockCountController', 'show'])->whereNumber('stockCount')
+                ->name('stock_counts.show');
+            Route::put('/inventaires/{stockCount}', [$eco . 'StockCountController', 'update'])
+                ->whereNumber('stockCount')->name('stock_counts.update');
+            Route::post('/inventaires/{stockCount}/soumettre', [$eco . 'StockCountController', 'submit'])
+                ->whereNumber('stockCount')->name('stock_counts.submit');
+            Route::post('/inventaires/{stockCount}/rejeter', [$eco . 'StockCountController', 'reject'])
+                ->whereNumber('stockCount')->name('stock_counts.reject');
+            Route::post('/inventaires/{stockCount}/cloturer', [$eco . 'StockCountController', 'close'])
+                ->whereNumber('stockCount')->name('stock_counts.close');
+            Route::post('/inventaires/{stockCount}/annuler', [$eco . 'StockCountController', 'cancel'])
+                ->whereNumber('stockCount')->name('stock_counts.cancel');
+            Route::get('/inventaires/{stockCount}/pv', [$eco . 'StockCountController', 'report'])
+                ->whereNumber('stockCount')->name('stock_counts.report');
 
             // Contrôle, alertes, propositions de commande et ratios
             Route::get('/controle', [$eco . 'StockControlController', 'index'])->name('control.index');
-            Route::get('/controle/propositions', [$eco . 'StockControlController', 'suggestions'])->name('control.suggestions.index');
-            Route::post('/controle/propositions', [$eco . 'StockControlController', 'generatePurchaseRequest'])->name('control.suggestions.store');
-            Route::get('/controle/ecarts', [$eco . 'StockControlController', 'variances'])->name('control.variances.index');
+            Route::get('/controle/propositions', [$eco . 'StockControlController', 'suggestions'])
+                ->name('control.suggestions.index');
+            Route::post('/controle/propositions', [$eco . 'StockControlController', 'generatePurchaseRequest'])
+                ->name('control.suggestions.store');
+            Route::get('/controle/ecarts', [$eco . 'StockControlController', 'variances'])
+                ->name('control.variances.index');
             Route::get('/controle/imprimer', [$eco . 'StockControlController', 'printReport'])->name('control.print');
         });
 
@@ -947,28 +1235,43 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // sollicitent l'économat. Le contrôleur cloisonne à leurs propres demandes.
         Route::middleware('permission')->group(function () use ($eco) {
             // Demandes d'achat internes
-            Route::get('/demandes-achat', [$eco . 'PurchaseRequestController', 'index'])->name('purchase_requests.index');
-            Route::get('/demandes-achat/nouvelle', [$eco . 'PurchaseRequestController', 'create'])->name('purchase_requests.create');
-            Route::post('/demandes-achat', [$eco . 'PurchaseRequestController', 'store'])->name('purchase_requests.store');
+            Route::get('/demandes-achat', [$eco . 'PurchaseRequestController', 'index'])
+                ->name('purchase_requests.index');
+            Route::get('/demandes-achat/nouvelle', [$eco . 'PurchaseRequestController', 'create'])
+                ->name('purchase_requests.create');
+            Route::post('/demandes-achat', [$eco . 'PurchaseRequestController', 'store'])
+                ->name('purchase_requests.store');
             // La carte des fournisseurs d'un article, à la saisie d'une demande.
-            Route::get('/demandes-achat/articles/{item}/fournisseurs', [$eco . 'PurchaseRequestController', 'fournisseurs'])->whereNumber('item')->name('purchase_requests.fournisseurs');
-            Route::get('/demandes-achat/{purchaseRequest}', [$eco . 'PurchaseRequestController', 'show'])->whereNumber('purchaseRequest')->name('purchase_requests.show');
-            Route::get('/demandes-achat/{purchaseRequest}/modifier', [$eco . 'PurchaseRequestController', 'edit'])->whereNumber('purchaseRequest')->name('purchase_requests.edit');
-            Route::put('/demandes-achat/{purchaseRequest}', [$eco . 'PurchaseRequestController', 'update'])->whereNumber('purchaseRequest')->name('purchase_requests.update');
-            Route::get('/demandes-achat/{purchaseRequest}/imprimer', [$eco . 'PurchaseRequestController', 'print'])->whereNumber('purchaseRequest')->name('purchase_requests.print');
-            Route::post('/demandes-achat/{purchaseRequest}/annuler', [$eco . 'PurchaseRequestController', 'cancel'])->whereNumber('purchaseRequest')->name('purchase_requests.cancel');
+            Route::get('/demandes-achat/articles/{item}/fournisseurs', [$eco . 'PurchaseRequestController',
+                'fournisseurs'])->whereNumber('item')->name('purchase_requests.fournisseurs');
+            Route::get('/demandes-achat/{purchaseRequest}', [$eco . 'PurchaseRequestController', 'show'])
+                ->whereNumber('purchaseRequest')->name('purchase_requests.show');
+            Route::get('/demandes-achat/{purchaseRequest}/modifier', [$eco . 'PurchaseRequestController', 'edit'])
+                ->whereNumber('purchaseRequest')->name('purchase_requests.edit');
+            Route::put('/demandes-achat/{purchaseRequest}', [$eco . 'PurchaseRequestController', 'update'])
+                ->whereNumber('purchaseRequest')->name('purchase_requests.update');
+            Route::get('/demandes-achat/{purchaseRequest}/imprimer', [$eco . 'PurchaseRequestController', 'print'])
+                ->whereNumber('purchaseRequest')->name('purchase_requests.print');
+            Route::post('/demandes-achat/{purchaseRequest}/annuler', [$eco . 'PurchaseRequestController', 'cancel'])
+                ->whereNumber('purchaseRequest')->name('purchase_requests.cancel');
 
             // Demandes internes
             Route::get('/demandes', [$eco . 'StockRequisitionController', 'index'])->name('requisitions.index');
             // Impression et export : mêmes filtres que l'écran, même garde.
-            Route::get('/demandes/export', [$eco . 'StockRequisitionController', 'export'])->name('requisitions.export');
-            Route::get('/demandes/nouvelle', [$eco . 'StockRequisitionController', 'create'])->name('requisitions.create');
+            Route::get('/demandes/export', [$eco . 'StockRequisitionController', 'export'])
+                ->name('requisitions.export');
+            Route::get('/demandes/nouvelle', [$eco . 'StockRequisitionController', 'create'])
+                ->name('requisitions.create');
             Route::post('/demandes', [$eco . 'StockRequisitionController', 'store'])->name('requisitions.store');
-            Route::get('/demandes/{requisition}', [$eco . 'StockRequisitionController', 'show'])->whereNumber('requisition')->name('requisitions.show');
-            Route::get('/demandes/{requisition}/imprimer', [$eco . 'StockRequisitionController', 'print'])->whereNumber('requisition')->name('requisitions.print');
-            Route::post('/demandes/{requisition}/annuler', [$eco . 'StockRequisitionController', 'cancel'])->whereNumber('requisition')->name('requisitions.cancel');
+            Route::get('/demandes/{requisition}', [$eco . 'StockRequisitionController', 'show'])
+                ->whereNumber('requisition')->name('requisitions.show');
+            Route::get('/demandes/{requisition}/imprimer', [$eco . 'StockRequisitionController', 'print'])
+                ->whereNumber('requisition')->name('requisitions.print');
+            Route::post('/demandes/{requisition}/annuler', [$eco . 'StockRequisitionController', 'cancel'])
+                ->whereNumber('requisition')->name('requisitions.cancel');
             // Visa du chef de service avant l'économat (le contrôleur vérifie le service).
-            Route::post('/demandes/{requisition}/viser', [$eco . 'StockRequisitionController', 'endorse'])->whereNumber('requisition')->name('requisitions.endorse');
+            Route::post('/demandes/{requisition}/viser', [$eco . 'StockRequisitionController', 'endorse'])
+                ->whereNumber('requisition')->name('requisitions.endorse');
         });
     });
 
@@ -981,31 +1284,48 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/demandes', [$tec . 'MaintenanceRequestController', 'list'])->name('demandes.index');
         Route::get('/demandes/nouvelle', [$tec . 'MaintenanceRequestController', 'create'])->name('demandes.create');
         Route::post('/demandes', [$tec . 'MaintenanceRequestController', 'store'])->name('demandes.store');
-        Route::get('/demandes/{demande}', [$tec . 'MaintenanceRequestController', 'show'])->whereNumber('demande')->name('demandes.show');
-        Route::get('/demandes/{demande}/imprimer', [$tec . 'MaintenanceRequestController', 'print'])->whereNumber('demande')->name('demandes.print');
-        Route::post('/demandes/{demande}/affecter', [$tec . 'MaintenanceRequestController', 'assign'])->whereNumber('demande')->name('demandes.assign');
-        Route::post('/demandes/{demande}/prendre', [$tec . 'MaintenanceRequestController', 'take'])->whereNumber('demande')->name('demandes.take');
-        Route::post('/demandes/{demande}/commencer', [$tec . 'MaintenanceRequestController', 'start'])->whereNumber('demande')->name('demandes.start');
-        Route::post('/demandes/{demande}/pieces', [$tec . 'MaintenanceRequestController', 'parts'])->whereNumber('demande')->name('demandes.parts');
-        Route::post('/demandes/{demande}/soumettre', [$tec . 'MaintenanceRequestController', 'submit'])->whereNumber('demande')->name('demandes.submit');
-        Route::post('/demandes/{demande}/viser', [$tec . 'MaintenanceRequestController', 'approve'])->whereNumber('demande')->name('demandes.approve');
-        Route::post('/demandes/{demande}/reprise', [$tec . 'MaintenanceRequestController', 'rework'])->whereNumber('demande')->name('demandes.rework');
-        Route::post('/demandes/{demande}/terminer', [$tec . 'MaintenanceRequestController', 'complete'])->whereNumber('demande')->name('demandes.complete');
-        Route::post('/demandes/{demande}/rouvrir', [$tec . 'MaintenanceRequestController', 'reopen'])->whereNumber('demande')->name('demandes.reopen');
-        Route::post('/demandes/{demande}/annuler', [$tec . 'MaintenanceRequestController', 'cancel'])->whereNumber('demande')->name('demandes.cancel');
+        Route::get('/demandes/{demande}', [$tec . 'MaintenanceRequestController', 'show'])->whereNumber('demande')
+            ->name('demandes.show');
+        Route::get('/demandes/{demande}/imprimer', [$tec . 'MaintenanceRequestController', 'print'])
+            ->whereNumber('demande')->name('demandes.print');
+        Route::post('/demandes/{demande}/affecter', [$tec . 'MaintenanceRequestController', 'assign'])
+            ->whereNumber('demande')->name('demandes.assign');
+        Route::post('/demandes/{demande}/prendre', [$tec . 'MaintenanceRequestController', 'take'])
+            ->whereNumber('demande')->name('demandes.take');
+        Route::post('/demandes/{demande}/commencer', [$tec . 'MaintenanceRequestController', 'start'])
+            ->whereNumber('demande')->name('demandes.start');
+        Route::post('/demandes/{demande}/pieces', [$tec . 'MaintenanceRequestController', 'parts'])
+            ->whereNumber('demande')->name('demandes.parts');
+        Route::post('/demandes/{demande}/soumettre', [$tec . 'MaintenanceRequestController', 'submit'])
+            ->whereNumber('demande')->name('demandes.submit');
+        Route::post('/demandes/{demande}/viser', [$tec . 'MaintenanceRequestController', 'approve'])
+            ->whereNumber('demande')->name('demandes.approve');
+        Route::post('/demandes/{demande}/reprise', [$tec . 'MaintenanceRequestController', 'rework'])
+            ->whereNumber('demande')->name('demandes.rework');
+        Route::post('/demandes/{demande}/terminer', [$tec . 'MaintenanceRequestController', 'complete'])
+            ->whereNumber('demande')->name('demandes.complete');
+        Route::post('/demandes/{demande}/rouvrir', [$tec . 'MaintenanceRequestController', 'reopen'])
+            ->whereNumber('demande')->name('demandes.reopen');
+        Route::post('/demandes/{demande}/annuler', [$tec . 'MaintenanceRequestController', 'cancel'])
+            ->whereNumber('demande')->name('demandes.cancel');
         Route::get('/equipe', [$tec . 'TechnicalTeamController', 'index'])->name('equipe.index');
-        Route::put('/equipe/{user}', [$tec . 'TechnicalTeamController', 'update'])->whereNumber('user')->name('equipe.update');
+        Route::put('/equipe/{user}', [$tec . 'TechnicalTeamController', 'update'])->whereNumber('user')
+            ->name('equipe.update');
         Route::get('/depot', [$tec . 'TechnicalTeamController', 'depot'])->name('depot.index');
     });
 
     // --- SHOP ---
     // Lecture seule pour le manager (GET uniquement)
     Route::prefix('shop')->name('shop.')->middleware(['permission', 'module:shop'])->group(function () {
-        Route::get('/cash-register', [CashRegisterController::class, 'index'])->middleware('permission')->name('cash_register.index');
-        Route::get('/products', [ShopProductController::class, 'index'])->middleware('permission')->name('products.index');
-        Route::get('/products-export', [App\Http\Controllers\ShopProductCsvController::class, 'export'])->middleware('permission')->name('products.export');
+        Route::get('/cash-register', [CashRegisterController::class, 'index'])->middleware('permission')
+            ->name('cash_register.index');
+        Route::get('/products', [ShopProductController::class, 'index'])->middleware('permission')
+            ->name('products.index');
+        Route::get('/products-export', [App\Http\Controllers\ShopProductCsvController::class, 'export'])
+            ->middleware('permission')->name('products.export');
         Route::get('/orders', [ShopOrderController::class, 'index'])->name('orders.index');
-        Route::get('/orders/{order}/receipt', [ShopOrderController::class, 'receipt'])->whereNumber('order')->name('orders.receipt');
+        Route::get('/orders/{order}/receipt', [ShopOrderController::class, 'receipt'])->whereNumber('order')
+            ->name('orders.receipt');
         Route::get('/orders/{order}', [ShopOrderController::class, 'show'])->whereNumber('order')->name('orders.show');
     });
 
@@ -1014,28 +1334,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Caisse — ouverture : shop_manager + shop_cashier
         Route::get('/cash-register/open', [CashRegisterController::class, 'showOpenForm'])->name('cash_register.open');
         Route::post('/cash-register/open', [CashRegisterController::class, 'open'])->name('cash_register.open.store');
-        Route::post('/cash-register/disbursements', [CashRegisterController::class, 'storeDisbursement'])->name('cash_register.disbursements.store');
+        Route::post('/cash-register/disbursements', [CashRegisterController::class, 'storeDisbursement'])
+            ->name('cash_register.disbursements.store');
 
         // Caisse — fermeture : celui qui a ouvert la caisse la ferme (le
         // contrôleur scope la session à auth()->id()) — pas de restriction
         // supplémentaire au-delà du groupe (shop_manager + shop_cashier).
-        Route::get('/cash-register/close', [CashRegisterController::class, 'showCloseForm'])->name('cash_register.close');
-        Route::post('/cash-register/close', [CashRegisterController::class, 'close'])->name('cash_register.close.store');
+        Route::get('/cash-register/close', [CashRegisterController::class, 'showCloseForm'])
+            ->name('cash_register.close');
+        Route::post('/cash-register/close', [CashRegisterController::class, 'close'])
+            ->name('cash_register.close.store');
 
         // Commandes
         Route::get('/orders/create', [ShopOrderController::class, 'create'])->name('orders.create');
         Route::post('/orders', [ShopOrderController::class, 'store'])->name('orders.store');
-        Route::patch('/orders/{order}/paid', [ShopOrderController::class, 'markAsPaid'])->whereNumber('order')->name('orders.paid');
-        Route::patch('/orders/{order}/refund', [ShopOrderController::class, 'refund'])->whereNumber('order')->name('orders.refund');
+        Route::patch('/orders/{order}/paid', [ShopOrderController::class, 'markAsPaid'])->whereNumber('order')
+            ->name('orders.paid');
+        Route::patch('/orders/{order}/refund', [ShopOrderController::class, 'refund'])->whereNumber('order')
+            ->name('orders.refund');
 
         // Articles — shop_manager uniquement
         Route::middleware('permission')->group(function () {
             Route::get('/products/create', [ShopProductController::class, 'create'])->name('products.create');
             Route::post('/products', [ShopProductController::class, 'store'])->name('products.store');
-            Route::post('/products-import', [App\Http\Controllers\ShopProductCsvController::class, 'import'])->name('products.import');
-            Route::get('/products/{product}/edit', [ShopProductController::class, 'edit'])->whereNumber('product')->name('products.edit');
-            Route::patch('/products/{product}', [ShopProductController::class, 'update'])->whereNumber('product')->name('products.update');
-            Route::delete('/products/{product}', [ShopProductController::class, 'destroy'])->whereNumber('product')->name('products.destroy');
+            Route::post('/products-import', [App\Http\Controllers\ShopProductCsvController::class, 'import'])
+                ->name('products.import');
+            Route::get('/products/{product}/edit', [ShopProductController::class, 'edit'])->whereNumber('product')
+                ->name('products.edit');
+            Route::patch('/products/{product}', [ShopProductController::class, 'update'])->whereNumber('product')
+                ->name('products.update');
+            Route::delete('/products/{product}', [ShopProductController::class, 'destroy'])->whereNumber('product')
+                ->name('products.destroy');
         });
     });
 });
@@ -1047,13 +1376,15 @@ Route::middleware(['auth'])->group(function () {
     })->middleware('permission')->name('test-popup');
 
     // Statut de la liaison avec le site vitrine (badge du header)
-    Route::get('/site-sync/status', [\App\Http\Controllers\SiteSyncController::class, 'status'])->name('site-sync.status');
+    Route::get('/site-sync/status', [\App\Http\Controllers\SiteSyncController::class, 'status'])
+        ->name('site-sync.status');
 });
 
 // ==========================================
 // ANALYTICS (Manager uniquement)
 // ==========================================
-Route::middleware(['auth', 'permission', 'module:analytics'])->prefix('analytics')->name('analytics.')->group(function () {
+Route::middleware(['auth', 'permission', 'module:analytics'])->prefix('analytics')->name('analytics.')
+    ->group(function () {
     Route::get('/', [\App\Http\Controllers\AnalyticsController::class, 'index'])->name('index');
     Route::get('/print', [\App\Http\Controllers\AnalyticsController::class, 'print'])->name('print');
 });

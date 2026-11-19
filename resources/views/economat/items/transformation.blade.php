@@ -15,7 +15,9 @@
 @endphp
 
 <div class="max-w-4xl mx-auto space-y-5">
-    <a href="{{ route('economat.items.show', $item) }}" class="inline-flex items-center gap-1.5 text-sm text-primary/50 hover:text-primary">
+    <a
+        href="{{ route('economat.items.show', $item) }}"
+        class="inline-flex items-center gap-1.5 text-sm text-primary/50 hover:text-primary">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour à la fiche de l'article
     </a>
 
@@ -45,13 +47,24 @@
         </div>
 
         @droit('economat.items.transformation.packagings')
-            <form method="POST" action="{{ route('economat.items.transformation.packagings', $item) }}" class="p-6 space-y-3">
+            <form
+                method="POST"
+                action="{{ route('economat.items.transformation.packagings', $item) }}"
+                class="p-6 space-y-3">
                 @csrf
                 <template x-for="(niveau, i) in niveaux" :key="niveau.cle">
-                    <div class="grid grid-cols-12 gap-3 items-end p-3 rounded-lg border border-secondary/15 bg-surface-light/40">
+                    <div class="grid grid-cols-12 gap-3 items-end p-3 rounded-lg border border-secondary/15
+                        bg-surface-light/40">
                         <div class="col-span-12 sm:col-span-4">
-                            <label :for="'cond-nom-' + niveau.cle" class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Conditionnement</label>
-                            <select :id="'cond-nom-' + niveau.cle" :name="`niveaux[${i}][nom]`" x-model="niveau.nom" required class="{{ $champ }}">
+                            <label
+                                :for="'cond-nom-' + niveau.cle"
+                                class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Conditionnement</label>
+                            <select
+                                :id="'cond-nom-' + niveau.cle"
+                                :name="`niveaux[${i}][nom]`"
+                                x-model="niveau.nom"
+                                required
+                                class="{{ $champ }}">
                                 <option value="">Choisir…</option>
                                 @foreach($unites as $u)
                                     @if(mb_strtolower($u) !== mb_strtolower($item->unit))
@@ -61,21 +74,47 @@
                             </select>
                         </div>
                         <div class="col-span-7 sm:col-span-4">
-                            <label :for="'cond-contenance-' + niveau.cle" class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">
+                            <label
+                                :for="'cond-contenance-' + niveau.cle"
+                                class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">
                                 Contient <span class="normal-case font-normal" x-text="'(en ' + dessous(i) + ')'"></span>
                             </label>
-                            <input :id="'cond-contenance-' + niveau.cle" type="number" min="2" step="1" :name="`niveaux[${i}][contenance]`" x-model.number="niveau.contenance" required class="{{ $champ }} font-mono text-right">
+                            <input
+                                :id="'cond-contenance-' + niveau.cle"
+                                type="number"
+                                min="2"
+                                step="1"
+                                :name="`niveaux[${i}][contenance]`"
+                                x-model.number="niveau.contenance"
+                                required
+                                class="{{ $champ }} font-mono text-right">
                         </div>
                         <div class="col-span-5 sm:col-span-3">
-                            <label :for="'cond-fermes-' + niveau.cle" class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Encore fermés</label>
-                            <input :id="'cond-fermes-' + niveau.cle" type="number" min="0" step="1" :name="`niveaux[${i}][fermes]`" x-model.number="niveau.fermes" class="{{ $champ }} font-mono text-right">
+                            <label
+                                :for="'cond-fermes-' + niveau.cle"
+                                class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Encore fermés</label>
+                            <input
+                                :id="'cond-fermes-' + niveau.cle"
+                                type="number"
+                                min="0"
+                                step="1"
+                                :name="`niveaux[${i}][fermes]`"
+                                x-model.number="niveau.fermes"
+                                class="{{ $champ }} font-mono text-right">
                         </div>
                         <div class="col-span-12 sm:col-span-1 text-right">
-                            <button type="button" @click="niveaux.splice(i, 1)" class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg" aria-label="Retirer ce conditionnement">
+                            <button
+                                type="button"
+                                @click="niveaux.splice(i, 1)"
+                                class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                                aria-label="Retirer ce conditionnement">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </div>
-                        <p class="col-span-12 text-xs text-primary/60" x-show="niveau.nom && niveau.contenance >= 2" x-text="resume(i)"></p>
+                        <p
+                            class="col-span-12 text-xs text-primary/60"
+                            x-show="niveau.nom && niveau.contenance >= 2"
+                            x-text="resume(i)"></p>
                     </div>
                 </template>
 
@@ -85,13 +124,17 @@
 
                 <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
                     <button type="button" @click="ajouter()" x-show="niveaux.length < 6"
-                            class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold rounded-lg">
+                            class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary/10 hover:bg-primary/20
+                                text-primary text-xs font-semibold rounded-lg">
                         <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter un conditionnement
                     </button>
                     <div class="flex items-center gap-3">
                         <span class="text-xs" :class="fermeTotal() > {{ (float) $item->current_stock }} ? 'text-red-600 font-semibold' : 'text-primary/50'"
                               x-text="'Unités fermées : ' + quantite(fermeTotal(), unite) + ' sur ' + quantite({{ (float) $item->current_stock }}, unite) + ' en stock'"></span>
-                        <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark">Enregistrer</button>
+                        <button
+                            type="submit"
+                            class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg
+                                hover:bg-surface-dark">Enregistrer</button>
                     </div>
                 </div>
             </form>
@@ -118,7 +161,10 @@
                 </div>
                 <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     @foreach($niveaux->sortByDesc('factor') as $n)
-                        <form method="POST" action="{{ route('economat.items.transformation.open', $item) }}" class="rounded-lg border border-secondary/15 p-4 space-y-2">
+                        <form
+                            method="POST"
+                            action="{{ route('economat.items.transformation.open', $item) }}"
+                            class="rounded-lg border border-secondary/15 p-4 space-y-2">
                             @csrf
                             <input type="hidden" name="niveau" value="{{ $n->name }}">
                             <p class="text-sm font-semibold text-primary">{{ ucfirst(Conditionnement::accorde($n->name, 2)) }}</p>
@@ -126,7 +172,8 @@
                             <div class="flex items-center gap-2">
                                 <label for="ouvrir-{{ $loop->index }}" class="sr-only">Nombre à ouvrir</label>
                                 <input id="ouvrir-{{ $loop->index }}" type="number" name="nombre" min="1" max="{{ max(1, $n->closed_count) }}" value="1" required
-                                       class="w-24 px-3 py-2 text-sm border border-secondary/30 rounded-lg font-mono text-right" @disabled($n->closed_count < 1)>
+                                       class="w-24 px-3 py-2 text-sm border border-secondary/30 rounded-lg font-mono
+                                           text-right" @disabled($n->closed_count < 1)>
                                 <button type="submit" @disabled($n->closed_count < 1)
                                         class="px-3 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark disabled:opacity-40 disabled:cursor-not-allowed">
                                     Ouvrir
@@ -160,17 +207,38 @@
                         sa valeur se partage au poids entre les portions, qui entrent au garde-manger du restaurant choisi.
                     </p>
                 </div>
-                <form method="POST" action="{{ route('economat.items.transformation.cut', $item) }}" class="p-6 space-y-4">
+                <form
+                    method="POST"
+                    action="{{ route('economat.items.transformation.cut', $item) }}"
+                    class="p-6 space-y-4">
                     @csrf
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label for="decoupe-quantite" class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Quantité prise ({{ $item->unit }})</label>
-                            <input id="decoupe-quantite" type="number" step="0.001" min="0.001" max="{{ (float) $item->current_stock }}" name="quantity" x-model.number="quantite" required class="{{ $champ }} font-mono text-right">
+                            <label
+                                for="decoupe-quantite"
+                                class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Quantité prise ({{ $item->unit }})</label>
+                            <input
+                                id="decoupe-quantite"
+                                type="number"
+                                step="0.001"
+                                min="0.001"
+                                max="{{ (float) $item->current_stock }}"
+                                name="quantity"
+                                x-model.number="quantite"
+                                required
+                                class="{{ $champ }} font-mono text-right">
                             <p class="text-[11px] text-primary/50 mt-1">Disponible : {{ Conditionnement::libelle((float) $item->current_stock, $item->unit) }} · coût moyen {{ number_format($item->average_cost / 100, 0, ',', ' ') }} F</p>
                         </div>
                         <div>
-                            <label for="decoupe-restaurant" class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Garde-manger du restaurant</label>
-                            <select id="decoupe-restaurant" name="point_of_sale_id" x-model.number="restaurant" required class="{{ $champ }}">
+                            <label
+                                for="decoupe-restaurant"
+                                class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Garde-manger du restaurant</label>
+                            <select
+                                id="decoupe-restaurant"
+                                name="point_of_sale_id"
+                                x-model.number="restaurant"
+                                required
+                                class="{{ $champ }}">
                                 @foreach($restaurants as $r)
                                     <option value="{{ $r->id }}">{{ $r->name }}</option>
                                 @endforeach
@@ -198,32 +266,61 @@
                                     <input :id="'portion-qte-' + ligne.cle" type="number" step="0.001" min="0" :name="`lines[${i}][quantity]`" x-model.number="ligne.quantity"
                                            placeholder="{{ $item->unit }}" class="{{ $champ }} font-mono text-right">
                                 </div>
-                                <div class="col-span-1 sm:col-span-1 text-right text-[11px] font-mono text-primary/60" x-text="part(ligne)"></div>
+                                <div
+                                    class="col-span-1 sm:col-span-1 text-right text-[11px] font-mono text-primary/60"
+                                    x-text="part(ligne)"></div>
                                 <div class="col-span-12 sm:col-span-1 text-right">
-                                    <button type="button" @click="lignes.splice(i, 1)" x-show="lignes.length > 1" class="p-2 text-red-500 hover:bg-red-50 rounded-lg" aria-label="Retirer cette portion">
+                                    <button
+                                        type="button"
+                                        @click="lignes.splice(i, 1)"
+                                        x-show="lignes.length > 1"
+                                        class="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                                        aria-label="Retirer cette portion">
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
                                 </div>
                             </div>
                         </template>
-                        <button type="button" @click="ajouter()" class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold rounded-lg">
+                        <button
+                            type="button"
+                            @click="ajouter()"
+                            class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary/10 hover:bg-primary/20
+                                text-primary text-xs font-semibold rounded-lg">
                             <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter une portion
                         </button>
                     </div>
 
-                    <div class="rounded-lg bg-surface-light/60 border border-secondary/15 px-4 py-3 text-xs text-primary/70 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <p>Réparti : <strong class="font-mono" :class="reparti() > quantite ? 'text-red-600' : 'text-primary'" x-text="nombre(reparti()) + ' ' + unite"></strong></p>
-                        <p>Freinte (non répartie) : <strong class="font-mono" x-text="nombre(Math.max(0, quantite - reparti())) + ' ' + unite"></strong></p>
+                    <div class="rounded-lg bg-surface-light/60 border border-secondary/15 px-4 py-3 text-xs
+                        text-primary/70 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <p>Réparti : <strong
+                            class="font-mono"
+                            :class="reparti() > quantite ? 'text-red-600' : 'text-primary'"
+                            x-text="nombre(reparti()) + ' ' + unite"></strong></p>
+                        <p>Freinte (non répartie) : <strong
+                            class="font-mono"
+                            x-text="nombre(Math.max(0, quantite - reparti())) + ' ' + unite"></strong></p>
                         <p>Valeur prise : <strong class="font-mono" x-text="argent(quantite * cout)"></strong></p>
                     </div>
 
                     <div>
-                        <label for="decoupe-notes" class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Observations</label>
-                        <input id="decoupe-notes" type="text" name="notes" maxlength="500" value="{{ old('notes') }}" placeholder="Ex : découpe pour le service du week-end, en présence du chef" class="{{ $champ }}">
+                        <label
+                            for="decoupe-notes"
+                            class="block text-[11px] font-semibold uppercase text-primary/50 mb-1">Observations</label>
+                        <input
+                            id="decoupe-notes"
+                            type="text"
+                            name="notes"
+                            maxlength="500"
+                            value="{{ old('notes') }}"
+                            placeholder="Ex : découpe pour le service du week-end, en présence du chef"
+                            class="{{ $champ }}">
                     </div>
 
                     <div class="flex justify-end">
-                        <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark">Valider la découpe</button>
+                        <button
+                            type="submit"
+                            class="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg
+                                hover:bg-surface-dark">Valider la découpe</button>
                     </div>
                 </form>
 
@@ -231,7 +328,9 @@
                     <ul class="border-t border-secondary/15 divide-y divide-secondary/10">
                         @foreach($decoupes as $d)
                             <li class="px-6 py-2.5 text-xs flex flex-wrap justify-between gap-2">
-                                <a href="{{ route('economat.cuts.show', $d) }}" class="font-mono font-semibold text-primary hover:underline">{{ $d->number }}</a>
+                                <a
+                                    href="{{ route('economat.cuts.show', $d) }}"
+                                    class="font-mono font-semibold text-primary hover:underline">{{ $d->number }}</a>
                                 <span class="text-primary/70">{{ Conditionnement::libelle((float) $d->quantity, $item->unit) }} → {{ $d->restaurant?->name }}</span>
                                 <span class="text-primary/50">{{ $d->cut_at->format('d/m/Y H:i') }}</span>
                             </li>

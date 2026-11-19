@@ -34,7 +34,8 @@ class ShiftHandoverTaken extends Notification
         $ecart = (int) $p->discrepancy_amount;
 
         return ($p->toUser?->name ?? 'Un réceptionniste') . ' a repris le service à ' . $p->taken_at?->format('H:i')
-            . ' : ' . number_format((int) $p->received_amount / 100, 0, ',', ' ') . ' FCFA comptés dans le tiroir remis par '
+            . ' : ' . number_format((int) $p->received_amount / 100, 0, ',', ' ')
+                . ' FCFA comptés dans le tiroir remis par '
             . ($p->fromUser?->name ?? '—')
             . ($ecart === 0 ? ', sans écart.' : ', écart de ' . number_format($ecart / 100, 0, ',', ' ') . ' FCFA.');
     }

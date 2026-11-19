@@ -13,12 +13,15 @@
 <div class="max-w-4xl mx-auto space-y-5">
     <div class="flex items-center justify-between gap-4">
         @if($decoupe->item)
-            <a href="{{ route('economat.items.transformation.show', $decoupe->item) }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary">
+            <a
+                href="{{ route('economat.items.transformation.show', $decoupe->item) }}"
+                class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour à la transformation de l'article
             </a>
         @endif
         <a href="{{ route('economat.cuts.print', $decoupe) }}" target="_blank"
-           class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 rounded-lg text-primary text-xs font-semibold hover:bg-gray-50 shadow-sm">
+           class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-secondary/30 rounded-lg
+               text-primary text-xs font-semibold hover:bg-gray-50 shadow-sm">
             <i data-lucide="printer" class="w-4 h-4"></i> Imprimer le bon de découpe
         </a>
     </div>
@@ -36,7 +39,8 @@
                 </p>
                 <p class="text-xs text-primary/50 mt-0.5">Le {{ $decoupe->cut_at->format('d/m/Y à H:i') }} · par {{ $decoupe->cutBy?->name ?? '—' }}</p>
                 @if($decoupe->notes)
-                    <p class="mt-3 rounded-lg border border-secondary/15 bg-surface-light px-3 py-2 text-xs text-primary/80">{{ $decoupe->notes }}</p>
+                    <p class="mt-3 rounded-lg border border-secondary/15 bg-surface-light px-3 py-2 text-xs
+                        text-primary/80">{{ $decoupe->notes }}</p>
                 @endif
             </div>
             <div class="text-right sm:border-l sm:border-secondary/15 sm:pl-6">
@@ -68,7 +72,8 @@
                         @php $uniteCuisine = $ligne->pantryItem?->unit ?? $unite; @endphp
                         <tr>
                             <td class="px-4 py-2.5 font-medium text-primary">{{ $ligne->label }}</td>
-                            <td class="px-3 py-2.5 text-center font-mono font-bold text-xs text-primary/70">{{ \App\Models\StockUnit::symbolFor($uniteCuisine) }}</td>
+                            <td class="px-3 py-2.5 text-center font-mono font-bold text-xs
+                                text-primary/70">{{ \App\Models\StockUnit::symbolFor($uniteCuisine) }}</td>
                             <td class="px-4 py-2.5 text-right font-mono">
                                 {{ rtrim(rtrim(number_format((float) $ligne->pantry_quantity, 3, ',', ' '), '0'), ',') }}
                                 @if(mb_strtolower($uniteCuisine) !== mb_strtolower($unite))

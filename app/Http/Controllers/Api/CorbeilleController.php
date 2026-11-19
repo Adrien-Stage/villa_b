@@ -45,22 +45,27 @@ class CorbeilleController extends Controller
             ->when($filtres['type'] ?? null, fn ($q, $t) => $q->where('table_name', $t))
             ->when($filtres['module'] ?? null, fn ($q, $m) => $q->where('module', $m))
             ->when($filtres['auteur'] ?? null, fn ($q, $a) => $q->where('deleted_by_name', $a))
-            ->when($filtres['du'] ?? null, fn ($q, $d) => $q->where('deleted_at', '>=', Carbon::parse($d)->startOfDay()))
+            ->when($filtres['du'] ?? null, fn ($q, $d) => $q->where('deleted_at', '>=', Carbon::parse($d)
+                ->startOfDay()))
             ->when($filtres['au'] ?? null, fn ($q, $d) => $q->where('deleted_at', '<=', Carbon::parse($d)->endOfDay()))
-            ->when($filtres['q'] ?? null, fn ($q, $texte) => $q->whereRaw('LOWER(label) LIKE ?', ['%' . mb_strtolower($texte) . '%']))
+            ->when($filtres['q'] ?? null, fn ($q, $texte) => $q->whereRaw('LOWER(label) LIKE ?',
+                ['%' . mb_strtolower($texte) . '%']))
             ->orderByDesc('deleted_at')->orderByDesc('id');
 
         $page = $requete->paginate(self::PAR_PAGE)->withQueryString();
 
         return response()->json([
             'entrees'    => collect($page->items())->map(fn (TrashEntry $e) => $this->presenter($e))->all(),
-            'pagination' => ['page' => $page->currentPage(), 'pages' => $page->lastPage(), 'total' => $page->total(), 'par_page' => $page->perPage()],
+            'pagination' => ['page' => $page->currentPage(), 'pages' => $page->lastPage(), 'total' => $page->total(),
+                'par_page' => $page->perPage()],
             // De quoi remplir les filtres de la console avec ce qui existe.
             'filtres'    => [
                 'types'   => TrashEntry::query()->distinct()->orderBy('table_name')->pluck('table_name')
                     ->mapWithKeys(fn ($t) => [$t => Registre::type($t)])->all(),
-                'modules' => array_intersect_key(Registre::MODULES, array_flip(TrashEntry::query()->distinct()->pluck('module')->all())),
-                'auteurs' => TrashEntry::query()->whereNotNull('deleted_by_name')->distinct()->orderBy('deleted_by_name')->pluck('deleted_by_name')->all(),
+                'modules' => array_intersect_key(Registre::MODULES, array_flip(TrashEntry::query()->distinct()
+                    ->pluck('module')->all())),
+                'auteurs' => TrashEntry::query()->whereNotNull('deleted_by_name')->distinct()
+                    ->orderBy('deleted_by_name')->pluck('deleted_by_name')->all(),
                 'etats'   => self::ETATS,
             ],
         ]);

@@ -28,12 +28,18 @@
         <table class="min-w-full divide-y divide-secondary/10">
             <thead class="bg-accent/20">
                 <tr>
-                    <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">N°</th>
-                    <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Date</th>
-                    <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Libellé</th>
-                    <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Recette</th>
-                    <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Dépense</th>
-                    <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Solde</th>
+                    <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest
+                        text-primary/50">N°</th>
+                    <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest
+                        text-primary/50">Date</th>
+                    <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-widest
+                        text-primary/50">Libellé</th>
+                    <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest
+                        text-primary/50">Recette</th>
+                    <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest
+                        text-primary/50">Dépense</th>
+                    <th class="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-widest
+                        text-primary/50">Solde</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-secondary/10">
@@ -47,8 +53,10 @@
                             <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border {{ $srcChip }} mr-2">{{ $srcLabel }}</span>
                             <span class="text-sm text-primary">{{ $e['libelle'] }}</span>
                         </td>
-                        <td class="px-4 py-2.5 text-right text-sm font-medium text-green-700 tabular-nums">{{ $e['recette'] ? $fcfa($e['recette']) : '' }}</td>
-                        <td class="px-4 py-2.5 text-right text-sm font-medium text-red-600 tabular-nums">{{ $e['depense'] ? $fcfa($e['depense']) : '' }}</td>
+                        <td class="px-4 py-2.5 text-right text-sm font-medium text-green-700
+                            tabular-nums">{{ $e['recette'] ? $fcfa($e['recette']) : '' }}</td>
+                        <td class="px-4 py-2.5 text-right text-sm font-medium text-red-600
+                            tabular-nums">{{ $e['depense'] ? $fcfa($e['depense']) : '' }}</td>
                         <td class="px-4 py-2.5 text-right text-sm font-semibold {{ $solde < 0 ? 'text-red-600' : 'text-primary' }} tabular-nums">{{ $fcfa($solde) }}</td>
                     </tr>
                 @empty
@@ -62,8 +70,10 @@
                 <tfoot class="bg-gray-50/70 border-t-2 border-secondary/15">
                     <tr>
                         <td colspan="3" class="px-4 py-3 text-sm font-semibold text-primary">Totaux — {{ ucfirst($period['label']) }}</td>
-                        <td class="px-4 py-3 text-right text-sm font-bold text-green-700 tabular-nums">{{ $fcfa($totalRecettes) }}</td>
-                        <td class="px-4 py-3 text-right text-sm font-bold text-red-600 tabular-nums">{{ $fcfa($totalDepenses) }}</td>
+                        <td class="px-4 py-3 text-right text-sm font-bold text-green-700
+                            tabular-nums">{{ $fcfa($totalRecettes) }}</td>
+                        <td class="px-4 py-3 text-right text-sm font-bold text-red-600
+                            tabular-nums">{{ $fcfa($totalDepenses) }}</td>
                         <td class="px-4 py-3 text-right text-sm font-bold {{ ($totalRecettes - $totalDepenses) < 0 ? 'text-red-600' : 'text-primary' }} tabular-nums">{{ $fcfa($totalRecettes - $totalDepenses) }}</td>
                     </tr>
                 </tfoot>

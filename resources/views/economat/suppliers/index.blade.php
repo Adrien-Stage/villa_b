@@ -31,7 +31,8 @@
         @droit('economat.suppliers.creer')
             <div class="flex items-center gap-3">
                 <button type="button" @click="openCreate()"
-                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-surface-dark transition-all shadow-sm">
+                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-sm font-semibold
+                        rounded-xl hover:bg-surface-dark transition-all shadow-sm">
                     <i data-lucide="plus" class="w-4 h-4"></i> Nouveau fournisseur
                 </button>
             </div>
@@ -43,7 +44,8 @@
     {{-- 4 Cartes d'indicateurs KPIs --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-xs">
-            <div class="flex items-center justify-between text-primary/50 text-xs font-medium uppercase tracking-wider mb-1">
+            <div class="flex items-center justify-between text-primary/50 text-xs font-medium uppercase tracking-wider
+                mb-1">
                 <span>Total Partenaires</span>
                 <i data-lucide="building-2" class="w-4 h-4 text-primary/40"></i>
             </div>
@@ -52,7 +54,8 @@
         </div>
 
         <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-xs">
-            <div class="flex items-center justify-between text-primary/50 text-xs font-medium uppercase tracking-wider mb-1">
+            <div class="flex items-center justify-between text-primary/50 text-xs font-medium uppercase tracking-wider
+                mb-1">
                 <span>Actifs & Opérationnels</span>
                 <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
             </div>
@@ -61,7 +64,8 @@
         </div>
 
         <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-xs">
-            <div class="flex items-center justify-between text-primary/50 text-xs font-medium uppercase tracking-wider mb-1">
+            <div class="flex items-center justify-between text-primary/50 text-xs font-medium uppercase tracking-wider
+                mb-1">
                 <span>Avec Email Commande</span>
                 <i data-lucide="mail-check" class="w-4 h-4 text-sky-600"></i>
             </div>
@@ -70,7 +74,8 @@
         </div>
 
         <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-xs">
-            <div class="flex items-center justify-between text-primary/50 text-xs font-medium uppercase tracking-wider mb-1">
+            <div class="flex items-center justify-between text-primary/50 text-xs font-medium uppercase tracking-wider
+                mb-1">
                 <span>Articles Référencés</span>
                 <i data-lucide="boxes" class="w-4 h-4 text-purple-600"></i>
             </div>
@@ -81,7 +86,10 @@
 
     {{-- Formulaire de Recherche et Filtres multi-critères --}}
     <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-xs">
-        <form method="GET" action="{{ route('economat.suppliers.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+        <form
+            method="GET"
+            action="{{ route('economat.suppliers.index') }}"
+            class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
             <div class="sm:col-span-5">
                 <label class="block text-xs font-medium text-primary/70 mb-1">Recherche textuelle</label>
                 <x-live-search
@@ -94,7 +102,10 @@
 
             <div class="sm:col-span-3">
                 <label class="block text-xs font-medium text-primary/70 mb-1">Secteur / Domaine</label>
-                <select name="category" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                <select
+                    name="category"
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary
+                        outline-none focus:border-primary">
                     <option value="">Tous les domaines</option>
                     @foreach($categories as $key => $label)
                         <option value="{{ $key }}" @selected(request('category') === $key)>{{ $label }}</option>
@@ -104,7 +115,10 @@
 
             <div class="sm:col-span-2">
                 <label class="block text-xs font-medium text-primary/70 mb-1">Statut</label>
-                <select name="status" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                <select
+                    name="status"
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary
+                        outline-none focus:border-primary">
                     <option value="">Tous</option>
                     <option value="active" @selected(request('status') === 'active')>Actifs</option>
                     <option value="inactive" @selected(request('status') === 'inactive')>Inactifs</option>
@@ -112,11 +126,18 @@
             </div>
 
             <div class="sm:col-span-2 flex gap-2">
-                <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors inline-flex items-center justify-center gap-1.5">
+                <button
+                    type="submit"
+                    class="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                        transition-colors inline-flex items-center justify-center gap-1.5">
                     <i data-lucide="filter" class="w-3.5 h-3.5"></i> Filtrer
                 </button>
                 @if(request()->hasAny(['search', 'category', 'status']))
-                    <a href="{{ route('economat.suppliers.index') }}" title="Réinitialiser" class="px-3 py-2 border border-secondary/30 text-primary/60 hover:text-primary rounded-lg flex items-center justify-center">
+                    <a
+                        href="{{ route('economat.suppliers.index') }}"
+                        title="Réinitialiser"
+                        class="px-3 py-2 border border-secondary/30 text-primary/60 hover:text-primary rounded-lg flex
+                            items-center justify-center">
                         <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                     </a>
                 @endif
@@ -126,10 +147,18 @@
 
     {{-- Tableau des Fournisseurs --}}
     <div id="suppliers-table-container">
-    <x-table :rows="$suppliers" empty="{{ request()->hasAny(['search', 'category', 'status']) ? 'Aucun fournisseur ne correspond à vos critères de recherche.' : 'Aucun fournisseur. Ajoutez le premier pour pouvoir émettre des bons de commande.' }}" empty-icon="truck" caption="Fournisseurs">
+    <x-table
+        :rows="$suppliers"
+        empty="{{ request()->hasAny(['search', 'category', 'status']) ? 'Aucun fournisseur ne correspond à vos critères de recherche.' : 'Aucun fournisseur. Ajoutez le premier pour pouvoir émettre des bons de commande.' }}"
+        empty-icon="truck"
+        caption="Fournisseurs">
         <x-slot:emptyActions>
             @droit('economat.suppliers.creer')
-                <button type="button" x-on:click="openCreate()" class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-surface-dark">
+                <button
+                    type="button"
+                    x-on:click="openCreate()"
+                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium
+                        text-white hover:bg-surface-dark">
                     <i data-lucide="plus" class="h-4 w-4" aria-hidden="true"></i> Ajouter un fournisseur
                 </button>
             @enddroit
@@ -177,22 +206,28 @@
             <x-table.row :muted="! $supplier->is_active">
                 <x-table.cell>
                                     <div class="flex items-start gap-2.5">
-                                        <div class="w-8 h-8 rounded-lg bg-secondary/15 flex items-center justify-center text-primary font-bold text-xs flex-shrink-0 mt-0.5">
+                                        <div class="w-8 h-8 rounded-lg bg-secondary/15 flex items-center justify-center
+                                            text-primary font-bold text-xs flex-shrink-0 mt-0.5">
                                             {{ mb_strtoupper(mb_substr($supplier->name, 0, 2)) }}
                                         </div>
                                         <div class="min-w-0">
                                             <div class="flex items-center gap-1.5 flex-wrap">
-                                                <a href="{{ route('economat.suppliers.show', $supplier) }}" class="font-semibold text-primary hover:underline">{{ $supplier->name }}</a>
+                                                <a
+                                                    href="{{ route('economat.suppliers.show', $supplier) }}"
+                                                    class="font-semibold text-primary hover:underline">{{ $supplier->name }}</a>
                                                 @if($supplier->code)
-                                                    <span class="px-1.5 py-0.5 text-[10px] font-mono bg-gray-100 text-primary/70 rounded">{{ $supplier->code }}</span>
+                                                    <span class="px-1.5 py-0.5 text-[10px] font-mono bg-gray-100
+                                                        text-primary/70 rounded">{{ $supplier->code }}</span>
                                                 @endif
                                                 @if(!$supplier->is_active)
-                                                    <span class="px-1.5 py-0.5 text-[10px] font-medium bg-red-100 text-red-700 rounded">Inactif</span>
+                                                    <span class="px-1.5 py-0.5 text-[10px] font-medium bg-red-100
+                                                        text-red-700 rounded">Inactif</span>
                                                 @endif
                                             </div>
                                             <div class="flex items-center gap-2 text-xs text-primary/50 mt-1 flex-wrap">
                                                 @if($supplier->category)
-                                                    <span class="inline-flex items-center gap-1 text-[11px] font-medium text-primary/70">
+                                                    <span class="inline-flex items-center gap-1 text-[11px] font-medium
+                                                        text-primary/70">
                                                         <i data-lucide="tag" class="w-3 h-3 text-secondary"></i> {{ $supplier->category_label }}
                                                     </span>
                                                 @endif
@@ -266,12 +301,21 @@
                                     </span>
                 </x-table.cell>
                 <x-table.actions :label="'Actions pour le fournisseur '.$supplier->name">
-                    <x-table.action :href="route('economat.suppliers.show', $supplier)" icon="file-text" title="Ses informations, ses articles et ses livraisons">Fiche</x-table.action>
+                    <x-table.action
+                        :href="route('economat.suppliers.show', $supplier)"
+                        icon="file-text"
+                        title="Ses informations, ses articles et ses livraisons">Fiche</x-table.action>
                     @droit('economat.orders.creer')
-                        <x-table.action :href="route('economat.orders.create', ['fournisseur' => $supplier->id])" icon="shopping-cart" title="Émettre un bon de commande à ce fournisseur">Commander</x-table.action>
+                        <x-table.action
+                            :href="route('economat.orders.create', ['fournisseur' => $supplier->id])"
+                            icon="shopping-cart"
+                            title="Émettre un bon de commande à ce fournisseur">Commander</x-table.action>
                     @enddroit
                     @droit('economat.suppliers.modifier')
-                        <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})" title="Modifier la fiche et les articles associés">Modifier</x-table.action>
+                        <x-table.action
+                            icon="pencil"
+                            x-on:click="openEdit({{ Js::from($editPayload) }})"
+                            title="Modifier la fiche et les articles associés">Modifier</x-table.action>
                     @enddroit
                     @droit('economat.suppliers.supprimer')
                         <x-table.action :action="route('economat.suppliers.destroy', $supplier)" method="DELETE" icon="trash-2" tone="danger"
@@ -284,10 +328,15 @@
     </div>
 
     {{-- MODALE ENRICHIE : NOUVEAU / MODIFIER FOURNISSEUR --}}
-    <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6" style="background:rgba(15,23,42,0.6); backdrop-filter:blur(4px);">
+    <div
+        x-show="open"
+        x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
+        style="background:rgba(15,23,42,0.6); backdrop-filter:blur(4px);">
         <div class="absolute inset-0" @click="open = false"></div>
 
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative z-10 flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative z-10 flex flex-col max-h-[92vh]
+            overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {{-- Entête de la Modale --}}
             <div class="px-6 py-4 border-b border-secondary/20 flex items-center justify-between bg-gray-50/60">
                 <div class="flex items-center gap-3">
@@ -295,11 +344,16 @@
                         <i data-lucide="truck" class="w-5 h-5"></i>
                     </span>
                     <div>
-                        <h3 class="text-lg font-heading font-semibold text-primary" x-text="editing ? 'Fiche Fournisseur : ' + form.name : 'Créer un Nouveau Fournisseur'"></h3>
+                        <h3
+                            class="text-lg font-heading font-semibold text-primary"
+                            x-text="editing ? 'Fiche Fournisseur : ' + form.name : 'Créer un Nouveau Fournisseur'"></h3>
                         <p class="text-xs text-primary/60">Renseignez l'identité, les coordonnées, les conditions commerciales et les articles livrés.</p>
                     </div>
                 </div>
-                <button type="button" @click="open = false" class="text-primary/40 hover:text-primary p-1.5 rounded-lg hover:bg-gray-200/50">
+                <button
+                    type="button"
+                    @click="open = false"
+                    class="text-primary/40 hover:text-primary p-1.5 rounded-lg hover:bg-gray-200/50">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -307,35 +361,40 @@
             {{-- Barre d'onglets de navigation interne --}}
             <div class="flex border-b border-secondary/20 bg-gray-50/30 px-6 overflow-x-auto hide-scrollbar">
                 <button type="button" @click="activeTab = 'identity'"
-                    class="py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors"
+                    class="py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 whitespace-nowrap
+                        transition-colors"
                     :class="activeTab === 'identity' ? 'border-primary text-primary' : 'border-transparent text-primary/50 hover:text-primary'">
                     <i data-lucide="building-2" class="w-4 h-4"></i>
                     1. Identité & Fisc
                 </button>
 
                 <button type="button" @click="activeTab = 'contact'"
-                    class="py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors"
+                    class="py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 whitespace-nowrap
+                        transition-colors"
                     :class="activeTab === 'contact' ? 'border-primary text-primary' : 'border-transparent text-primary/50 hover:text-primary'">
                     <i data-lucide="phone-call" class="w-4 h-4"></i>
                     2. Contacts & Commande
                 </button>
 
                 <button type="button" @click="activeTab = 'commercial'"
-                    class="py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors"
+                    class="py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 whitespace-nowrap
+                        transition-colors"
                     :class="activeTab === 'commercial' ? 'border-primary text-primary' : 'border-transparent text-primary/50 hover:text-primary'">
                     <i data-lucide="credit-card" class="w-4 h-4"></i>
                     3. Règlements & Délais
                 </button>
 
                 <button type="button" @click="activeTab = 'catalog'"
-                    class="py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors"
+                    class="py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 whitespace-nowrap
+                        transition-colors"
                     :class="activeTab === 'catalog' ? 'border-primary text-primary' : 'border-transparent text-primary/50 hover:text-primary'">
                     <i data-lucide="boxes" class="w-4 h-4"></i>
                     4. Articles & Tarifs (<span x-text="form.linked_items.length"></span>)
                 </button>
 
                 <button type="button" @click="activeTab = 'notes'"
-                    class="py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 whitespace-nowrap transition-colors"
+                    class="py-3 px-4 text-xs font-semibold border-b-2 flex items-center gap-2 whitespace-nowrap
+                        transition-colors"
                     :class="activeTab === 'notes' ? 'border-primary text-primary' : 'border-transparent text-primary/50 hover:text-primary'">
                     <i data-lucide="file-text" class="w-4 h-4"></i>
                     5. Notes & Accords
@@ -358,7 +417,8 @@
                                 </label>
                                 <input type="text" name="name" x-model="form.name" @input="applyAutoCode()" required maxlength="160"
                                     placeholder="Ex : Prodimex Hygiène SARL, Brasseries du Cameroun..."
-                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary">
+                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary outline-none focus:border-primary">
                             </div>
 
                             <div>
@@ -367,7 +427,8 @@
                                 </label>
                                 <input type="text" name="code" x-model="form.code" @input="autoCode = false" maxlength="30"
                                     placeholder="Ex : FOU-PRODIMEX"
-                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary font-mono uppercase">
+                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary outline-none focus:border-primary font-mono uppercase">
                                 <p class="text-[10px] text-primary/50 mt-1">Identifiant court pour bons et exports.</p>
                             </div>
                         </div>
@@ -376,7 +437,8 @@
                             <div>
                                 <label class="block text-xs font-semibold text-primary mb-1">Secteur / Domaine</label>
                                 <select name="category" x-model="form.category"
-                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary">
+                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary outline-none focus:border-primary">
                                     <option value="">Sélectionner un domaine</option>
                                     @foreach($categories as $key => $label)
                                         <option value="{{ $key }}">{{ $label }}</option>
@@ -388,14 +450,16 @@
                                 <label class="block text-xs font-semibold text-primary mb-1">NIF / NIU (Fiscal)</label>
                                 <input type="text" name="tax_id" x-model="form.tax_id" maxlength="60"
                                     placeholder="Ex : M051200000000X"
-                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary font-mono">
+                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary outline-none focus:border-primary font-mono">
                             </div>
 
                             <div>
                                 <label class="block text-xs font-semibold text-primary mb-1">RCCM</label>
                                 <input type="text" name="rccm" x-model="form.rccm" maxlength="60"
                                     placeholder="Ex : RC/DLA/2020/B/..."
-                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary font-mono">
+                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary outline-none focus:border-primary font-mono">
                             </div>
                         </div>
 
@@ -404,14 +468,16 @@
                                 <label class="block text-xs font-semibold text-primary mb-1">Ville</label>
                                 <input type="text" name="city" x-model="form.city" maxlength="100"
                                     placeholder="Ex : Douala, Yaoundé, Bafoussam..."
-                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary">
+                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary outline-none focus:border-primary">
                             </div>
 
                             <div class="sm:col-span-2">
                                 <label class="block text-xs font-semibold text-primary mb-1">Adresse Géographique</label>
                                 <input type="text" name="address" x-model="form.address" maxlength="255"
                                     placeholder="Ex : Akwa, Rue Pau, Face Direction Générale..."
-                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary">
+                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary outline-none focus:border-primary">
                             </div>
                         </div>
                     </div>
@@ -423,14 +489,16 @@
                                 <label class="block text-xs font-semibold text-primary mb-1">Interlocuteur / Contact Principal</label>
                                 <input type="text" name="contact_name" x-model="form.contact_name" maxlength="120"
                                     placeholder="Ex : M. Essomba — Responsable Grands Comptes"
-                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary">
+                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary outline-none focus:border-primary">
                             </div>
 
                             <div>
                                 <label class="block text-xs font-semibold text-primary mb-1">Téléphone Principal / WhatsApp</label>
                                 <input type="text" name="phone" x-model="form.phone" maxlength="30"
                                     placeholder="Ex : +237 670 00 00 00"
-                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary">
+                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary outline-none focus:border-primary">
                             </div>
                         </div>
 
@@ -442,7 +510,8 @@
                                 <i data-lucide="mail" class="w-4 h-4 absolute left-3.5 top-3.5 text-sky-600"></i>
                                 <input type="email" name="email" x-model="form.email" maxlength="150"
                                     placeholder="commandes@fournisseur.com"
-                                    class="w-full pl-10 pr-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary font-mono">
+                                    class="w-full pl-10 pr-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl
+                                        bg-white text-primary outline-none focus:border-primary font-mono">
                             </div>
                             <p class="text-[11px] text-primary/50 mt-1">
                                 Les bons de commande approuvés par l'Économe pourront être expédiés d'un simple clic à cette adresse.
@@ -450,9 +519,13 @@
                         </div>
 
                         <div class="pt-2">
-                            <label class="flex items-center gap-3 p-3.5 border border-secondary/30 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                            <label class="flex items-center gap-3 p-3.5 border border-secondary/30 rounded-xl
+                                cursor-pointer hover:bg-gray-50 transition-colors">
                                 <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
-                                <input type="checkbox" x-model="form.is_active" class="w-4 h-4 rounded text-primary border-secondary/40 focus:ring-primary">
+                                <input
+                                    type="checkbox"
+                                    x-model="form.is_active"
+                                    class="w-4 h-4 rounded text-primary border-secondary/40 focus:ring-primary">
                                 <div>
                                     <span class="text-sm font-semibold text-primary block">Fournisseur Actif</span>
                                     <span class="text-xs text-primary/50">Un fournisseur inactif n'apparaît plus dans la sélection lors de la création d'un bon de commande.</span>
@@ -467,7 +540,8 @@
                             <div>
                                 <label class="block text-xs font-semibold text-primary mb-1">Délai de Paiement Accordé</label>
                                 <select name="payment_terms" x-model="form.payment_terms"
-                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary">
+                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary outline-none focus:border-primary">
                                     <option value="">Sélectionner un délai</option>
                                     @foreach($paymentTerms as $k => $lbl)
                                         <option value="{{ $k }}">{{ $lbl }}</option>
@@ -478,7 +552,8 @@
                             <div>
                                 <label class="block text-xs font-semibold text-primary mb-1">Mode de Règlement Préféré</label>
                                 <select name="payment_method" x-model="form.payment_method"
-                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary">
+                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary outline-none focus:border-primary">
                                     <option value="">Sélectionner un mode</option>
                                     @foreach($paymentMethods as $k => $lbl)
                                         <option value="{{ $k }}">{{ $lbl }}</option>
@@ -493,7 +568,8 @@
                                 <div class="relative">
                                     <input type="number" name="delivery_lead_time_days" x-model="form.delivery_lead_time_days" min="0" max="365"
                                         placeholder="Ex : 2"
-                                        class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary">
+                                        class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl
+                                            bg-white text-primary outline-none focus:border-primary">
                                     <span class="absolute right-3 top-2.5 text-xs text-primary/40 font-medium">jour(s)</span>
                                 </div>
                                 <p class="text-[10px] text-primary/50 mt-1">Permet de calculer automatiquement la date d'échéance du bon.</p>
@@ -503,7 +579,8 @@
                                 <label class="block text-xs font-semibold text-primary mb-1">Coordonnées de Règlement (RIB / Mobile Money)</label>
                                 <input type="text" name="bank_details" x-model="form.bank_details" maxlength="255"
                                     placeholder="Ex : UBA CM21 10033... ou Compte Marchand Orange Money 699..."
-                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary outline-none focus:border-primary font-mono text-xs">
+                                    class="w-full px-3.5 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary outline-none focus:border-primary font-mono text-xs">
                             </div>
                         </div>
                     </div>
@@ -536,9 +613,12 @@
 
                         {{-- Liste des articles associés --}}
                         <div class="border border-secondary/20 rounded-xl overflow-hidden">
-                            <div class="bg-gray-100/70 px-4 py-2.5 border-b border-secondary/20 flex items-center justify-between">
+                            <div class="bg-gray-100/70 px-4 py-2.5 border-b border-secondary/20 flex items-center
+                                justify-between">
                                 <span class="text-xs font-semibold uppercase tracking-wider text-primary/70">Articles Actuellement Rattachés</span>
-                                <span class="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full" x-text="`${form.linked_items.length} article(s)`"></span>
+                                <span
+                                    class="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full"
+                                    x-text="`${form.linked_items.length} article(s)`"></span>
                             </div>
 
                             <template x-if="form.linked_items.length === 0">
@@ -551,7 +631,8 @@
                             <template x-if="form.linked_items.length > 0">
                                 <div class="overflow-x-auto">
                                     <table class="min-w-full text-xs">
-                                        <thead class="bg-gray-50 border-b border-secondary/15 text-primary/60 font-semibold uppercase">
+                                        <thead class="bg-gray-50 border-b border-secondary/15 text-primary/60
+                                            font-semibold uppercase">
                                             <tr>
                                                 <th class="px-4 py-2 text-left">Article</th>
                                                 <th class="px-4 py-2 text-left w-28">Unité</th>
@@ -564,9 +645,16 @@
                                                 <tr class="hover:bg-gray-50/50">
                                                     {{-- Nom & ID --}}
                                                     <td class="px-4 py-2.5">
-                                                        <input type="hidden" :name="`linked_items[${idx}][id]`" :value="line.id">
-                                                        <div class="font-semibold text-primary text-sm" x-text="line.name"></div>
-                                                        <div class="text-[11px] text-primary/40" x-text="line.reference ? 'Réf: ' + line.reference : 'Sans référence'"></div>
+                                                        <input
+                                                            type="hidden"
+                                                            :name="`linked_items[${idx}][id]`"
+                                                            :value="line.id">
+                                                        <div
+                                                            class="font-semibold text-primary text-sm"
+                                                            x-text="line.name"></div>
+                                                        <div
+                                                            class="text-[11px] text-primary/40"
+                                                            x-text="line.reference ? 'Réf: ' + line.reference : 'Sans référence'"></div>
                                                     </td>
 
                                                     {{-- Unité : celle du stock de l'article --}}
@@ -577,15 +665,23 @@
                                                         <div class="relative">
                                                             <input type="number" :name="`linked_items[${idx}][price]`" x-model="line.price" min="1" step="1" required
                                                                 :aria-label="`Prix d'achat de ${line.name}`"
-                                                                class="w-full px-2.5 py-1.5 text-right text-xs font-mono font-semibold border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary">
+                                                                class="w-full px-2.5 py-1.5 text-right text-xs
+                                                                    font-mono font-semibold border border-secondary/30
+                                                                    rounded-lg bg-white text-primary outline-none
+                                                                    focus:border-primary">
                                                         </div>
-                                                        <div class="text-[10px] text-primary/40 mt-0.5" x-show="line.priced_at" x-text="`Prix du ${line.priced_at}`"></div>
+                                                        <div
+                                                            class="text-[10px] text-primary/40 mt-0.5"
+                                                            x-show="line.priced_at"
+                                                            x-text="`Prix du ${line.priced_at}`"></div>
                                                     </td>
 
                                                     {{-- Supprimer --}}
                                                     <td class="px-3 py-2.5 text-center">
                                                         <button type="button" @click="removeItemFromSupplier(idx)" title="Retirer cet article"
-                                                            class="h-7 w-7 inline-flex items-center justify-center rounded-lg text-red-600 hover:bg-red-50 transition-colors">
+                                                            class="h-7 w-7 inline-flex items-center justify-center
+                                                                rounded-lg text-red-600 hover:bg-red-50
+                                                                transition-colors">
                                                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                                         </button>
                                                     </td>
@@ -612,15 +708,22 @@
                 </div>
 
                 {{-- Pied de Modale avec navigation entre onglets et boutons d'action --}}
-                <div class="px-6 py-4 border-t border-secondary/20 bg-gray-50 flex items-center justify-between rounded-b-2xl">
+                <div class="px-6 py-4 border-t border-secondary/20 bg-gray-50 flex items-center justify-between
+                    rounded-b-2xl">
                     <div>
-                        <button type="button" @click="open = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
+                        <button
+                            type="button"
+                            @click="open = false"
+                            class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
                             Annuler
                         </button>
                     </div>
 
                     <div class="flex items-center gap-3">
-                        <button type="submit" class="px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-surface-dark transition-all shadow-sm inline-flex items-center gap-2">
+                        <button
+                            type="submit"
+                            class="px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl
+                                hover:bg-surface-dark transition-all shadow-sm inline-flex items-center gap-2">
                             <i data-lucide="check" class="w-4 h-4"></i>
                             <span x-text="editing ? 'Mettre à jour le fournisseur' : 'Enregistrer le fournisseur'"></span>
                         </button>

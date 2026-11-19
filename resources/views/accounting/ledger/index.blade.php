@@ -15,10 +15,12 @@
 @include('accounting.ledger.partials.nav')
 
 @if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700">{{ session('success') }}</div>
 @endif
 @if(session('error'))
-    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm
+        text-red-700">{{ session('error') }}</div>
 @endif
 
 @if(!$exercice)
@@ -26,7 +28,10 @@
         <i data-lucide="calendar-plus" class="w-8 h-8 mx-auto mb-3 text-primary/30"></i>
         <p class="text-sm text-primary/70 mb-1">Aucun exercice comptable n'est ouvert.</p>
         <p class="text-xs text-primary/50 mb-4">L'exercice s'ouvrira automatiquement à la première écriture, ou vous pouvez l'ouvrir dès maintenant.</p>
-        <a href="{{ route('accounting.ledger.periods') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+        <a
+            href="{{ route('accounting.ledger.periods') }}"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                hover:bg-surface-dark transition-colors">
             Ouvrir un exercice
         </a>
     </div>
@@ -62,7 +67,9 @@
                 après la fin de la période :
                 {{ $enRetard->map(fn ($p) => $p->label())->implode(', ') }}.
             </p>
-            <a href="{{ route('accounting.ledger.periods') }}" class="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-amber-900 hover:underline">
+            <a
+                href="{{ route('accounting.ledger.periods') }}"
+                class="inline-flex items-center gap-1.5 mt-2 text-xs font-semibold text-amber-900 hover:underline">
                 Gérer les périodes <i data-lucide="arrow-right" class="w-3 h-3"></i>
             </a>
         </div>
@@ -91,7 +98,10 @@
                 <p class="text-xs text-primary/50 mt-1">
                     Commencez par reprendre les à-nouveaux de l'exercice précédent.
                 </p>
-                <a href="{{ route('accounting.ledger.opening') }}" class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                <a
+                    href="{{ route('accounting.ledger.opening') }}"
+                    class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-primary text-white text-xs font-semibold
+                        rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="import" class="w-3.5 h-3.5"></i> Reprendre les à-nouveaux
                 </a>
             </div>
@@ -120,7 +130,8 @@
                             <tr class="hover:bg-accent/10">
                                 <td class="px-5 py-2 whitespace-nowrap text-primary/70">{{ $e->entry_date->format('d/m/Y') }}</td>
                                 <td class="px-3 py-2">
-                                    <span class="inline-flex px-1.5 py-0.5 rounded bg-accent/40 text-primary text-[10px] font-semibold">{{ $e->journal?->code }}</span>
+                                    <span class="inline-flex px-1.5 py-0.5 rounded bg-accent/40 text-primary
+                                        text-[10px] font-semibold">{{ $e->journal?->code }}</span>
                                 </td>
                                 <td class="px-3 py-2 text-primary">
                                     <a href="{{ route('accounting.ledger.entry', $e) }}" class="hover:underline">{{ $e->label }}</a>
@@ -128,7 +139,8 @@
                                         <span class="ml-1 text-[10px] text-red-600">extournée</span>
                                     @endif
                                 </td>
-                                <td class="px-5 py-2 text-right font-medium text-primary whitespace-nowrap">{{ $fcfa($e->totalDebit()) }}</td>
+                                <td class="px-5 py-2 text-right font-medium text-primary
+                                    whitespace-nowrap">{{ $fcfa($e->totalDebit()) }}</td>
                             </tr>
                         @endforeach
                     </tbody>

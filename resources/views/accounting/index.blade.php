@@ -27,7 +27,8 @@
 @include('accounting.partials.nav')
 
 @if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700">{{ session('success') }}</div>
 @endif
 
 {{-- KPI --}}
@@ -46,7 +47,9 @@
             {{ $resultat['resultat_net'] > 0 ? '+' : '' }}{{ number_format($resultat['resultat_net'] / 100, 0, ',', ' ') }} <span class="text-sm">FCFA</span>
         </p>
     </div>
-    <a href="{{ route('accounting.receivables') }}" class="bg-white rounded-xl border {{ $creances['total'] > 0 ? 'border-amber-200' : 'border-secondary/20' }} p-5 shadow-sm hover:shadow-md transition-shadow">
+    <a
+        href="{{ route('accounting.receivables') }}"
+        class="bg-white rounded-xl border {{ $creances['total'] > 0 ? 'border-amber-200' : 'border-secondary/20' }} p-5 shadow-sm hover:shadow-md transition-shadow">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-primary/40">Créances (à percevoir)</p>
         <p class="text-2xl font-heading font-bold mt-1 {{ $creances['total'] > 0 ? 'text-amber-600' : 'text-primary' }}">{{ number_format($creances['total'] / 100, 0, ',', ' ') }} <span class="text-sm">FCFA</span></p>
     </a>
@@ -69,7 +72,9 @@
                         <span class="text-sm font-semibold text-primary">{{ $fcfa($recettes[$key]) }}</span>
                     </div>
                     <div class="h-2 rounded-full bg-secondary/10 overflow-hidden">
-                        <div class="h-full bg-primary/70 rounded-full" style="width: {{ round(max(0, $recettes[$key]) / $maxAct * 100) }}%"></div>
+                        <div
+                            class="h-full bg-primary/70 rounded-full"
+                            style="width: {{ round(max(0, $recettes[$key]) / $maxAct * 100) }}%"></div>
                     </div>
                 </div>
             @endforeach
@@ -96,7 +101,8 @@
             @endforelse
         </div>
         <a href="{{ route('accounting.cash', ['month' => $period['month']]) }}"
-            class="flex items-center justify-between px-5 py-3 border-t border-secondary/15 bg-gray-50/50 hover:bg-accent/10 transition-colors">
+            class="flex items-center justify-between px-5 py-3 border-t border-secondary/15 bg-gray-50/50
+                hover:bg-accent/10 transition-colors">
             <span class="text-sm text-primary/70">
                 Caisse — {{ $caisse['sessions']->count() }} session(s)
                 @if($caisse['total_discrepancy'] != 0)

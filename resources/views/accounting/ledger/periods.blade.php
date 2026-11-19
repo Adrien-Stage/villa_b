@@ -11,13 +11,16 @@
 @include('accounting.ledger.partials.nav')
 
 @if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700">{{ session('success') }}</div>
 @endif
 @if(session('error'))
-    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm
+        text-red-700">{{ session('error') }}</div>
 @endif
 
-<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70 leading-relaxed">
+<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70
+    leading-relaxed">
     <strong>Le verrouillage est définitif.</strong> Une période verrouillée n'accepte plus aucune écriture :
     toute correction ultérieure passe obligatoirement par une contre-passation datée d'une période encore ouverte.
     L'Acte Uniforme impose de verrouiller au plus tard <strong>un mois</strong> après la fin de la période.
@@ -27,7 +30,10 @@
     @csrf
     <input type="number" name="year" min="2000" max="2100" value="{{ now()->year }}" required
            class="w-full sm:w-40 rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
-    <button type="submit" class="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shrink-0">
+    <button
+        type="submit"
+        class="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark
+            transition-colors shrink-0">
         Ouvrir cet exercice
     </button>
 </form>
@@ -43,17 +49,20 @@
             </div>
             <div class="flex flex-wrap gap-1.5">
                 @if($exercice->hasOpeningBalance())
-                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-green-50 text-green-700 text-[11px] font-semibold">
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-green-50 text-green-700
+                        text-[11px] font-semibold">
                         <i data-lucide="check" class="w-3 h-3"></i> À-nouveaux repris
                     </span>
                 @else
                     <a href="{{ route('accounting.ledger.opening', ['exercice' => $exercice->id]) }}"
-                       class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 text-amber-800 text-[11px] font-semibold hover:bg-amber-100 transition-colors">
+                       class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 text-amber-800
+                           text-[11px] font-semibold hover:bg-amber-100 transition-colors">
                         <i data-lucide="import" class="w-3 h-3"></i> Reprendre les à-nouveaux
                     </a>
                 @endif
                 @if($exercice->isClosed())
-                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/40 text-primary/70 text-[11px] font-semibold">
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-accent/40 text-primary/70
+                        text-[11px] font-semibold">
                         <i data-lucide="lock" class="w-3 h-3"></i> Exercice clos
                     </span>
                 @endif

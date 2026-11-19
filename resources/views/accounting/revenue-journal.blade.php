@@ -66,11 +66,14 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-secondary/20 bg-accent/10">
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-primary/50">Point de vente</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider
+                            text-primary/50">Point de vente</th>
                         @foreach($colonnes as $mode)
-                            <th class="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/50 whitespace-nowrap">{{ $libelle($mode) }}</th>
+                            <th class="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50 whitespace-nowrap">{{ $libelle($mode) }}</th>
                         @endforeach
-                        <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-primary/70">Total</th>
+                        <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider
+                            text-primary/70">Total</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-secondary/10">
@@ -93,11 +96,13 @@
                 </tbody>
                 <tfoot>
                     <tr class="border-t-2 border-secondary/30 bg-accent/10">
-                        <td class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-primary/60">Total période</td>
+                        <td class="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider
+                            text-primary/60">Total période</td>
                         @foreach($colonnes as $mode)
                             <td class="px-3 py-3 text-right font-semibold tabular-nums text-primary">{{ $fcfa($journal['par_mode'][$mode]) }}</td>
                         @endforeach
-                        <td class="px-4 py-3 text-right font-heading font-bold tabular-nums text-primary">{{ $fcfa($journal['total']) }}</td>
+                        <td class="px-4 py-3 text-right font-heading font-bold tabular-nums
+                            text-primary">{{ $fcfa($journal['total']) }}</td>
                     </tr>
                 </tfoot>
             </table>

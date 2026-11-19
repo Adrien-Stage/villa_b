@@ -28,7 +28,8 @@
         </p>
     </div>
     <a href="{{ route('restaurant.orders.index') }}"
-        class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20">
+        class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/25 bg-white text-primary text-xs
+            font-semibold rounded-lg hover:bg-accent/20">
         <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
         Retour
     </a>
@@ -41,7 +42,8 @@
 @endif
 
 @if(session('stock_warning'))
-    <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+    <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-start
+        gap-2">
         <i data-lucide="alert-triangle" class="w-4 h-4 mt-0.5 shrink-0"></i>
         <span>{{ session('stock_warning') }}</span>
     </div>
@@ -118,7 +120,8 @@
             <p class="text-xs font-semibold uppercase tracking-widest text-primary/45 mb-2">Serveur</p>
             @if($order->assignedServer)
                 <div class="flex items-center gap-2">
-                    <div class="h-8 w-8 rounded-full bg-accent/30 flex items-center justify-center text-primary text-xs font-bold">
+                    <div class="h-8 w-8 rounded-full bg-accent/30 flex items-center justify-center text-primary text-xs
+                        font-bold">
                         {{ strtoupper(mb_substr($order->assignedServer->name, 0, 2)) }}
                     </div>
                     <p class="text-sm font-semibold text-primary">{{ $order->assignedServer->name }}</p>
@@ -128,7 +131,10 @@
                 @if($isServer && $order->isActive())
                     <form method="POST" action="{{ route('restaurant.orders.claim', $order) }}" class="mt-2">
                         @csrf
-                        <button type="submit" class="w-full px-3 py-2 text-xs font-semibold rounded-lg border border-secondary/25 bg-white text-primary hover:bg-accent/20">
+                        <button
+                            type="submit"
+                            class="w-full px-3 py-2 text-xs font-semibold rounded-lg border border-secondary/25
+                                bg-white text-primary hover:bg-accent/20">
                             Prendre cette commande en charge
                         </button>
                     </form>
@@ -137,14 +143,23 @@
 
             {{-- Le chef peut réaffecter à un serveur en service --}}
             @if($isChief && $order->isActive() && $onDutyServers->isNotEmpty())
-                <form method="POST" action="{{ route('restaurant.orders.reassign', $order) }}" class="mt-3 flex items-center gap-2">
+                <form
+                    method="POST"
+                    action="{{ route('restaurant.orders.reassign', $order) }}"
+                    class="mt-3 flex items-center gap-2">
                     @csrf
-                    <select name="assigned_server_id" class="flex-1 px-2 py-1.5 text-xs border border-secondary/25 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                    <select
+                        name="assigned_server_id"
+                        class="flex-1 px-2 py-1.5 text-xs border border-secondary/25 rounded-lg bg-white text-primary
+                            outline-none focus:border-secondary">
                         @foreach($onDutyServers as $server)
                             <option value="{{ $server->id }}" @selected($order->assigned_server_id === $server->id)>{{ $server->name }}</option>
                         @endforeach
                     </select>
-                    <button type="submit" class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-secondary/25 bg-white text-primary hover:bg-accent/20">
+                    <button
+                        type="submit"
+                        class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-secondary/25 bg-white
+                            text-primary hover:bg-accent/20">
                         Réaffecter
                     </button>
                 </form>
@@ -187,7 +202,10 @@
                 @php $acted = true; @endphp
                 <form method="POST" action="{{ route('restaurant.orders.send_to_kitchen', $order) }}">
                     @csrf
-                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-surface-dark">
+                    <button
+                        type="submit"
+                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary
+                            text-white text-sm font-semibold hover:bg-surface-dark">
                         <i data-lucide="send" class="w-4 h-4"></i> Transmettre le bon en cuisine
                     </button>
                 </form>
@@ -197,7 +215,10 @@
                 @php $acted = true; @endphp
                 <form method="POST" action="{{ route('restaurant.orders.preparing', $order) }}">
                     @csrf
-                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700">
+                    <button
+                        type="submit"
+                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600
+                            text-white text-sm font-semibold hover:bg-blue-700">
                         <i data-lucide="flame" class="w-4 h-4"></i> Prendre en préparation
                     </button>
                 </form>
@@ -207,7 +228,10 @@
                 @php $acted = true; @endphp
                 <form method="POST" action="{{ route('restaurant.orders.ready', $order) }}">
                     @csrf
-                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700">
+                    <button
+                        type="submit"
+                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600
+                            text-white text-sm font-semibold hover:bg-green-700">
                         <i data-lucide="bell-ring" class="w-4 h-4"></i> Signaler le plat prêt
                     </button>
                 </form>
@@ -217,7 +241,10 @@
                 @php $acted = true; @endphp
                 <form method="POST" action="{{ route('restaurant.orders.served', $order) }}">
                     @csrf
-                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700">
+                    <button
+                        type="submit"
+                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600
+                            text-white text-sm font-semibold hover:bg-green-700">
                         <i data-lucide="check-check" class="w-4 h-4"></i> Marquer comme servie
                     </button>
                 </form>
@@ -238,15 +265,23 @@
             {{-- Le chef garde la main : annulation et correction de statut --}}
             @if($isChief)
                 <details class="pt-2">
-                    <summary class="text-[11px] text-primary/45 cursor-pointer hover:text-primary/70">Correction manuelle du statut (chef)</summary>
-                    <form method="POST" action="{{ route('restaurant.orders.status', $order) }}" class="flex items-center gap-2 mt-2">
+                    <summary class="text-[11px] text-primary/45 cursor-pointer
+                        hover:text-primary/70">Correction manuelle du statut (chef)</summary>
+                    <form
+                        method="POST"
+                        action="{{ route('restaurant.orders.status', $order) }}"
+                        class="flex items-center gap-2 mt-2">
                         @csrf
-                        <select name="status" class="flex-1 px-3 py-2 text-sm border border-secondary/25 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                        <select
+                            name="status"
+                            class="flex-1 px-3 py-2 text-sm border border-secondary/25 rounded-lg bg-white text-primary
+                                outline-none focus:border-secondary">
                             @foreach($statuses as $status)
                                 <option value="{{ $status }}" @selected($order->status === $status)>{{ $statusLabels[$status] ?? ucfirst($status) }}</option>
                             @endforeach
                         </select>
-                        <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">OK</button>
+                        <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary
+                            text-white">OK</button>
                     </form>
                 </details>
             @endif

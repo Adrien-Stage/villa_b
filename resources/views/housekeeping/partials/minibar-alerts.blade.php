@@ -24,7 +24,8 @@
                         @if($sejour->room)
                             @droit('housekeeping.minibar.check')
                                 <a href="{{ route('housekeeping.minibar.rooms.show', $sejour->room) }}"
-                                   class="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition">Faire le relevé</a>
+                                   class="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold
+                                       hover:bg-red-700 transition">Faire le relevé</a>
                             @enddroit
                         @endif
                     </li>
@@ -36,7 +37,8 @@
                         </span>
                         @droit('housekeeping.minibar.check')
                             <a href="{{ route('housekeeping.minibar.rooms.show', $chambre) }}"
-                               class="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 transition">Faire le relevé</a>
+                               class="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold
+                                   hover:bg-red-700 transition">Faire le relevé</a>
                         @enddroit
                     </li>
                 @endforeach
@@ -54,7 +56,8 @@
                     <li class="flex flex-wrap items-center justify-between gap-2 text-sm">
                         <span class="text-amber-900"><strong>Chambre {{ $chambre->number }}</strong> — vidé par le client, séjour en cours</span>
                         <a href="{{ route('housekeeping.minibar.rooms.show', $chambre) }}"
-                           class="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition">Recharger</a>
+                           class="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold
+                               hover:bg-amber-700 transition">Recharger</a>
                     </li>
                 @endforeach
                 @foreach($minibar['aRecharger'] as $chambre)
@@ -67,7 +70,8 @@
                             {{ $manque }} article{{ $manque > 1 ? 's' : '' }} manquant{{ $manque > 1 ? 's' : '' }}
                         </span>
                         <a href="{{ route('housekeeping.minibar.rooms.show', $chambre) }}"
-                           class="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition">Recharger</a>
+                           class="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-semibold
+                               hover:bg-amber-700 transition">Recharger</a>
                     </li>
                 @endforeach
             </ul>

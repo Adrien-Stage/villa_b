@@ -15,12 +15,14 @@
 @include('accounting.ledger.partials.nav')
 
 <a href="{{ route('accounting.ledger.analytic', ['from' => $periode['from']->toDateString(), 'to' => $periode['to']->toDateString()]) }}"
-   class="inline-flex items-center gap-1.5 mb-4 text-xs font-medium text-primary/60 hover:text-primary transition-colors">
+   class="inline-flex items-center gap-1.5 mb-4 text-xs font-medium text-primary/60 hover:text-primary
+       transition-colors">
     <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
     Retour à l'analytique
 </a>
 
-<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70 leading-relaxed">
+<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70
+    leading-relaxed">
     <strong>Marge de contribution.</strong> Ce que chaque nuitée laisse une fois payé ce qu'elle a
     coûté à servir — linge, produits d'accueil, ménage. Elle ne couvre pas le loyer ni les salaires
     fixes : elle dit ce qui reste pour les payer.

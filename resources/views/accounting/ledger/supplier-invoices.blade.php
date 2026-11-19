@@ -13,7 +13,8 @@
         <p class="text-sm text-primary/60 mt-1">Dettes reçues et retenues prélevées</p>
     </div>
     <a href="{{ route('accounting.ledger.suppliers.create') }}"
-       class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shrink-0">
+       class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg
+           hover:bg-surface-dark transition-colors shrink-0">
         <i data-lucide="plus" class="w-3.5 h-3.5"></i>
         Saisir une facture
     </a>
@@ -22,10 +23,12 @@
 @include('accounting.ledger.partials.nav')
 
 @if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700">{{ session('success') }}</div>
 @endif
 @if(session('error'))
-    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm
+        text-red-700">{{ session('error') }}</div>
 @endif
 
 <div class="grid grid-cols-2 gap-3 mb-4">
@@ -36,7 +39,9 @@
     <div class="bg-white rounded-xl border border-secondary/20 p-3.5">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-primary/40">Retenues prélevées</p>
         <p class="text-base font-heading font-bold text-primary mt-0.5">{{ $fcfa($totaux['retenues']) }}</p>
-        <a href="{{ route('accounting.ledger.withholding') }}" class="text-[10px] text-primary/50 hover:text-primary hover:underline">Voir l'état déclaratif</a>
+        <a
+            href="{{ route('accounting.ledger.withholding') }}"
+            class="text-[10px] text-primary/50 hover:text-primary hover:underline">Voir l'état déclaratif</a>
     </div>
 </div>
 
@@ -48,14 +53,19 @@
             <option value="{{ $f->id }}" @selected(request('fournisseur') == $f->id)>{{ $f->name }}</option>
         @endforeach
     </select>
-    <label class="inline-flex items-center gap-2 px-3 py-2.5 rounded-lg border border-secondary/25 bg-white text-xs text-primary/70 cursor-pointer">
+    <label class="inline-flex items-center gap-2 px-3 py-2.5 rounded-lg border border-secondary/25 bg-white text-xs
+        text-primary/70 cursor-pointer">
         <input type="checkbox" name="retenues" value="1" onchange="this.form.submit()" @checked(request()->boolean('retenues'))
                class="rounded border-secondary/40 text-primary focus:ring-primary/30">
         Avec retenue seulement
     </label>
 </form>
 
-<x-table :rows="$factures" empty="Aucune facture fournisseur enregistrée." empty-icon="truck" caption="Factures fournisseurs">
+<x-table
+    :rows="$factures"
+    empty="Aucune facture fournisseur enregistrée."
+    empty-icon="truck"
+    caption="Factures fournisseurs">
     <x-slot:head>
         <x-table.col hide="md">Date</x-table.col>
         <x-table.col>Référence</x-table.col>
@@ -71,12 +81,17 @@
         <x-table.row :href="route('accounting.ledger.suppliers.show', $facture)">
             <x-table.cell hide="md" nowrap class="text-primary/70">{{ $facture->invoice_date->format('d/m/Y') }}</x-table.cell>
             <x-table.cell>
-                <a href="{{ route('accounting.ledger.suppliers.show', $facture) }}" class="font-mono font-medium text-primary hover:underline">{{ $facture->number }}</a>
+                <a
+                    href="{{ route('accounting.ledger.suppliers.show', $facture) }}"
+                    class="font-mono font-medium text-primary hover:underline">{{ $facture->number }}</a>
                 @if($facture->purchaseOrder)
                     <span class="block text-[10px] text-primary/45">{{ $facture->purchaseOrder->number }}</span>
                 @endif
                 @if($facture->hasReceptionVariance())
-                    <span class="mt-0.5 inline-block rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700" title="{{ $facture->variance_reason }}">Écart +{{ $fcfa($facture->reception_variance) }}</span>
+                    <span
+                        class="mt-0.5 inline-block rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5
+                            text-[10px] font-medium text-amber-700"
+                        title="{{ $facture->variance_reason }}">Écart +{{ $fcfa($facture->reception_variance) }}</span>
                 @endif
             </x-table.cell>
             <x-table.cell>{{ $facture->supplier?->name ?? '—' }}</x-table.cell>

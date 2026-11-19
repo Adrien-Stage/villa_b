@@ -93,7 +93,8 @@ class LedgerService
 
         $normalized = $this->normalizeLines($lines);
 
-        return DB::transaction(function () use ($journal, $period, $date, $label, $normalized, $source, $schema, $reference, $autoPost) {
+        return DB::transaction(function () use ($journal, $period, $date, $label, $normalized, $source, $schema,
+            $reference, $autoPost) {
             $entry = JournalEntry::create([
                 'journal_id'       => $journal->id,
                 'fiscal_period_id' => $period->id,
@@ -136,7 +137,8 @@ class LedgerService
         $period = $this->periodFor($date);
 
         if ($period->isLocked()) {
-            throw new RuntimeException("La période {$period->label()} est verrouillée : impossible d'y porter la contre-passation.");
+            throw new RuntimeException(
+                "La période {$period->label()} est verrouillée : impossible d'y porter la contre-passation.");
         }
 
         return DB::transaction(function () use ($entry, $date, $period, $reason) {
@@ -276,11 +278,13 @@ class LedgerService
             $credit = (int) ($line['credit'] ?? 0);
 
             if ($debit < 0 || $credit < 0) {
-                throw new RuntimeException("Ligne {$index} : un montant comptable ne peut pas être négatif. Utilisez le sens opposé.");
+                throw new RuntimeException(
+                    "Ligne {$index} : un montant comptable ne peut pas être négatif. Utilisez le sens opposé.");
             }
 
             if ($debit > 0 && $credit > 0) {
-                throw new RuntimeException("Ligne {$index} : une ligne se porte au débit ou au crédit, jamais aux deux.");
+                throw new RuntimeException(
+                    "Ligne {$index} : une ligne se porte au débit ou au crédit, jamais aux deux.");
             }
 
             if ($debit === 0 && $credit === 0) {
@@ -290,7 +294,8 @@ class LedgerService
             $account = $this->account($code);
 
             if (!$account->is_postable) {
-                throw new RuntimeException("Le compte {$code} est un compte de regroupement : il ne reçoit pas d'écriture directe.");
+                throw new RuntimeException(
+                    "Le compte {$code} est un compte de regroupement : il ne reçoit pas d'écriture directe.");
             }
 
             $auxiliary = $line['auxiliary'] ?? null;

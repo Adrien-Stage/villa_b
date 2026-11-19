@@ -18,7 +18,8 @@
         <h1 class="text-2xl font-semibold text-primary font-heading">Bar</h1>
         <p class="text-sm text-primary/60 mt-1">Les boissons des bons transmis par la salle. Préparez-les, puis signalez-les prêtes — le serveur est prévenu.</p>
     </div>
-    <label class="shrink-0 inline-flex items-center gap-2 text-xs text-primary/60 bg-white border border-secondary/20 rounded-lg px-3 py-2">
+    <label class="shrink-0 inline-flex items-center gap-2 text-xs text-primary/60 bg-white border border-secondary/20
+        rounded-lg px-3 py-2">
         <input type="checkbox" x-model="auto" class="rounded border-secondary/30 text-primary">
         Actualisation auto (20s)
     </label>
@@ -78,7 +79,10 @@
                 @droit('restaurant.orders.bar_ready')
                     <form method="POST" action="{{ route('restaurant.orders.bar_ready', $order) }}">
                         @csrf
-                        <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs
+                                font-semibold text-white hover:bg-green-700">
                             <i data-lucide="glass-water" class="w-3.5 h-3.5"></i> Prêtes
                         </button>
                     </form>
@@ -86,7 +90,8 @@
             </div>
         </article>
     @empty
-        <p class="col-span-full rounded-xl bg-white px-4 py-10 text-center text-sm text-primary/50 shadow-sm">Aucune boisson en attente.</p>
+        <p class="col-span-full rounded-xl bg-white px-4 py-10 text-center text-sm text-primary/50
+            shadow-sm">Aucune boisson en attente.</p>
     @endforelse
 </div>
 @endsection

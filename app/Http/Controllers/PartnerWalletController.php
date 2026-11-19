@@ -30,7 +30,8 @@ class PartnerWalletController extends Controller
         $partner->load('wallet');
         $entries = WalletEntry::where('wallet_id', $partner->wallet?->id ?? 0)
             ->with(['createdBy', 'reversal', 'attachment'])->latest('id')->paginate(30);
-        $payments = Payment::whereIn('wallet_entry_id', $entries->pluck('id'))->with(['booking', 'invoice'])->get()->keyBy('wallet_entry_id');
+        $payments = Payment::whereIn('wallet_entry_id', $entries->pluck('id'))->with(['booking', 'invoice'])->get()
+            ->keyBy('wallet_entry_id');
         $methods = self::METHODS;
 
         return view('partners.wallets.show', compact('partner', 'entries', 'payments', 'methods'));
@@ -43,7 +44,8 @@ class PartnerWalletController extends Controller
             'reference' => ['required', 'string', 'max:200', 'regex:/\S/'],
         ]);
 
-        return $this->execute(fn () => $service->topup($partner, $data, $request->user(), $request->file('proof')), $partner);
+        return $this->execute(fn () => $service->topup($partner, $data, $request->user(), $request->file('proof')),
+            $partner);
     }
 
     public function debit(Request $request, PartnerOrganization $partner, PartnerWalletService $service)
@@ -57,29 +59,36 @@ class PartnerWalletController extends Controller
         $booking = Booking::findOrFail($data['booking_id']);
         $invoice = isset($data['invoice_id']) ? Invoice::findOrFail($data['invoice_id']) : null;
 
-        return $this->execute(fn () => $service->settle($partner, $booking, $invoice, $data, $request->user(), $request->file('proof')), $partner);
+        return $this->execute(fn () => $service->settle($partner, $booking, $invoice, $data, $request->user(),
+            $request->file('proof')), $partner);
     }
 
-    public function reverse(Request $request, PartnerOrganization $partner, WalletEntry $entry, PartnerWalletService $service)
+    public function reverse(Request $request, PartnerOrganization $partner, WalletEntry $entry,
+        PartnerWalletService $service)
     {
-        $data = $request->validate(['request_key' => ['required', 'uuid'], 'reason' => ['required', 'string', 'max:500', 'regex:/\S/']]);
+        $data = $request->validate(['request_key' => ['required', 'uuid'], 'reason' => ['required', 'string', 'max:500',
+            'regex:/\S/']]);
 
         return $this->execute(fn () => $service->reverse($partner, $entry, $data, $request->user()), $partner);
     }
 
     public function proof(PartnerOrganization $partner, WalletEntry $entry)
     {
-        abort_unless($entry->wallet?->owner_type === $partner->getMorphClass() && $entry->wallet->owner_id === $partner->id, 404);
+        abort_unless($entry->wallet?->owner_type === $partner->getMorphClass() && $entry->wallet->owner_id === $partner
+            ->id, 404);
         $attachment = $entry->attachment;
         abort_unless($attachment && Storage::disk('local')->exists($attachment->path), 404);
 
-        return Storage::disk('local')->download($attachment->path, $attachment->original_name, ['X-Content-Type-Options' => 'nosniff']);
+        return Storage::disk('local')->download($attachment->path, $attachment->original_name,
+            ['X-Content-Type-Options' => 'nosniff']);
     }
 
     private function commonRules(): array
     {
-        return ['request_key' => ['required', 'uuid'], 'amount' => ['required', 'integer', 'min:1', 'max:1000000000000'],
-            'notes' => ['nullable', 'string', 'max:1000'], 'proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240']];
+        return ['request_key' => ['required', 'uuid'], 'amount' => ['required', 'integer', 'min:1',
+            'max:1000000000000'],
+            'notes' => ['nullable', 'string', 'max:1000'], 'proof' => ['nullable', 'file',
+                'mimes:pdf,jpg,jpeg,png,webp', 'max:10240']];
     }
 
     private function execute(callable $operation, PartnerOrganization $partner)

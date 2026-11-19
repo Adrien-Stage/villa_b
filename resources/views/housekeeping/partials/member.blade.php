@@ -15,7 +15,8 @@
         <p class="text-xs sm:text-sm text-primary/50">Mon équipe et les chambres qui me sont confiées.</p>
     </div>
     <button type="button" onclick="window.location.reload()"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition shadow-2xs"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-white border border-secondary/30
+                text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition shadow-2xs"
             title="Actualiser les chambres">
         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
         <span class="hidden sm:inline">Actualiser</span>
@@ -40,13 +41,15 @@
                         <p class="text-xs text-primary/50">Chef d'équipe : {{ $team->leader?->name ?? 'non défini' }}</p>
                     </div>
                     @if($iLead)
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary uppercase tracking-widest">Chef d'équipe</span>
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-primary/10 text-primary
+                            uppercase tracking-widest">Chef d'équipe</span>
                     @endif
                 </div>
                 <p class="text-[11px] font-semibold uppercase tracking-wider text-primary/40 mb-2">Coéquipiers</p>
                 <div class="flex flex-wrap gap-2">
                     @foreach($team->members as $member)
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/10 border border-secondary/20 text-xs text-primary/80">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/10 border
+                            border-secondary/20 text-xs text-primary/80">
                             <span class="w-2 h-2 rounded-full {{ ($presence[$member->id] ?? false) ? 'bg-green-500' : 'bg-gray-300' }}"
                                   title="{{ ($presence[$member->id] ?? false) ? 'En ligne' : 'Hors ligne' }}"></span>
                             {{ $member->name }}@if($member->id === $me) <span class="text-primary/40">(moi)</span>@endif

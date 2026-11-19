@@ -12,7 +12,12 @@
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f2ee; padding:24px 0;">
         <tr>
             <td align="center">
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #e6e0d6;">
+                <table
+                    role="presentation"
+                    width="600"
+                    cellpadding="0"
+                    cellspacing="0"
+                    style="background:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #e6e0d6;">
                     <tr>
                         <td style="background:#391F0E; padding:24px 32px;">
                             <h1 style="margin:0; font-size:18px; color:#ffffff;">{{ $brand }}</h1>
@@ -29,7 +34,12 @@
                                 et le délai de livraison.
                             </p>
 
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px; margin-bottom:20px;">
+                            <table
+                                role="presentation"
+                                width="100%"
+                                cellpadding="0"
+                                cellspacing="0"
+                                style="font-size:13px; margin-bottom:20px;">
                                 <tr>
                                     <td style="padding:4px 0; color:#8a7d6b;">Référence</td>
                                     <td style="padding:4px 0; text-align:right; font-weight:bold;">{{ $order->number }}</td>
@@ -46,13 +56,24 @@
                                 @endif
                             </table>
 
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px; border-collapse:collapse;">
+                            <table
+                                role="presentation"
+                                width="100%"
+                                cellpadding="0"
+                                cellspacing="0"
+                                style="font-size:13px; border-collapse:collapse;">
                                 <thead>
                                     <tr>
                                         {{-- Les articles et les quantités à livrer, jamais les prix. --}}
-                                        <th align="left" style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Article</th>
-                                        <th align="right" style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Quantité</th>
-                                        <th align="center" style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Unité</th>
+                                        <th
+                                            align="left"
+                                            style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Article</th>
+                                        <th
+                                            align="right"
+                                            style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Quantité</th>
+                                        <th
+                                            align="center"
+                                            style="padding:8px; background:#f4f2ee; border-bottom:2px solid #e6e0d6;">Unité</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -61,8 +82,12 @@
                                             <td style="padding:8px; border-bottom:1px solid #efeae1;">
                                                 {{ $line->item?->name ?? 'Article' }}
                                             </td>
-                                            <td align="right" style="padding:8px; border-bottom:1px solid #efeae1; font-family:monospace;">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }} {{ \App\Models\StockUnit::symbolFor($line->item?->unit) }}</td>
-                                            <td align="center" style="padding:8px; border-bottom:1px solid #efeae1; font-family:monospace; font-weight:bold; color:#5a5045;">{{ \App\Models\StockUnit::symbolFor($line->item?->unit) }}</td>
+                                            <td
+                                                align="right"
+                                                style="padding:8px; border-bottom:1px solid #efeae1; font-family:monospace;">{{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }} {{ \App\Models\StockUnit::symbolFor($line->item?->unit) }}</td>
+                                            <td
+                                                align="center"
+                                                style="padding:8px; border-bottom:1px solid #efeae1; font-family:monospace; font-weight:bold; color:#5a5045;">{{ \App\Models\StockUnit::symbolFor($line->item?->unit) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

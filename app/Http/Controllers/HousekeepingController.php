@@ -85,8 +85,10 @@ class HousekeepingController extends Controller
                 ->orderBy('number')
                 ->get();
 
-            $vides = $equipees->filter(fn (Room $r) => $r->status === RoomStatus::OCCUPIED && $r->miniBarVide())->values();
-            $aRecharger = $equipees->filter(fn (Room $r) => $r->status !== RoomStatus::OCCUPIED && !$r->miniBarComplet())->values();
+            $vides = $equipees->filter(fn (Room $r) => $r->status === RoomStatus::OCCUPIED && $r->miniBarVide())
+                ->values();
+            $aRecharger = $equipees->filter(fn (Room $r) => $r->status !== RoomStatus::OCCUPIED && !$r
+                ->miniBarComplet())->values();
         }
 
         return compact('demandes', 'dus', 'vides', 'aRecharger');
@@ -132,7 +134,8 @@ class HousekeepingController extends Controller
             ->latest('completed_at')
             ->get();
 
-        $pipeline = Room::with(['roomType', 'activeHousekeepingAssignment.team', 'activeHousekeepingAssignment.startedBy',
+        $pipeline = Room::with(['roomType', 'activeHousekeepingAssignment.team',
+            'activeHousekeepingAssignment.startedBy',
                 'latestHousekeepingAssignment.completedBy', 'minibarLines'])
             ->whereIn('status', self::CYCLE_STATUSES)
             ->orderByRaw("CASE status
@@ -153,7 +156,8 @@ class HousekeepingController extends Controller
 
         $myRooms = $myTeamIds->isEmpty()
             ? collect()
-            : Room::with(['roomType', 'latestHousekeepingAssignment.team', 'latestHousekeepingAssignment.startedBy', 'latestHousekeepingAssignment.completedBy', 'minibarLines'])
+            : Room::with(['roomType', 'latestHousekeepingAssignment.team', 'latestHousekeepingAssignment.startedBy',
+                'latestHousekeepingAssignment.completedBy', 'minibarLines'])
                 ->whereIn('id', HousekeepingAssignment::whereIn('housekeeping_team_id', $myTeamIds)
                     ->where('kind', HousekeepingAssignment::KIND_DEPART)
                     ->pluck('room_id')->unique())
@@ -238,7 +242,8 @@ class HousekeepingController extends Controller
             ->where('kind', HousekeepingAssignment::KIND_DEPART)
             ->pluck('room_id')->unique();
 
-        $myRooms = Room::with(['roomType', 'latestHousekeepingAssignment.team', 'latestHousekeepingAssignment.startedBy', 'latestHousekeepingAssignment.completedBy', 'minibarLines'])
+        $myRooms = Room::with(['roomType', 'latestHousekeepingAssignment.team',
+            'latestHousekeepingAssignment.startedBy', 'latestHousekeepingAssignment.completedBy', 'minibarLines'])
             ->whereIn('id', $roomIds)
             ->whereIn('status', self::CYCLE_STATUSES)
             ->orderByRaw("CASE status
@@ -395,7 +400,8 @@ class HousekeepingController extends Controller
                 }
 
                 HousekeepingLog::noter($room, HousekeepingLog::ASSIGNED,
-                    ($kind === HousekeepingAssignment::KIND_RECOUCHE ? 'Recouche — ' : 'Ménage de départ — ') . $team->name,
+                    ($kind === HousekeepingAssignment::KIND_RECOUCHE ? 'Recouche — ' : 'Ménage de départ — ') . $team
+                        ->name,
                     $assignment);
             }
         });
@@ -453,7 +459,8 @@ class HousekeepingController extends Controller
             if ($isTechnique) {
                 // Pour un problème technique : passage automatique et direct en maintenance
                 if ($room->status !== RoomStatus::MAINTENANCE) {
-                    $room->updateStatus(RoomStatus::MAINTENANCE, 'Problème technique signalé par housekeeping : ' . $notes, Auth::id());
+                    $room->updateStatus(RoomStatus::MAINTENANCE, 'Problème technique signalé par housekeeping : '
+                        . $notes, Auth::id());
                 }
 
                 // Si le service technique est actif, créer la demande d'intervention
@@ -524,12 +531,14 @@ class HousekeepingController extends Controller
             HousekeepingLog::noter(
                 $room,
                 HousekeepingLog::STARTED,
-                "Incident résolu (" . Auth::user()->name . ") : " . ($oldNotes ? mb_substr($oldNotes, 0, 150) : 'reprise du travail'),
+                "Incident résolu (" . Auth::user()->name . ") : " . ($oldNotes ? mb_substr($oldNotes, 0,
+                    150) : 'reprise du travail'),
                 $assignment
             );
         });
 
-        return back()->with('success', "L'incident sur la chambre {$room->number} a été résolu. Le travail peut reprendre.");
+        return back()->with('success',
+            "L'incident sur la chambre {$room->number} a été résolu. Le travail peut reprendre.");
     }
 
     /** La gouvernante ou le responsable des étages qualifie et transmet le problème au service technique. */
@@ -566,7 +575,8 @@ class HousekeepingController extends Controller
         );
 
         if ($room->status !== RoomStatus::MAINTENANCE) {
-            $room->updateStatus(RoomStatus::MAINTENANCE, 'Transmis au service technique : ' . $validated['notes'], Auth::id());
+            $room->updateStatus(RoomStatus::MAINTENANCE, 'Transmis au service technique : ' . $validated['notes'],
+                Auth::id());
         }
 
         $assignment->update([
@@ -591,7 +601,8 @@ class HousekeepingController extends Controller
         // Recouche : le client garde sa chambre, son statut ne bouge pas.
         if ($assignment->isRecouche()) {
             if ($room->status !== RoomStatus::OCCUPIED) {
-                return back()->withErrors(['status' => "La chambre {$room->number} n'est plus occupée : la recouche n'a plus lieu d'être."]);
+                return back()->withErrors(
+                    ['status' => "La chambre {$room->number} n'est plus occupée : la recouche n'a plus lieu d'être."]);
             }
 
             DB::transaction(function () use ($room, $assignment) {
@@ -600,7 +611,8 @@ class HousekeepingController extends Controller
                     'started_at' => $assignment->started_at ?? now(),
                     'started_by' => $assignment->started_by ?? Auth::id(),
                 ]);
-                HousekeepingLog::noter($room, HousekeepingLog::STAYOVER_STARTED, null, $assignment, $this->sejourEnCours($room)?->id);
+                HousekeepingLog::noter($room, HousekeepingLog::STAYOVER_STARTED, null, $assignment,
+                    $this->sejourEnCours($room)?->id);
             });
 
             return back()->with('success', "Recouche de la chambre {$room->number} commencée.");
@@ -636,13 +648,16 @@ class HousekeepingController extends Controller
         $this->ensureCanClean($room);
 
         if ($room->status !== RoomStatus::OCCUPIED) {
-            return back()->withErrors(['status' => "La chambre {$room->number} n'est plus occupée : la recouche n'a plus lieu d'être."]);
+            return back()->withErrors(
+                ['status' => "La chambre {$room->number} n'est plus occupée : la recouche n'a plus lieu d'être."]);
         }
 
         // Le relevé du mini-bar fait partie de la recouche : ce que le client
         // a consommé part à son folio.
-        if ($room->aUnMiniBar() && !\App\Models\MinibarCheck::query()->where('housekeeping_assignment_id', $assignment->id)->exists()) {
-            return back()->withErrors(['status' => "Faites d'abord le relevé du mini-bar de la chambre {$room->number}."]);
+        if ($room->aUnMiniBar() && !\App\Models\MinibarCheck::query()->where('housekeeping_assignment_id', $assignment
+            ->id)->exists()) {
+            return back()->withErrors(
+                ['status' => "Faites d'abord le relevé du mini-bar de la chambre {$room->number}."]);
         }
 
         DB::transaction(function () use ($room, $assignment) {
@@ -653,7 +668,8 @@ class HousekeepingController extends Controller
                 'completed_at' => now(),
                 'completed_by' => Auth::id(),
             ]);
-            HousekeepingLog::noter($room, HousekeepingLog::STAYOVER_DONE, null, $assignment, $this->sejourEnCours($room)?->id);
+            HousekeepingLog::noter($room, HousekeepingLog::STAYOVER_DONE, null, $assignment, $this->sejourEnCours($room)
+                ?->id);
         });
 
         return back()->with('success', "Recouche de la chambre {$room->number} terminée.");
@@ -670,7 +686,8 @@ class HousekeepingController extends Controller
         $this->ensureCanClean($room);
 
         if ($assignment->isRecouche()) {
-            return back()->withErrors(['status' => "La chambre {$room->number} est en recouche : terminez la recouche."]);
+            return back()->withErrors(
+                ['status' => "La chambre {$room->number} est en recouche : terminez la recouche."]);
         }
 
         // Le client est parti sans relevé de départ : sa consommation n'est

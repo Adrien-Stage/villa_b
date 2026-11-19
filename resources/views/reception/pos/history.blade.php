@@ -7,7 +7,10 @@
     
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-            <a href="{{ route('reception.pos.index') }}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary/60 hover:text-primary transition-colors mb-2">
+            <a
+                href="{{ route('reception.pos.index') }}"
+                class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary/60 hover:text-primary
+                    transition-colors mb-2">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 Retour au terminal POS
             </a>
@@ -19,7 +22,10 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <a href="{{ route('reception.pos.index') }}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-surface-dark transition-all shadow-sm">
+            <a
+                href="{{ route('reception.pos.index') }}"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-xs font-bold rounded-xl
+                    hover:bg-surface-dark transition-all shadow-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 Nouvelle vente POS
             </a>
@@ -28,9 +34,13 @@
 
     {{-- Filtres de recherche --}}
     <div class="bg-white rounded-2xl p-4 border border-secondary/15 shadow-xs mb-6">
-        <form method="GET" action="{{ route('reception.pos.history') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+        <form
+            method="GET"
+            action="{{ route('reception.pos.history') }}"
+            class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
             <div class="sm:col-span-2">
-                <label class="block text-[10px] font-bold uppercase tracking-wider text-primary/50 mb-1">Recherche (N° vente, client, chambre)</label>
+                <label class="block text-[10px] font-bold uppercase tracking-wider text-primary/50
+                    mb-1">Recherche (N° vente, client, chambre)</label>
                 <x-live-search
                     name="search"
                     target="#pos-history-table-container"
@@ -41,19 +51,31 @@
 
             <div>
                 <label class="block text-[10px] font-bold uppercase tracking-wider text-primary/50 mb-1">Statut</label>
-                <select name="payment_status" class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-xl bg-white outline-none focus:border-primary">
+                <select
+                    name="payment_status"
+                    class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-xl bg-white outline-none
+                        focus:border-primary">
                     <option value="">Tous les statuts</option>
                     <option value="paid" {{ request('payment_status') === 'paid' ? 'selected' : '' }}>Payé immédiatement</option>
-                    <option value="charged_to_room" {{ request('payment_status') === 'charged_to_room' ? 'selected' : '' }}>Débité sur chambre</option>
+                    <option
+                        value="charged_to_room"
+                        {{ request('payment_status') === 'charged_to_room' ? 'selected' : '' }}>Débité sur chambre</option>
                 </select>
             </div>
 
             <div class="flex gap-2">
-                <button type="submit" class="flex-1 py-2 px-4 bg-primary text-white text-xs font-bold rounded-xl hover:bg-surface-dark transition-colors">
+                <button
+                    type="submit"
+                    class="flex-1 py-2 px-4 bg-primary text-white text-xs font-bold rounded-xl hover:bg-surface-dark
+                        transition-colors">
                     Filtrer
                 </button>
                 @if(request()->hasAny(['search', 'payment_status', 'date']))
-                    <a href="{{ route('reception.pos.history') }}" class="py-2 px-3 bg-secondary/10 hover:bg-secondary/20 text-primary text-xs font-bold rounded-xl transition-colors" title="Réinitialiser">
+                    <a
+                        href="{{ route('reception.pos.history') }}"
+                        class="py-2 px-3 bg-secondary/10 hover:bg-secondary/20 text-primary text-xs font-bold
+                            rounded-xl transition-colors"
+                        title="Réinitialiser">
                         <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                     </a>
                 @endif
@@ -62,7 +84,11 @@
     </div>
 
     <div id="pos-history-table-container">
-    <x-table :rows="$sales" empty="Aucune vente enregistrée pour le moment." empty-icon="receipt" caption="Ventes du POS de la réception">
+    <x-table
+        :rows="$sales"
+        empty="Aucune vente enregistrée pour le moment."
+        empty-icon="receipt"
+        caption="Ventes du POS de la réception">
         <x-slot:head>
             <x-table.col hide="lg">Date / heure</x-table.col>
             <x-table.col>N° vente</x-table.col>
@@ -81,7 +107,10 @@
                 <x-table.cell>
                     <p class="font-bold text-primary">{{ $sale->customer_name }}</p>
                     @if($sale->room_number)
-                        <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-800"><i data-lucide="bed" class="h-3 w-3" aria-hidden="true"></i> Chambre {{ $sale->room_number }}</span>
+                        <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-800"><i
+                            data-lucide="bed"
+                            class="h-3 w-3"
+                            aria-hidden="true"></i> Chambre {{ $sale->room_number }}</span>
                     @endif
                 </x-table.cell>
                 <x-table.cell hide="2xl" class="max-w-xs truncate text-primary/70">{{ $sale->items->pluck('name')->join(', ') }}</x-table.cell>

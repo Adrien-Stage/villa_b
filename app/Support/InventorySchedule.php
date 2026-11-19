@@ -92,7 +92,8 @@ class InventorySchedule
         $parties = [];
 
         foreach ($this->monthDays as $jour) {
-            $parties[] = $jour === self::LAST_DAY ? 'le dernier jour de chaque mois' : ((int) $jour === 1 ? 'le 1er de chaque mois' : "le {$jour} de chaque mois");
+            $parties[] = $jour === self::LAST_DAY ? 'le dernier jour de chaque mois' : (
+                (int) $jour === 1 ? 'le 1er de chaque mois' : "le {$jour} de chaque mois");
         }
 
         foreach ($this->fixedDates as $date) {

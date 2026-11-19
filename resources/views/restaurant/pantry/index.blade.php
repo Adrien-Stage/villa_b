@@ -11,22 +11,33 @@
     </div>
 
     <div class="flex items-center gap-2">
-        <a href="{{ route('restaurant.pantry.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors" title="Exporter le garde-manger en CSV">
+        <a
+            href="{{ route('restaurant.pantry.export') }}"
+            class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs
+                font-semibold rounded-lg hover:bg-accent/20 transition-colors"
+            title="Exporter le garde-manger en CSV">
             <i data-lucide="download" class="w-3.5 h-3.5"></i> Exporter
         </a>
         @if($peutCreer)
-            <button type="button" onclick="document.getElementById('modal-import-pantry').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors" title="Importer des articles depuis un CSV">
+            <button
+                type="button"
+                onclick="document.getElementById('modal-import-pantry').classList.remove('hidden')"
+                class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/25 bg-white text-primary
+                    text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors"
+                title="Importer des articles depuis un CSV">
                 <i data-lucide="upload" class="w-3.5 h-3.5"></i> Importer
             </button>
             <button type="button"
                 onclick="openCreateCategoryModal()"
-                class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-accent/20">
+                class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/25 bg-white text-primary
+                    text-xs font-semibold rounded-lg hover:bg-accent/20">
                 <i data-lucide="tag" class="w-3.5 h-3.5"></i>
                 Catégorie
             </button>
             <button type="button"
                 onclick="openCreateItemModal()"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 transition-opacity">
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                    hover:opacity-95 transition-opacity">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                 Nouvel article
             </button>
@@ -90,7 +101,9 @@
     </div>
     <div class="bg-white rounded-xl shadow-sm p-4 text-center border {{ $stats['negative_stock'] > 0 ? 'border-red-200' : 'border-secondary/15' }}">
         <p class="text-2xl font-heading font-semibold {{ $stats['negative_stock'] > 0 ? 'text-red-600' : 'text-primary' }}">{{ $stats['negative_stock'] }}</p>
-        <p class="text-xs text-primary/50 mt-1" title="La cuisine a servi plus que le stock ne contenait : réception oubliée ou fiche technique fausse.">
+        <p
+            class="text-xs text-primary/50 mt-1"
+            title="La cuisine a servi plus que le stock ne contenait : réception oubliée ou fiche technique fausse.">
             Stocks négatifs
         </p>
     </div>
@@ -112,7 +125,8 @@
         <input type="hidden" name="low" value="{{ request('low') }}">
 
         <select name="category" onchange="this.form.submit()"
-            class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+            class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none
+                focus:border-secondary">
             <option value="">Toutes les catégories</option>
             @foreach($categories as $category)
                 <option value="{{ $category->id }}" @selected((string) request('category') === (string) $category->id)>{{ $category->name }}</option>
@@ -120,7 +134,8 @@
         </select>
 
         <select name="status" onchange="this.form.submit()"
-            class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+            class="px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none
+                focus:border-secondary">
             <option value="">Tous</option>
             <option value="active" @selected(request('status') === 'active')>Actifs</option>
             <option value="inactive" @selected(request('status') === 'inactive')>Inactifs</option>
@@ -137,7 +152,11 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-4">
     <div id="pantry-table-container" class="min-w-0">
-    <x-table :rows="$items" empty="Aucun article. Ajoutez des articles au garde-manger pour suivre le stock." empty-icon="package" caption="Stocks du garde-manger">
+    <x-table
+        :rows="$items"
+        empty="Aucun article. Ajoutez des articles au garde-manger pour suivre le stock."
+        empty-icon="package"
+        caption="Stocks du garde-manger">
         <x-slot:toolbar>
             <p class="font-heading text-sm font-semibold text-primary">Stocks</p>
         </x-slot:toolbar>
@@ -162,7 +181,10 @@
                     <p class="text-sm font-semibold text-primary">
                         {{ $item->name }}
                         @if($item->is_prepared)
-                            <span class="ml-1 inline-flex items-center rounded bg-accent/40 px-1.5 py-0.5 text-[10px] font-semibold text-primary" title="Article fabriqué en cuisine, produit par une fiche technique">fabriqué</span>
+                            <span
+                                class="ml-1 inline-flex items-center rounded bg-accent/40 px-1.5 py-0.5 text-[10px]
+                                    font-semibold text-primary"
+                                title="Article fabriqué en cuisine, produit par une fiche technique">fabriqué</span>
                         @endif
                     </p>
                     <p class="mt-0.5 text-xs text-primary/45">
@@ -178,7 +200,11 @@
                 <x-table.cell align="right" nowrap class="font-semibold {{ $isNegative ? 'text-red-600' : '' }}">{{ rtrim(rtrim(number_format((float) $item->current_stock, 3, '.', ''), '0'), '.') }}</x-table.cell>
                 <x-table.cell align="center" nowrap class="font-mono text-xs font-bold text-primary/70">{{ $item->shortUnit() }}</x-table.cell>
                 <x-table.cell align="right" hide="lg" nowrap class="text-primary/70">{{ rtrim(rtrim(number_format((float) $item->min_stock, 3, '.', ''), '0'), '.') }}</x-table.cell>
-                <x-table.cell align="right" hide="xl" nowrap class="text-xs {{ (float) $item->average_cost <= 0 ? 'text-amber-600' : 'text-primary/70' }}">
+                <x-table.cell
+                    align="right"
+                    hide="xl"
+                    nowrap
+                    class="text-xs {{ (float) $item->average_cost <= 0 ? 'text-amber-600' : 'text-primary/70' }}">
                     @if((float) $item->average_cost <= 0)
                         <span title="Sans coût, les plats qui utilisent cet ingrédient ne peuvent pas être chiffrés.">coût inconnu</span>
                     @else
@@ -188,12 +214,19 @@
                 <x-table.cell align="right" hide="md" nowrap>{{ number_format($item->stockValue() / 100, 0, ',', ' ') }} FCFA</x-table.cell>
                 <x-table.actions :label="'Actions pour '.$item->name">
                     @if($canManage)
-                        <x-table.action icon="package-plus" tone="success" onclick="openReceiveModal({{ $item->id }})" title="Réception de marchandise : met à jour le stock et le coût moyen">Réception</x-table.action>
+                        <x-table.action
+                            icon="package-plus"
+                            tone="success"
+                            onclick="openReceiveModal({{ $item->id }})"
+                            title="Réception de marchandise : met à jour le stock et le coût moyen">Réception</x-table.action>
                     @endif
                     @droit('restaurant.pantry.movements.creer')
                         @unless($canManage)
                             {{-- Le staff enregistre une entrée simple ; la réception valorisée est au chef. --}}
-                            <x-table.action icon="log-in" tone="success" onclick="openMovementModal({{ $item->id }}, 'in')">Entrée</x-table.action>
+                            <x-table.action
+                                icon="log-in"
+                                tone="success"
+                                onclick="openMovementModal({{ $item->id }}, 'in')">Entrée</x-table.action>
                         @endunless
                         <x-table.action icon="log-out" onclick="openMovementModal({{ $item->id }}, 'out')">Sortie</x-table.action>
                     @enddroit
@@ -231,7 +264,10 @@
                     @endif
                     @if($move->stockRequisition)
                         <div class="mt-1">
-                            <a href="{{ route('economat.requisitions.show', $move->stockRequisition) }}" class="inline-flex items-center gap-1 text-[11px] font-mono text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded">
+                            <a
+                                href="{{ route('economat.requisitions.show', $move->stockRequisition) }}"
+                                class="inline-flex items-center gap-1 text-[11px] font-mono text-indigo-600
+                                    hover:text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded">
                                 <i data-lucide="package" class="w-3 h-3"></i> {{ $move->stockRequisition->number }}
                             </a>
                         </div>
@@ -247,7 +283,13 @@
 </div>
 
 {{-- Movement modal --}}
-<x-modal id="movement-modal" title="Mouvement" title-id="movement-title" max-width="max-w-xl" formAction="#" closeAction="closeMovementModal()">
+<x-modal
+    id="movement-modal"
+    title="Mouvement"
+    title-id="movement-title"
+    max-width="max-w-xl"
+    formAction="#"
+    closeAction="closeMovementModal()">
     <x-slot:form-attributes>
         id="movement-form"
     </x-slot:form-attributes>
@@ -258,11 +300,16 @@
         <div>
             <label class="text-xs text-primary/60">Quantité</label>
             <input type="number" name="quantity" step="0.001" min="0.001" required
-                class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                    outline-none">
         </div>
         <div>
             <label class="text-xs text-primary/60">Raison</label>
-            <select name="reason" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+            <select
+                name="reason"
+                required
+                class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                    focus:border-secondary outline-none">
                 @foreach($moveReasons as $reason)
                     <option value="{{ $reason }}">{{ $reasonLabels[$reason] ?? strtoupper($reason) }}</option>
                 @endforeach
@@ -277,8 +324,13 @@
     </div>
 
     <x-slot:footer>
-        <button type="button" onclick="closeMovementModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-        <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
+        <button
+            type="button"
+            onclick="closeMovementModal()"
+            class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                hover:bg-accent/20">Annuler</button>
+        <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary
+            text-white">Enregistrer</button>
     </x-slot:footer>
 </x-modal>
 
@@ -298,7 +350,8 @@
                         Quantité reçue ({{ $item->purchase_unit ?: $item->unit }})
                     </label>
                     <input type="number" name="purchase_quantity" step="0.001" min="0.001" required
-                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none">
                     @if($item->purchase_unit)
                         <p class="text-[11px] text-primary/40 mt-1">
                             1 {{ $item->purchase_unit }} = {{ rtrim(rtrim(number_format($item->conversion(), 3, ',', ' '), '0'), ',') }} {{ $item->unit }}
@@ -312,7 +365,8 @@
                 <div>
                     <label class="text-xs text-primary/60">Prix total payé (FCFA)</label>
                     <input type="number" name="total_price" min="0"
-                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none">
                     <p class="text-[11px] text-primary/40 mt-1">
                         Laisser vide conserve le coût moyen actuel
                         ({{ number_format((float) $item->average_cost / 100, 2, ',', ' ') }} FCFA / {{ $item->unit }}).
@@ -324,34 +378,58 @@
                 <div>
                     <label class="text-xs text-primary/60">Date (optionnel)</label>
                     <input type="datetime-local" name="occurred_at"
-                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none">
                 </div>
                 <div>
                     <label class="text-xs text-primary/60">Fournisseur / notes</label>
                     <input type="text" name="notes" maxlength="2000"
-                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none">
                 </div>
             </div>
 
             <x-slot:footer>
-                <button type="button" onclick="closeReceiveModal({{ $item->id }})" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700">Enregistrer la réception</button>
+                <button
+                    type="button"
+                    onclick="closeReceiveModal({{ $item->id }})"
+                    class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                        hover:bg-accent/20">Annuler</button>
+                <button
+                    type="submit"
+                    class="px-4 py-2 text-xs font-semibold rounded-lg bg-green-600 text-white
+                        hover:bg-green-700">Enregistrer la réception</button>
             </x-slot:footer>
         </x-modal>
     @endforeach
 
     {{-- Create category modal --}}
-    <x-modal id="create-category-modal" title="Nouvelle categorie" formAction="{{ route('restaurant.pantry.categories.store') }}" closeAction="closeCreateCategoryModal()">
+    <x-modal
+        id="create-category-modal"
+        title="Nouvelle categorie"
+        formAction="{{ route('restaurant.pantry.categories.store') }}"
+        closeAction="closeCreateCategoryModal()">
         <input type="hidden" name="form_type" value="create_category">
 
         <div>
             <label class="text-xs text-primary/60">Nom</label>
-            <input type="text" name="name" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+            <input
+                type="text"
+                name="name"
+                required
+                class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                    outline-none">
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Ordre</label>
-                <input type="number" name="sort_order" min="0" value="0" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                <input
+                    type="number"
+                    name="sort_order"
+                    min="0"
+                    value="0"
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
             </div>
             <label class="inline-flex items-center gap-2 text-xs text-primary/70 mt-6">
                 <input type="checkbox" name="is_active" value="1" checked>
@@ -360,23 +438,41 @@
         </div>
 
         <x-slot:footer>
-            <button type="button" onclick="closeCreateCategoryModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Creer</button>
+            <button
+                type="button"
+                onclick="closeCreateCategoryModal()"
+                class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                    hover:bg-accent/20">Annuler</button>
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary
+                text-white">Creer</button>
         </x-slot:footer>
     </x-modal>
 
     {{-- Create item modal --}}
-    <x-modal id="create-item-modal" title="Nouvel article" max-width="max-w-2xl" formAction="{{ route('restaurant.pantry.items.store') }}" closeAction="closeCreateItemModal()">
+    <x-modal
+        id="create-item-modal"
+        title="Nouvel article"
+        max-width="max-w-2xl"
+        formAction="{{ route('restaurant.pantry.items.store') }}"
+        closeAction="closeCreateItemModal()">
         <input type="hidden" name="form_type" value="create_item">
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Nom</label>
-                <input type="text" name="name" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                <input
+                    type="text"
+                    name="name"
+                    required
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
             </div>
             <div>
                 <label class="text-xs text-primary/60">Categorie</label>
-                <select name="restaurant_pantry_category_id" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                <select
+                    name="restaurant_pantry_category_id"
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                        focus:border-secondary outline-none">
                     <option value="">Aucune</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -388,7 +484,11 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
                 <label class="text-xs text-primary/60">Unité de stock</label>
-                <select name="unit" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                <select
+                    name="unit"
+                    required
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                        focus:border-secondary outline-none">
                     @foreach($units as $u)
                         @php
                             $val = is_array($u) ? $u['value'] : $u;
@@ -400,12 +500,20 @@
             </div>
             <div>
                 <label class="text-xs text-primary/60">Stock min</label>
-                <input type="number" step="0.001" min="0" name="min_stock" value="0" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                <input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    name="min_stock"
+                    value="0"
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none">
             </div>
             <div>
                 <label class="text-xs text-primary/60">Coût de départ (FCFA)</label>
                 <input type="number" min="0" name="cost_price" placeholder="optionnel"
-                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none placeholder-primary/30">
+                    class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                        outline-none placeholder-primary/30">
                 <p class="text-[11px] text-primary/40 mt-1">Optionnel — le coût réel se calcule à la réception.</p>
             </div>
         </div>
@@ -421,12 +529,14 @@
                 <div>
                     <label class="text-xs text-primary/60">Nom de l'unité d'achat</label>
                     <input type="text" name="purchase_unit" maxlength="40" placeholder="Ex : sac de 50 kg, bidon de 20 L"
-                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none placeholder-primary/30">
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none placeholder-primary/30">
                 </div>
                 <div>
                     <label class="text-xs text-primary/60">Contenu, en unités de stock</label>
                     <input type="number" step="0.001" min="0.001" name="purchase_conversion" value="1"
-                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none">
                     <p class="text-[11px] text-primary/40 mt-1">Ex : 50 000 si l'article est suivi en grammes.</p>
                 </div>
             </div>
@@ -444,25 +554,44 @@
         </div>
 
         <x-slot:footer>
-            <button type="button" onclick="closeCreateItemModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Creer</button>
+            <button
+                type="button"
+                onclick="closeCreateItemModal()"
+                class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                    hover:bg-accent/20">Annuler</button>
+            <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary
+                text-white">Creer</button>
         </x-slot:footer>
     </x-modal>
 
     {{-- Edit item modals --}}
     @foreach($items as $item)
-        <x-modal id="edit-item-modal-{{ $item->id }}" title="Modifier {{ $item->name }}" max-width="max-w-2xl" formAction="{{ route('restaurant.pantry.items.update', $item) }}" closeAction="closeEditItemModal({{ $item->id }})">
+        <x-modal
+            id="edit-item-modal-{{ $item->id }}"
+            title="Modifier {{ $item->name }}"
+            max-width="max-w-2xl"
+            formAction="{{ route('restaurant.pantry.items.update', $item) }}"
+            closeAction="closeEditItemModal({{ $item->id }})">
             @method('PUT')
             <input type="hidden" name="form_type" value="edit_item_{{ $item->id }}">
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">Nom</label>
-                    <input type="text" name="name" value="{{ old('name', $item->name) }}" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    <input
+                        type="text"
+                        name="name"
+                        value="{{ old('name', $item->name) }}"
+                        required
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none">
                 </div>
                 <div>
                     <label class="text-xs text-primary/60">Categorie</label>
-                    <select name="restaurant_pantry_category_id" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                    <select
+                        name="restaurant_pantry_category_id"
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                            focus:border-secondary outline-none">
                         <option value="">Aucune</option>
                         @foreach($categories as $category)
                             <option value="{{ $category->id }}" @selected((string) $item->restaurant_pantry_category_id === (string) $category->id)>{{ $category->name }}</option>
@@ -474,7 +603,11 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                     <label class="text-xs text-primary/60">Unité de stock</label>
-                    <select name="unit" required class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white focus:border-secondary outline-none">
+                    <select
+                        name="unit"
+                        required
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                            focus:border-secondary outline-none">
                         @foreach($units as $u)
                             @php
                                 $val = is_array($u) ? $u['value'] : $u;
@@ -486,11 +619,24 @@
                 </div>
                 <div>
                     <label class="text-xs text-primary/60">Stock min</label>
-                    <input type="number" step="0.001" min="0" name="min_stock" value="{{ (float) $item->min_stock }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    <input
+                        type="number"
+                        step="0.001"
+                        min="0"
+                        name="min_stock"
+                        value="{{ (float) $item->min_stock }}"
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none">
                 </div>
                 <div>
                     <label class="text-xs text-primary/60">Coût unitaire de référence (FCFA)</label>
-                    <input type="number" min="0" name="cost_price" value="{{ $item->cost_price ? (int) ($item->cost_price / 100) : '' }}" class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                    <input
+                        type="number"
+                        min="0"
+                        name="cost_price"
+                        value="{{ $item->cost_price ? (int) ($item->cost_price / 100) : '' }}"
+                        class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                            focus:border-secondary outline-none">
                     <p class="text-[11px] text-primary/40 mt-1">
                         Coût moyen actuel : {{ number_format((float) $item->average_cost / 100, 2, ',', ' ') }} FCFA / {{ $item->unit }}
                         (recalculé à chaque réception).
@@ -505,13 +651,15 @@
                         <label class="text-xs text-primary/60">Nom de l'unité d'achat</label>
                         <input type="text" name="purchase_unit" value="{{ $item->purchase_unit }}" maxlength="40"
                             placeholder="Ex : sac de 50 kg, bidon de 20 L"
-                            class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none placeholder-primary/30">
+                            class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                                focus:border-secondary outline-none placeholder-primary/30">
                     </div>
                     <div>
                         <label class="text-xs text-primary/60">Contenu, en {{ $item->unit }}</label>
                         <input type="number" step="0.001" min="0.001" name="purchase_conversion"
                             value="{{ rtrim(rtrim(number_format($item->conversion(), 3, '.', ''), '0'), '.') }}"
-                            class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none">
+                            class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg
+                                focus:border-secondary outline-none">
                     </div>
                 </div>
             </div>
@@ -528,8 +676,13 @@
             </div>
 
             <x-slot:footer>
-                <button type="button" onclick="closeEditItemModal({{ $item->id }})" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
+                <button
+                    type="button"
+                    onclick="closeEditItemModal({{ $item->id }})"
+                    class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                        hover:bg-accent/20">Annuler</button>
+                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary
+                    text-white">Enregistrer</button>
             </x-slot:footer>
         </x-modal>
     @endforeach

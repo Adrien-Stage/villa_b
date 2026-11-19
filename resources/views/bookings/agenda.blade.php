@@ -14,7 +14,8 @@
         @module('restaurant')
             @droit('restaurant.banquets.voir')
                 <a href="{{ route('restaurant.banquets.index') }}"
-                   class="flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+                   class="flex items-center gap-2 px-3.5 py-2 bg-white border border-secondary/30 text-primary text-sm
+                       font-medium rounded-lg hover:bg-accent/20 transition-colors">
                     <i data-lucide="party-popper" class="w-4 h-4"></i>
                     Banquets
                 </a>
@@ -22,7 +23,8 @@
         @endmodule
         @droit('bookings.voir')
             <a href="{{ route('bookings.index') }}"
-               class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+               class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm
+                   font-medium rounded-lg hover:bg-accent/20 transition-colors">
                 <i data-lucide="list" class="w-4 h-4"></i>
                 Liste des réservations
             </a>
@@ -80,22 +82,38 @@
     </style>
     <div x-data="agendaReservations(window.calendarBookingsData)" class="flex flex-col flex-1 bg-white">
         <!-- Calendar Header -->
-        <div class="flex flex-col space-y-4 p-5 md:flex-row md:items-center md:justify-between md:space-y-0 border-b border-slate-100 bg-white">
+        <div class="flex flex-col space-y-4 p-5 md:flex-row md:items-center md:justify-between md:space-y-0 border-b
+            border-slate-100 bg-white">
 
             <!-- Left: Period Navigation -->
             <div class="flex items-center gap-3">
-                <button type="button" @click="reculer()" title="Période précédente" class="inline-flex items-center justify-center h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-50 border border-slate-200/50 rounded-lg transition-colors cursor-pointer">
+                <button
+                    type="button"
+                    @click="reculer()"
+                    title="Période précédente"
+                    class="inline-flex items-center justify-center h-8 w-8 text-slate-400 hover:text-slate-700
+                        hover:bg-slate-50 border border-slate-200/50 rounded-lg transition-colors cursor-pointer">
                     <i data-lucide="chevron-left" class="w-4 h-4"></i>
                 </button>
-                <h2 class="text-lg font-semibold text-slate-800 tracking-tight select-none min-w-44 text-center" x-text="periodeLabel"></h2>
-                <button type="button" @click="avancer()" title="Période suivante" class="inline-flex items-center justify-center h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-50 border border-slate-200/50 rounded-lg transition-colors cursor-pointer">
+                <h2
+                    class="text-lg font-semibold text-slate-800 tracking-tight select-none min-w-44 text-center"
+                    x-text="periodeLabel"></h2>
+                <button
+                    type="button"
+                    @click="avancer()"
+                    title="Période suivante"
+                    class="inline-flex items-center justify-center h-8 w-8 text-slate-400 hover:text-slate-700
+                        hover:bg-slate-50 border border-slate-200/50 rounded-lg transition-colors cursor-pointer">
                     <i data-lucide="chevron-right" class="w-4 h-4"></i>
                 </button>
             </div>
 
             <!-- Center: View Toggle Pill -->
-            <div class="inline-flex bg-slate-100 rounded-full p-0.5 border border-slate-200/50 shadow-inner select-none">
-                <template x-for="[valeur, libelle] in [['jour', 'Jour'], ['semaine', 'Semaine'], ['mois', 'Mois']]" :key="valeur">
+            <div class="inline-flex bg-slate-100 rounded-full p-0.5 border border-slate-200/50 shadow-inner
+                select-none">
+                <template
+                    x-for="[valeur, libelle] in [['jour', 'Jour'], ['semaine', 'Semaine'], ['mois', 'Mois']]"
+                    :key="valeur">
                     <button type="button"
                             @click="changerGrain(valeur)"
                             :class="grain === valeur
@@ -112,10 +130,17 @@
                     <input type="text"
                            x-model="searchQuery"
                            placeholder="Rechercher..."
-                           class="pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-800 placeholder-slate-400 outline-none focus:border-slate-300 w-full transition-all">
-                    <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                           class="pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-800
+                               placeholder-slate-400 outline-none focus:border-slate-300 w-full transition-all">
+                    <i
+                        data-lucide="search"
+                        class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 </div>
-                <button type="button" @click="goToToday()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-lg transition-colors cursor-pointer">
+                <button
+                    type="button"
+                    @click="goToToday()"
+                    class="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-50
+                        hover:bg-slate-100 border border-slate-200/80 rounded-lg transition-colors cursor-pointer">
                     Aujourd'hui
                 </button>
             </div>
@@ -126,7 +151,9 @@
             <div class="w-full flex flex-col xl:flex-1 xl:min-w-0">
 
                 <!-- Week Days Header -->
-                <div x-show="grain !== 'jour'" class="grid grid-cols-7 border-b border-slate-200 bg-[#FAFBFF] rounded-t-xl overflow-hidden">
+                <div
+                    x-show="grain !== 'jour'"
+                    class="grid grid-cols-7 border-b border-slate-200 bg-[#FAFBFF] rounded-t-xl overflow-hidden">
                     <div class="py-3 text-center text-[11px] font-semibold tracking-wider uppercase text-slate-500">
                         <span class="hidden sm:inline">Lundi</span>
                         <span class="sm:hidden">Lun</span>
@@ -167,7 +194,8 @@
                                  selectedIso === day.iso ? 'bg-indigo-50/20' : 'hover:bg-[#F8F9FF]',
                                  grain === 'mois' ? 'min-h-[90px] sm:min-h-[110px]' : 'min-h-[200px] sm:min-h-[280px]'
                              ]"
-                             class="relative flex flex-col border-r border-b border-slate-200 p-1.5 sm:p-2.5 cursor-pointer transition-colors group">
+                             class="relative flex flex-col border-r border-b border-slate-200 p-1.5 sm:p-2.5
+                                 cursor-pointer transition-colors group">
 
                             <header class="flex flex-wrap items-center justify-between gap-3 mb-1">
                                 <span :class="[
@@ -176,7 +204,8 @@
                                       ]"
                                       x-text="day.number"></span>
 
-                                <span class="hidden sm:inline-block text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200/50 rounded-full px-1.5 py-0.5"
+                                <span class="hidden sm:inline-block text-[9px] font-bold text-slate-400 bg-slate-100
+                                    border border-slate-200/50 rounded-full px-1.5 py-0.5"
                                       x-show="day.bookings.length"
                                       x-text="day.bookings.length"></span>
                             </header>
@@ -192,7 +221,8 @@
                                            'agenda-sejour--attente': !booking.is_firm,
                                            'agenda-sejour--depart': booking.check_out === day.iso,
                                        }"
-                                       class="agenda-sejour pl-2 pr-2 py-0.5 rounded-r text-[11px] font-medium leading-relaxed block truncate text-slate-700 transition-all"
+                                       class="agenda-sejour pl-2 pr-2 py-0.5 rounded-r text-[11px] font-medium
+                                           leading-relaxed block truncate text-slate-700 transition-all"
                                        :title="etiquette(booking, day.iso)">
                                         <span x-text="'Ch. ' + booking.room_number + ' — ' + booking.customer"></span>
                                     </a>
@@ -226,11 +256,15 @@
                         Une couleur par séjour
                     </span>
                     <span class="inline-flex items-center gap-1.5">
-                        <span class="agenda-sejour agenda-sejour--attente inline-block w-7 h-3.5 rounded-r" style="--sejour:#52514e"></span>
+                        <span
+                            class="agenda-sejour agenda-sejour--attente inline-block w-7 h-3.5 rounded-r"
+                            style="--sejour:#52514e"></span>
                         En attente de confirmation
                     </span>
                     <span class="inline-flex items-center gap-1.5">
-                        <span class="agenda-sejour agenda-sejour--depart inline-block w-7 h-3.5 rounded-r" style="--sejour:#52514e"></span>
+                        <span
+                            class="agenda-sejour agenda-sejour--depart inline-block w-7 h-3.5 rounded-r"
+                            style="--sejour:#52514e"></span>
                         Jour de départ (chambre libérée)
                     </span>
                     <span class="ml-auto inline-flex items-center gap-1.5 font-medium text-slate-600">
@@ -241,7 +275,8 @@
             </div>
 
             <!-- Details Panel : colonne de droite, la journée en un coup d'œil -->
-            <aside class="w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-xs xl:w-80 2xl:w-96 xl:flex-shrink-0 xl:self-start xl:sticky xl:top-0">
+            <aside class="w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-xs xl:w-80 2xl:w-96
+                xl:flex-shrink-0 xl:self-start xl:sticky xl:top-0">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
                     <i data-lucide="calendar" class="w-4 h-4 text-slate-500"></i>
                     Détails du jour
@@ -285,7 +320,8 @@
                 </div>
 
                 <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                    <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Séjours du jour</span>
+                    <span class="text-[10px] font-semibold uppercase tracking-wider
+                        text-slate-400">Séjours du jour</span>
                     <span class="text-[10px] font-semibold text-slate-500" x-text="selectedEvents.length"></span>
                 </div>
 
@@ -293,9 +329,13 @@
                     <template x-for="booking in selectedEvents" :key="booking.id">
                         <a :href="booking.url"
                            :style="'--sejour:' + booking.color"
-                           class="agenda-fiche block rounded-xl rounded-l-sm border border-l-0 border-slate-200/60 hover:border-slate-300 p-4 transition-all bg-white hover:bg-slate-50/50 shadow-2xs group">
+                           class="agenda-fiche block rounded-xl rounded-l-sm border border-l-0 border-slate-200/60
+                               hover:border-slate-300 p-4 transition-all bg-white hover:bg-slate-50/50 shadow-2xs
+                               group">
                             <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
-                                <span class="text-[10px] font-mono font-bold text-slate-400" x-text="booking.booking_number"></span>
+                                <span
+                                    class="text-[10px] font-mono font-bold text-slate-400"
+                                    x-text="booking.booking_number"></span>
                                 <span class="px-2 py-0.5 rounded-full text-[9px] font-bold"
                                       :class="[
                                           booking.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' : '',
@@ -306,7 +346,9 @@
                                       ]"
                                       x-text="booking.status_label"></span>
                             </div>
-                            <div class="text-xs font-bold text-slate-800 group-hover:text-slate-900 transition-colors" x-text="booking.customer"></div>
+                            <div
+                                class="text-xs font-bold text-slate-800 group-hover:text-slate-900 transition-colors"
+                                x-text="booking.customer"></div>
 
                             <div class="flex items-center gap-1.5 text-xs text-slate-500 mt-2">
                                 <i data-lucide="door-closed" class="w-3.5 h-3.5"></i>
@@ -317,20 +359,23 @@
                             <div class="mt-2 flex flex-wrap items-center gap-1.5"
                                  x-show="booking.check_in === selectedIso || booking.check_out === selectedIso">
                                 <span x-show="booking.check_in === selectedIso"
-                                      class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold border"
+                                      class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px]
+                                          font-bold border"
                                       :class="badgeArrivee(booking)">
                                     <i data-lucide="log-in" class="w-2.5 h-2.5"></i>
                                     <span x-text="estArrive(booking) ? 'Arrivé' : 'Arrivée attendue'"></span>
                                 </span>
                                 <span x-show="booking.check_out === selectedIso"
-                                      class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold border"
+                                      class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px]
+                                          font-bold border"
                                       :class="badgeDepart(booking)">
                                     <i data-lucide="log-out" class="w-2.5 h-2.5"></i>
                                     <span x-text="estParti(booking) ? 'Parti' : 'Départ attendu'"></span>
                                 </span>
                             </div>
 
-                            <div class="text-[10px] text-slate-400 mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-1">
+                            <div class="text-[10px] text-slate-400 mt-2.5 pt-2 border-t border-slate-100 flex
+                                items-center gap-1">
                                 <i data-lucide="clock" class="w-3 h-3"></i>
                                 <span x-text="'Du ' + formatShortDate(booking.check_in) + ' au ' + formatShortDate(booking.check_out)"></span>
                             </div>

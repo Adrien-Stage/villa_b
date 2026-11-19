@@ -29,7 +29,8 @@ class RestaurantCsvController extends Controller
     }
 
     private const MENU_HEADERS   = ['categorie', 'nom', 'description', 'type', 'prix_fcfa', 'services', 'actif'];
-    private const PANTRY_HEADERS = ['categorie', 'nom', 'unite', 'preparation', 'unite_achat', 'conversion_achat', 'cout_fcfa', 'stock_min', 'actif'];
+    private const PANTRY_HEADERS = ['categorie', 'nom', 'unite', 'preparation', 'unite_achat', 'conversion_achat',
+        'cout_fcfa', 'stock_min', 'actif'];
     private const RECIPE_HEADERS = [
         'nom_fiche', 'type', 'plat_menu', 'article_produit', 'rendement',
         'notes_fiche', 'ingredient', 'quantite', 'perte_pct', 'notes_ingredient',
@@ -84,8 +85,10 @@ class RestaurantCsvController extends Controller
         $restaurant = app(RestaurantContext::class)->exigerPourSaisie(Auth::user());
         $types = RestaurantMenuController::typesPour($restaurant);
 
-        $categoriesByName = RestaurantMenuCategory::duRestaurant($restaurant)->get()->keyBy(fn ($c) => mb_strtolower(trim($c->name)));
-        $existingNames    = RestaurantMenuItem::duRestaurant($restaurant)->pluck('name')->map(fn ($n) => mb_strtolower(trim($n)))->flip();
+        $categoriesByName = RestaurantMenuCategory::duRestaurant($restaurant)->get()
+            ->keyBy(fn ($c) => mb_strtolower(trim($c->name)));
+        $existingNames    = RestaurantMenuItem::duRestaurant($restaurant)->pluck('name')
+            ->map(fn ($n) => mb_strtolower(trim($n)))->flip();
 
         $created = 0;
         $skipped = 0;
@@ -106,7 +109,8 @@ class RestaurantCsvController extends Controller
 
             $type = mb_strtolower(trim((string) ($row['type'] ?? '')));
             if (!in_array($type, $types, true)) {
-                $errors[] = "Ligne {$line} : type « {$row['type']} » invalide (valeurs : " . implode(', ', $types) . ').';
+                $errors[] = "Ligne {$line} : type « {$row['type']} » invalide (valeurs : " . implode(', ', $types)
+                    . ').';
                 continue;
             }
 
@@ -188,7 +192,8 @@ class RestaurantCsvController extends Controller
         $restaurant = app(RestaurantContext::class)->exigerPourSaisie(Auth::user());
 
         $categoriesByName = RestaurantPantryCategory::all()->keyBy(fn ($c) => mb_strtolower(trim($c->name)));
-        $existingNames    = RestaurantPantryItem::duRestaurant($restaurant)->pluck('name')->map(fn ($n) => mb_strtolower(trim($n)))->flip();
+        $existingNames    = RestaurantPantryItem::duRestaurant($restaurant)->pluck('name')
+            ->map(fn ($n) => mb_strtolower(trim($n)))->flip();
 
         $created = 0;
         $skipped = 0;
@@ -209,7 +214,8 @@ class RestaurantCsvController extends Controller
 
             $unit = mb_strtolower(trim((string) ($row['unite'] ?? '')));
             if (!in_array($unit, self::PANTRY_UNITS, true)) {
-                $errors[] = "Ligne {$line} : unité « {$row['unite']} » invalide (valeurs : " . implode(', ', self::PANTRY_UNITS) . ').';
+                $errors[] = "Ligne {$line} : unité « {$row['unite']} » invalide (valeurs : " . implode(', ',
+                    self::PANTRY_UNITS) . ').';
                 continue;
             }
 
@@ -240,7 +246,8 @@ class RestaurantCsvController extends Controller
                 'is_prepared'         => $this->parseFlag($row['preparation'] ?? ''),
                 'purchase_unit'       => trim((string) ($row['unite_achat'] ?? '')) ?: null,
                 'purchase_conversion' => is_numeric($conversion) && (float) $conversion > 0 ? (float) $conversion : 1,
-                'min_stock'           => is_numeric($row['stock_min'] ?? null) ? (string) (float) $row['stock_min'] : '0',
+                'min_stock'           => is_numeric($row['stock_min']
+                    ?? null) ? (string) (float) $row['stock_min'] : '0',
                 'current_stock'       => '0', // alimenté par une réception ensuite
                 'cost_price'          => $costPrice,
                 'average_cost'        => $costPrice ?? 0,
@@ -264,22 +271,28 @@ class RestaurantCsvController extends Controller
     {
         if ($request->boolean('template')) {
             $templateRows = [
-                ['Ndolé aux crevettes & plantains mûrs vapeur', 'plat', 'Ndolé aux crevettes & plantains mûrs vapeur', '', '1', '', 'Sauce Ndole', '200', '0', ''],
-                ['Ndolé aux crevettes & plantains mûrs vapeur', 'plat', 'Ndolé aux crevettes & plantains mûrs vapeur', '', '1', '', 'Viande de Boeuf', '125', '20', ''],
-                ['Ndolé aux crevettes & plantains mûrs vapeur', 'plat', 'Ndolé aux crevettes & plantains mûrs vapeur', '', '1', '', 'Crevettes', '50', '0', ''],
-                ['Ndolé aux crevettes & plantains mûrs vapeur', 'plat', 'Ndolé aux crevettes & plantains mûrs vapeur', '', '1', '', 'Plantain mûr', '2', '0', ''],
+                ['Ndolé aux crevettes & plantains mûrs vapeur', 'plat', 'Ndolé aux crevettes & plantains mûrs vapeur',
+                    '', '1', '', 'Sauce Ndole', '200', '0', ''],
+                ['Ndolé aux crevettes & plantains mûrs vapeur', 'plat', 'Ndolé aux crevettes & plantains mûrs vapeur',
+                    '', '1', '', 'Viande de Boeuf', '125', '20', ''],
+                ['Ndolé aux crevettes & plantains mûrs vapeur', 'plat', 'Ndolé aux crevettes & plantains mûrs vapeur',
+                    '', '1', '', 'Crevettes', '50', '0', ''],
+                ['Ndolé aux crevettes & plantains mûrs vapeur', 'plat', 'Ndolé aux crevettes & plantains mûrs vapeur',
+                    '', '1', '', 'Plantain mûr', '2', '0', ''],
                 ['Sauce Ndole', 'preparation', '', 'Sauce Ndole', '5000', '', 'Feuilles de ndolé', '2000', '0', ''],
                 ['Sauce Ndole', 'preparation', '', 'Sauce Ndole', '5000', '', 'Arachide décortiquée', '1500', '0', ''],
                 ['Sauce Ndole', 'preparation', '', 'Sauce Ndole', '5000', '', 'Oignon', '400', '0', ''],
                 ['Sauce Ndole', 'preparation', '', 'Sauce Ndole', '5000', '', 'Huile', '400', '0', ''],
-                ['Sauce Ndole', 'preparation', '', 'Sauce Ndole', '5000', '', 'Crevettes séchées & épices', '100', '0', ''],
+                ['Sauce Ndole', 'preparation', '', 'Sauce Ndole', '5000', '', 'Crevettes séchées & épices', '100',
+                    '0', ''],
             ];
 
             if ($request->query('format') === 'csv') {
                 return $this->streamCsv('modele_fiches_techniques_restaurant.csv', self::RECIPE_HEADERS, $templateRows);
             }
 
-            return $this->streamXlsx('modele_fiches_techniques_restaurant.xlsx', 'Fiches Techniques', self::RECIPE_HEADERS, $templateRows);
+            return $this->streamXlsx('modele_fiches_techniques_restaurant.xlsx', 'Fiches Techniques',
+                self::RECIPE_HEADERS, $templateRows);
         }
 
         // « lines.item.recipe » : une ligne qui pointe une préparation doit
@@ -385,8 +398,10 @@ class RestaurantCsvController extends Controller
         // On importe les fiches d'un restaurant : celui qui est choisi.
         $restaurant = app(RestaurantContext::class)->exigerPourSaisie(Auth::user());
 
-        $menuItemsByName   = RestaurantMenuItem::duRestaurant($restaurant)->get()->keyBy(fn ($m) => mb_strtolower(trim($m->name)));
-        $pantryItemsByName = RestaurantPantryItem::duRestaurant($restaurant)->get()->keyBy(fn ($p) => mb_strtolower(trim($p->name)));
+        $menuItemsByName   = RestaurantMenuItem::duRestaurant($restaurant)->get()
+            ->keyBy(fn ($m) => mb_strtolower(trim($m->name)));
+        $pantryItemsByName = RestaurantPantryItem::duRestaurant($restaurant)->get()
+            ->keyBy(fn ($p) => mb_strtolower(trim($p->name)));
 
         $recipesByName = [];
         $created = 0;
@@ -538,7 +553,8 @@ class RestaurantCsvController extends Controller
             "Import des fiches techniques : {$created} ligne(s) traitée(s), " . count($errors) . ' erreur(s)',
             'restaurant');
 
-        return $this->csvImportRedirect('restaurant.recipes.index', [], $created, $skipped, $errors, 'ligne(s) de fiche technique traitée(s)');
+        return $this->csvImportRedirect('restaurant.recipes.index', [], $created, $skipped, $errors,
+            'ligne(s) de fiche technique traitée(s)');
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

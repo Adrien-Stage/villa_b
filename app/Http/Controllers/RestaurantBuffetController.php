@@ -62,7 +62,8 @@ class RestaurantBuffetController extends Controller
             // On ouvre le buffet d'un restaurant qui sert au buffet.
             'restaurant' => $restaurant,
             // Le buffet se sert en salle, dans un restaurant qui sert au buffet.
-            'peutOuvrirIci' => $restaurant !== null && $restaurant->sert(PointOfSale::MODE_BUFFET) && $restaurant->offre(PointOfSale::SERVICE_SALLE),
+            'peutOuvrirIci' => $restaurant !== null && $restaurant->sert(PointOfSale::MODE_BUFFET) && $restaurant
+                ->offre(PointOfSale::SERVICE_SALLE),
             'vueEnsemble' => $this->contexte->vueEnsemble($user),
             'repas' => RestaurantMenuItem::MEAL_SERVICES,
         ]);
@@ -93,7 +94,8 @@ class RestaurantBuffetController extends Controller
             ->exists();
 
         if ($doublon) {
-            return back()->withInput()->withErrors(['service_date' => 'Ce buffet est déjà ouvert pour ce repas et ce jour.']);
+            return back()->withInput()
+                ->withErrors(['service_date' => 'Ce buffet est déjà ouvert pour ce repas et ce jour.']);
         }
 
         $service = RestaurantBuffetService::create([
@@ -114,7 +116,8 @@ class RestaurantBuffetController extends Controller
 
     public function show(RestaurantBuffetService $buffet): View
     {
-        $buffet->load(['pointOfSale', 'openedBy:id,name', 'entries' => fn ($q) => $q->with(['recordedBy:id,name', 'booking.room', 'booking.customer'])->latest('id')]);
+        $buffet->load(['pointOfSale', 'openedBy:id,name', 'entries' => fn ($q) => $q->with(['recordedBy:id,name',
+            'booking.room', 'booking.customer'])->latest('id')]);
 
         $parMode = $buffet->entries->groupBy('payment_method')
             ->map(fn ($entrees) => ['nombre' => $entrees->count(), 'montant' => (int) $entrees->sum('amount')]);
@@ -165,7 +168,8 @@ class RestaurantBuffetController extends Controller
                 ->where('status', BookingStatus::CHECKED_IN)->first();
 
             if (! $sejour) {
-                return back()->withInput()->withErrors(['booking_id' => 'Choisissez un résident dont le séjour est en cours.']);
+                return back()->withInput()
+                    ->withErrors(['booking_id' => 'Choisissez un résident dont le séjour est en cours.']);
             }
         } else {
             $session = $this->circuit->ouverte(Auth::user(), 'restaurant');
@@ -240,7 +244,8 @@ class RestaurantBuffetController extends Controller
             'closed_at' => now(),
         ]);
 
-        $buffet->loadSum('entries as total', 'amount')->loadSum('entries as adultes', 'adults')->loadSum('entries as enfants', 'children');
+        $buffet->loadSum('entries as total', 'amount')->loadSum('entries as adultes', 'adults')
+            ->loadSum('entries as enfants', 'children');
 
         AuditLog::record(Auth::id(), 'buffet_closed', sprintf(
             'Buffet %s du %s clos (%s) : %d adulte(s), %d enfant(s), %s FCFA',

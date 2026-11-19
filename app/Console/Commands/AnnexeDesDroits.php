@@ -40,14 +40,15 @@ class AnnexeDesDroits extends Command
         'rooms' => 'Chambres', 'bookings' => 'Réservations', 'groups' => 'Groupes', 'agenda' => 'Agenda',
         'customers' => 'Clients', 'reception' => 'POS Réception', 'invoices' => 'Factures',
         'housekeeping' => 'Housekeeping', 'restaurant' => 'Restaurant', 'shop' => 'Boutique',
-        'economat' => 'Économat', 'technique' => 'Technique', 'accounting' => 'Comptabilité', 'achats' => 'Achats', 'pilotage' => 'Pilotage', 'analytics' => 'Analytique',
-        'editions' => 'Éditions', 'planning' => 'Planning', 'settings' => 'Paramètres', 'users' => 'Utilisateurs', 'droits' => 'Rôles & droits',
+        'economat' => 'Économat', 'technique' => 'Technique', 'accounting' => 'Comptabilité', 'achats' => 'Achats',
+            'pilotage' => 'Pilotage', 'analytics' => 'Analytique',
+        'editions' => 'Éditions', 'planning' => 'Planning', 'settings' => 'Paramètres', 'users' => 'Utilisateurs',
+            'droits' => 'Rôles & droits',
         'interventions' => 'Interventions', 'audit' => "Journal d'audit", 'support' => 'Support',
     ];
 
     public function handle(): int
     {
-        $catalogue = PermissionCatalog::all();
         $roles = array_values(array_filter(
             RoleCatalog::all(),
             static fn (array $r): bool => $r['statut'] === RoleCatalog::ACTIF && isset(self::COURTS[$r['slug']])
@@ -72,20 +73,7 @@ class AnnexeDesDroits extends Command
         ];
 
         foreach ($roles as $role) {
-            $droits = PermissionCatalog::forRole($role['slug']);
-            $actions = array_values(array_filter($droits, static fn (string $d): bool => ! PermissionCatalog::estLecture($d)));
-            $services = array_values(array_unique(array_map(
-                static fn (string $d): string => self::SERVICES[explode('.', $d)[0]] ?? explode('.', $d)[0],
-                $actions
-            )));
-
-            $lignes[] = sprintf('| %s (`%s`) | %s | %s | %d | %d | %s |',
-                $role['name'], $role['slug'],
-                $role['level'] === null ? 'transversal' : (string) $role['level'],
-                implode(', ', array_map(static fn (string $s): string => "`{$s}`", $role['includes'] ?? [])) ?: '—',
-                count($droits) - count($actions),
-                count($actions),
-                implode(', ', $services) ?: '—');
+            $lignes[] = $this->resumeRole($role);
         }
 
         $lignes[] = '';
@@ -94,43 +82,8 @@ class AnnexeDesDroits extends Command
         $lignes[] = '« ✓ » : le rôle détient le droit. La colonne **Nature** dit s\'il consulte ou s\'il agit.';
         $lignes[] = 'Seuls les rôles qui détiennent au moins un droit du service ont une colonne.';
 
-        $parService = [];
-        foreach ($catalogue as $droit => $detenteurs) {
-            $parService[explode('.', $droit)[0]][$droit] = $detenteurs;
-        }
-
-        foreach (self::SERVICES as $prefixe => $libelle) {
-            if (! isset($parService[$prefixe])) {
-                continue;
-            }
-
-            $droits = $parService[$prefixe];
-            ksort($droits);
-
-            $colonnes = array_values(array_filter($roles, static function (array $role) use ($droits): bool {
-                foreach ($droits as $detenteurs) {
-                    if (in_array($role['slug'], $detenteurs, true)) {
-                        return true;
-                    }
-                }
-
-                return false;
-            }));
-
-            $lignes[] = '';
-            $lignes[] = "### {$libelle}";
-            $lignes[] = '';
-            $lignes[] = '| Droit | Nature | '.implode(' | ', array_map(static fn (array $r): string => self::COURTS[$r['slug']], $colonnes)).' |';
-            $lignes[] = '|---|---|'.str_repeat(':-:|', count($colonnes));
-
-            foreach ($droits as $droit => $detenteurs) {
-                $cases = array_map(
-                    static fn (array $r): string => in_array($r['slug'], $detenteurs, true) ? '✓' : '',
-                    $colonnes
-                );
-
-                $lignes[] = "| `{$droit}` | ".(PermissionCatalog::estLecture($droit) ? 'consulte' : '**agit**').' | '.implode(' | ', $cases).' |';
-            }
+        foreach ($this->droitsParService() as $prefixe => $droits) {
+            array_push($lignes, ...$this->tableauService(self::SERVICES[$prefixe], $droits, $roles));
         }
 
         $chemin = base_path((string) $this->option('sortie'));
@@ -139,5 +92,75 @@ class AnnexeDesDroits extends Command
         $this->info("Annexe écrite : {$chemin}");
 
         return self::SUCCESS;
+    }
+
+    private function resumeRole(array $role): string
+    {
+        $droits = PermissionCatalog::forRole($role['slug']);
+        $actions = array_values(array_filter($droits, static fn (string $d): bool => ! PermissionCatalog::estLecture(
+            $d)));
+        $services = array_values(array_unique(array_map(
+            static fn (string $d): string => self::SERVICES[explode('.', $d)[0]] ?? explode('.', $d)[0],
+            $actions
+        )));
+
+        return sprintf('| %s (`%s`) | %s | %s | %d | %d | %s |',
+            $role['name'], $role['slug'],
+            $role['level'] === null ? 'transversal' : (string) $role['level'],
+            implode(', ', array_map(static fn (string $s): string => "`{$s}`", $role['includes'] ?? [])) ?: '—',
+            count($droits) - count($actions),
+            count($actions),
+            implode(', ', $services) ?: '—');
+    }
+
+    private function droitsParService(): array
+    {
+        $parService = [];
+        foreach (PermissionCatalog::all() as $droit => $detenteurs) {
+            $parService[explode('.', $droit)[0]][$droit] = $detenteurs;
+        }
+
+        $ordonnes = [];
+        foreach (array_keys(self::SERVICES) as $prefixe) {
+            if (isset($parService[$prefixe])) {
+                $ordonnes[$prefixe] = $parService[$prefixe];
+            }
+        }
+
+        return $ordonnes;
+    }
+
+    private function tableauService(string $libelle, array $droits, array $roles): array
+    {
+        $lignes = [];
+        ksort($droits);
+
+        $colonnes = array_values(array_filter($roles, static function (array $role) use ($droits): bool {
+            foreach ($droits as $detenteurs) {
+                if (in_array($role['slug'], $detenteurs, true)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }));
+
+        $lignes[] = '';
+        $lignes[] = "### {$libelle}";
+        $lignes[] = '';
+        $lignes[] = '| Droit | Nature | '.implode(' | ',
+            array_map(static fn (array $r): string => self::COURTS[$r['slug']], $colonnes)).' |';
+        $lignes[] = '|---|---|'.str_repeat(':-:|', count($colonnes));
+
+        foreach ($droits as $droit => $detenteurs) {
+            $cases = array_map(
+                static fn (array $r): string => in_array($r['slug'], $detenteurs, true) ? '✓' : '',
+                $colonnes
+            );
+
+            $lignes[] = "| `{$droit}` | ".(PermissionCatalog::estLecture($droit) ? 'consulte' : '**agit**').' | '
+                .implode(' | ', $cases).' |';
+        }
+        return $lignes;
     }
 }

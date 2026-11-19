@@ -15,7 +15,10 @@
             </p>
         </div>
         @droit('technique.demandes.creer')
-            <a href="{{ route('technique.demandes.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+            <a
+                href="{{ route('technique.demandes.create') }}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                    hover:bg-surface-dark transition-colors">
                 <i data-lucide="plus" class="w-4 h-4" aria-hidden="true"></i> Demander une intervention
             </a>
         @enddroit
@@ -33,7 +36,10 @@
             @endforeach
         </div>
         <label class="text-xs text-primary/70">Spécialité
-            <select name="specialite" class="mt-1 block rounded-lg border border-secondary/30 text-sm px-2 py-1.5" onchange="this.form.submit()">
+            <select
+                name="specialite"
+                class="mt-1 block rounded-lg border border-secondary/30 text-sm px-2 py-1.5"
+                onchange="this.form.submit()">
                 <option value="">Toutes</option>
                 @foreach(\App\Models\MaintenanceRequest::SPECIALTIES as $cle => $libelle)
                     <option value="{{ $cle }}" @selected(request('specialite') === $cle)>{{ $libelle }}</option>
@@ -41,7 +47,10 @@
             </select>
         </label>
         <label class="text-xs text-primary/70">Priorité
-            <select name="priorite" class="mt-1 block rounded-lg border border-secondary/30 text-sm px-2 py-1.5" onchange="this.form.submit()">
+            <select
+                name="priorite"
+                class="mt-1 block rounded-lg border border-secondary/30 text-sm px-2 py-1.5"
+                onchange="this.form.submit()">
                 <option value="">Toutes</option>
                 @foreach(\App\Models\MaintenanceRequest::PRIORITIES as $cle => $libelle)
                     <option value="{{ $cle }}" @selected(request('priorite') === $cle)>{{ $libelle }}</option>
@@ -50,7 +59,10 @@
         </label>
         @if($toutVoir)
             <label class="text-xs text-primary/70">Service
-                <select name="service" class="mt-1 block rounded-lg border border-secondary/30 text-sm px-2 py-1.5" onchange="this.form.submit()">
+                <select
+                    name="service"
+                    class="mt-1 block rounded-lg border border-secondary/30 text-sm px-2 py-1.5"
+                    onchange="this.form.submit()">
                     <option value="">Tous</option>
                     @foreach(\App\Models\StockRequisition::DEPARTMENTS as $cle => $libelle)
                         <option value="{{ $cle }}" @selected(request('service') === $cle)>{{ $libelle }}</option>

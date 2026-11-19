@@ -22,7 +22,8 @@ class InvoicePaymentController extends Controller
     public function store(Request $request, Invoice $invoice): RedirectResponse
     {
         if (!$invoice->isComplementaire()) {
-            return back()->withErrors(['payment' => 'La facture du séjour se règle depuis le séjour, pendant le séjour.']);
+            return back()->withErrors(
+                ['payment' => 'La facture du séjour se règle depuis le séjour, pendant le séjour.']);
         }
 
         $data = $request->validate([
@@ -66,7 +67,8 @@ class InvoicePaymentController extends Controller
                     'reference'                => $this->prochaineReference(),
                     'paid_at'                  => now(),
                     'processed_by'             => Auth::id(),
-                    'notes'                    => trim("Facture complémentaire {$facture->invoice_number}. " . ($data['notes'] ?? '')),
+                    'notes'                    => trim("Facture complémentaire {$facture->invoice_number}. "
+                        . ($data['notes'] ?? '')),
                     'cash_register_session_id' => $session->id,
                 ]);
 
@@ -84,7 +86,8 @@ class InvoicePaymentController extends Controller
         }
 
         AuditLog::record(Auth::id(), 'sensitive_action',
-            'Encaissement de ' . number_format($montant / 100, 0, ',', ' ') . " FCFA sur la facture complémentaire {$invoice->invoice_number}",
+            'Encaissement de ' . number_format($montant / 100, 0, ',', ' ')
+                . " FCFA sur la facture complémentaire {$invoice->invoice_number}",
             'bookings', ['invoice_id' => $invoice->id, 'reference' => $paiement->reference]);
 
         $circuit->enregistrerInterventionTiers(

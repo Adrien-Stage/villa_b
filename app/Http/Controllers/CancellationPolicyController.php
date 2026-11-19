@@ -12,7 +12,8 @@ class CancellationPolicyController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code'                     => ['required', 'string', 'max:50', 'alpha_dash', 'unique:cancellation_policies,code'],
+            'code'                     => ['required', 'string', 'max:50', 'alpha_dash',
+                'unique:cancellation_policies,code'],
             'name'                     => ['required', 'string', 'max:255'],
             'description'              => ['nullable', 'string', 'max:1000'],
             'penalty_type'             => ['required', Rule::in(array_keys(CancellationPolicy::PENALTY_TYPES))],
@@ -58,7 +59,8 @@ class CancellationPolicyController extends Controller
     public function update(Request $request, CancellationPolicy $cancellationPolicy)
     {
         $validated = $request->validate([
-            'code'                     => ['required', 'string', 'max:50', 'alpha_dash', Rule::unique('cancellation_policies', 'code')->ignore($cancellationPolicy->id)],
+            'code'                     => ['required', 'string', 'max:50', 'alpha_dash',
+                Rule::unique('cancellation_policies', 'code')->ignore($cancellationPolicy->id)],
             'name'                     => ['required', 'string', 'max:255'],
             'description'              => ['nullable', 'string', 'max:1000'],
             'penalty_type'             => ['required', Rule::in(array_keys(CancellationPolicy::PENALTY_TYPES))],

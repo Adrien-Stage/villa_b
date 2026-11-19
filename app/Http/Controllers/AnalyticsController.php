@@ -99,9 +99,12 @@ class AnalyticsController extends Controller
                 $chartLabels[] = Carbon::create()->month($i)->locale('fr')->shortMonthName;
                 // PostgreSQL EXTRACT returns float, so keys might be "1" or 1.0 depending on the driver. Casting to float handles both.
                 $monthKey = (string)$i;
-                $chartHotel[] = ($monthlyHotel->has($monthKey) ? $monthlyHotel[$monthKey]->total : ($monthlyHotel->has($i) ? $monthlyHotel[$i]->total : 0)) / 100;
-                $chartRestaurant[] = ($monthlyRestaurant->has($monthKey) ? $monthlyRestaurant[$monthKey]->total : ($monthlyRestaurant->has($i) ? $monthlyRestaurant[$i]->total : 0)) / 100;
-                $chartShop[] = ($monthlyShop->has($monthKey) ? $monthlyShop[$monthKey]->total : ($monthlyShop->has($i) ? $monthlyShop[$i]->total : 0)) / 100;
+                $chartHotel[] = ($monthlyHotel->has($monthKey) ? $monthlyHotel[$monthKey]->total : ($monthlyHotel
+                    ->has($i) ? $monthlyHotel[$i]->total : 0)) / 100;
+                $chartRestaurant[] = ($monthlyRestaurant->has($monthKey) ? $monthlyRestaurant[$monthKey]
+                    ->total : ($monthlyRestaurant->has($i) ? $monthlyRestaurant[$i]->total : 0)) / 100;
+                $chartShop[] = ($monthlyShop->has($monthKey) ? $monthlyShop[$monthKey]->total : ($monthlyShop
+                    ->has($i) ? $monthlyShop[$i]->total : 0)) / 100;
             }
         } else {
             // Group by day

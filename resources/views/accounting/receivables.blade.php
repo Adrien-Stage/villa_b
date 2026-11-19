@@ -17,7 +17,8 @@
 {{-- Cette page dit qui doit ; elle ne dit pas depuis quand. Pour relancer,
      c'est l'ancienneté qui compte — la balance âgée la donne. --}}
 <a href="{{ route('accounting.ledger.aged') }}"
-   class="flex items-center gap-2.5 px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70 leading-relaxed hover:bg-accent/30 transition-colors">
+   class="flex items-center gap-2.5 px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px]
+       text-primary/70 leading-relaxed hover:bg-accent/30 transition-colors">
     <i data-lucide="hourglass" class="w-4 h-4 text-primary/45 shrink-0"></i>
     <span>
         <strong>Instantané.</strong> Cette liste dit qui doit, pas depuis quand.
@@ -34,7 +35,9 @@
 {{-- Séjours --}}
 <section class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden mb-6">
     <div class="px-5 py-4 border-b border-secondary/15 bg-gray-50/50 flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-primary flex items-center gap-2"><i data-lucide="bed-double" class="w-4 h-4 text-primary/50"></i> Séjours — soldes dus</h2>
+        <h2 class="text-sm font-semibold text-primary flex items-center gap-2"><i
+            data-lucide="bed-double"
+            class="w-4 h-4 text-primary/50"></i> Séjours — soldes dus</h2>
         <span class="text-sm font-semibold text-primary">{{ $fcfa($creances['sejours']['total']) }}</span>
     </div>
     @if($creances['sejours']['items']->isEmpty())
@@ -44,11 +47,16 @@
             <table class="min-w-full divide-y divide-secondary/10">
                 <thead class="bg-accent/10">
                     <tr>
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Séjour</th>
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Client</th>
-                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-widest text-primary/50">Statut</th>
-                        <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Total</th>
-                        <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-widest text-primary/50">Solde dû</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-widest
+                            text-primary/50">Séjour</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-widest
+                            text-primary/50">Client</th>
+                        <th class="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-widest
+                            text-primary/50">Statut</th>
+                        <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-widest
+                            text-primary/50">Total</th>
+                        <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-widest
+                            text-primary/50">Solde dû</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-secondary/10">
@@ -58,7 +66,8 @@
                             <td class="px-4 py-2.5 text-sm text-primary/70">{{ trim(($b->customer->first_name ?? '') . ' ' . ($b->customer->last_name ?? '')) ?: '—' }}</td>
                             <td class="px-4 py-2.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600">{{ ucfirst(str_replace('_', ' ', $b->status->value ?? $b->status)) }}</span></td>
                             <td class="px-4 py-2.5 text-right text-sm text-primary/60 tabular-nums">{{ $fcfa((int) $b->total_amount) }}</td>
-                            <td class="px-4 py-2.5 text-right text-sm font-semibold text-amber-600 tabular-nums">{{ $fcfa((int) $b->balance_due) }}</td>
+                            <td class="px-4 py-2.5 text-right text-sm font-semibold text-amber-600
+                                tabular-nums">{{ $fcfa((int) $b->balance_due) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -71,7 +80,9 @@
     {{-- Commandes resto impayées --}}
     <section class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden">
         <div class="px-5 py-4 border-b border-secondary/15 bg-gray-50/50 flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-primary flex items-center gap-2"><i data-lucide="utensils" class="w-4 h-4 text-primary/50"></i> Restaurant — impayés</h2>
+            <h2 class="text-sm font-semibold text-primary flex items-center gap-2"><i
+                data-lucide="utensils"
+                class="w-4 h-4 text-primary/50"></i> Restaurant — impayés</h2>
             <span class="text-sm font-semibold text-primary">{{ $fcfa($creances['restaurant']['total']) }}</span>
         </div>
         @forelse($creances['restaurant']['items'] as $o)
@@ -87,7 +98,9 @@
     {{-- Commandes boutique impayées --}}
     <section class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden">
         <div class="px-5 py-4 border-b border-secondary/15 bg-gray-50/50 flex items-center justify-between">
-            <h2 class="text-sm font-semibold text-primary flex items-center gap-2"><i data-lucide="shopping-bag" class="w-4 h-4 text-primary/50"></i> Boutique — impayés</h2>
+            <h2 class="text-sm font-semibold text-primary flex items-center gap-2"><i
+                data-lucide="shopping-bag"
+                class="w-4 h-4 text-primary/50"></i> Boutique — impayés</h2>
             <span class="text-sm font-semibold text-primary">{{ $fcfa($creances['boutique']['total']) }}</span>
         </div>
         @forelse($creances['boutique']['items'] as $o)

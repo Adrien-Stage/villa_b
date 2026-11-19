@@ -23,7 +23,8 @@
     {{-- Actions --}}
     <div class="flex items-center gap-2">
         <button onclick="window.print()"
-            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm
+                font-medium rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="printer" class="w-4 h-4"></i>
             Imprimer
         </button>
@@ -118,8 +119,10 @@
     <div class="px-8 py-4">
         <div class="grid grid-cols-12 gap-4 py-2 border-b border-secondary/20 mb-1">
             <div class="col-span-6 text-xs font-semibold uppercase tracking-widest text-primary/40">Département</div>
-            <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">Montant (FCFA)</div>
-            <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">Part (%)</div>
+            <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40
+                text-right">Montant (FCFA)</div>
+            <div class="col-span-3 text-xs font-semibold uppercase tracking-widest text-primary/40
+                text-right">Part (%)</div>
         </div>
 
         <div class="grid grid-cols-12 gap-4 py-3 border-b border-secondary/10 items-center">

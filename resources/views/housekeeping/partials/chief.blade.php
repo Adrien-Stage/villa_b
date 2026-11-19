@@ -100,13 +100,15 @@
     <div class="flex flex-wrap gap-2">
         @droit('housekeeping.minibar.voir')
             <a href="{{ route('housekeeping.minibar.index') }}"
-               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary
+                   text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
                 <i data-lucide="wine" class="w-4 h-4"></i> Mini-bars
             </a>
         @enddroit
         @droit('housekeeping.journal.voir')
             <a href="{{ route('housekeeping.journal.index') }}"
-               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 bg-white text-primary
+                   text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
                 <i data-lucide="list-checks" class="w-4 h-4"></i> Suivi des chambres
             </a>
         @enddroit
@@ -175,7 +177,8 @@
             <button type="button"
                 @click="setTab('pipeline')"
                 :class="activeTab === 'pipeline' ? 'border-primary text-primary font-bold bg-primary/5' : 'border-transparent text-primary/60 hover:text-primary hover:border-secondary/30'"
-                class="flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm whitespace-nowrap rounded-t-lg transition-all cursor-pointer">
+                class="flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm whitespace-nowrap rounded-t-lg
+                    transition-all cursor-pointer">
                 <i data-lucide="layout-grid" class="w-4 h-4"></i>
                 <span>Pipeline du cycle</span>
                 <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">
@@ -186,7 +189,8 @@
             <button type="button"
                 @click="setTab('affectation')"
                 :class="activeTab === 'affectation' ? 'border-primary text-primary font-bold bg-primary/5' : 'border-transparent text-primary/60 hover:text-primary hover:border-secondary/30'"
-                class="flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm whitespace-nowrap rounded-t-lg transition-all cursor-pointer">
+                class="flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm whitespace-nowrap rounded-t-lg
+                    transition-all cursor-pointer">
                 <i data-lucide="user-check" class="w-4 h-4"></i>
                 <span>Centre d'affectation</span>
                 @if($unassignedCount > 0)
@@ -203,7 +207,8 @@
             <button type="button"
                 @click="setTab('recouches')"
                 :class="activeTab === 'recouches' ? 'border-primary text-primary font-bold bg-primary/5' : 'border-transparent text-primary/60 hover:text-primary hover:border-secondary/30'"
-                class="flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm whitespace-nowrap rounded-t-lg transition-all cursor-pointer">
+                class="flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm whitespace-nowrap rounded-t-lg
+                    transition-all cursor-pointer">
                 <i data-lucide="bed-double" class="w-4 h-4"></i>
                 <span>Recouches</span>
                 <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
@@ -214,7 +219,8 @@
             <button type="button"
                 @click="setTab('equipes')"
                 :class="activeTab === 'equipes' ? 'border-primary text-primary font-bold bg-primary/5' : 'border-transparent text-primary/60 hover:text-primary hover:border-secondary/30'"
-                class="flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm whitespace-nowrap rounded-t-lg transition-all cursor-pointer">
+                class="flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm whitespace-nowrap rounded-t-lg
+                    transition-all cursor-pointer">
                 <i data-lucide="users" class="w-4 h-4"></i>
                 <span>Équipes & Effectifs</span>
                 <span class="ml-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-secondary/10 text-primary/70">
@@ -225,7 +231,8 @@
             <button type="button"
                 @click="setTab('problemes')"
                 :class="activeTab === 'problemes' ? 'border-primary text-primary font-bold bg-primary/5' : 'border-transparent text-primary/60 hover:text-primary hover:border-secondary/30'"
-                class="flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm whitespace-nowrap rounded-t-lg transition-all cursor-pointer">
+                class="flex items-center gap-2 px-4 py-2.5 border-b-2 text-sm whitespace-nowrap rounded-t-lg
+                    transition-all cursor-pointer">
                 <i data-lucide="alert-triangle" class="w-4 h-4"></i>
                 <span>Signalements & Maintenance</span>
                 @php
@@ -258,7 +265,8 @@
         </div>
 
         @if($activeRooms->isEmpty())
-            <div class="bg-white rounded-xl shadow-sm p-10 text-center text-primary/40 border border-dashed border-secondary/30">
+            <div class="bg-white rounded-xl shadow-sm p-10 text-center text-primary/40 border border-dashed
+                border-secondary/30">
                 <i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 text-emerald-500"></i>
                 <p class="font-medium text-primary">Toutes les chambres de départ sont nettoyées et remises en vente.</p>
                 <p class="text-xs text-primary/50 mt-1">Aucune chambre ne requiert d'attention particulière pour le moment.</p>
@@ -270,14 +278,16 @@
 
                     @if($status === 'dirty')
                         {{-- À NETTOYER --}}
-                        <div class="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm flex flex-col justify-between">
+                        <div class="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm flex flex-col
+                            justify-between">
                             <div>
                                 <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                                     <div>
                                         <h3 class="font-heading font-bold text-red-900 text-lg">Chambre {{ $room->number }}</h3>
                                         <p class="text-xs text-red-700 font-medium">{{ $room->roomType->name }}</p>
                                     </div>
-                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-200 text-red-800 uppercase tracking-widest">À nettoyer</span>
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-200 text-red-800
+                                        uppercase tracking-widest">À nettoyer</span>
                                 </div>
                                 @php $prioInfo = $priorityRooms->firstWhere('room.id', $room->id); @endphp
                                 @if($prioInfo)
@@ -288,21 +298,28 @@
                             </div>
                             <div class="mt-4 pt-3 border-t border-red-200/50">
                                 @if($room->activeHousekeepingAssignment)
-                                    <div class="px-3 py-2 bg-white/70 rounded-lg border border-red-200 text-xs text-red-800 mb-2 flex items-center justify-between">
+                                    <div class="px-3 py-2 bg-white/70 rounded-lg border border-red-200 text-xs
+                                        text-red-800 mb-2 flex items-center justify-between">
                                         <span>Assignée à :</span>
                                         <span class="font-bold">{{ $room->activeHousekeepingAssignment->team?->name ?? 'Équipe non assignée' }}</span>
                                     </div>
                                     <form method="POST" action="{{ route('housekeeping.clean', $room) }}">
                                         @csrf
-                                        <button type="submit" class="w-full py-2 bg-yellow-600 text-white rounded-lg text-xs font-semibold hover:bg-yellow-700 transition flex items-center justify-center gap-1.5 shadow-xs">
+                                        <button
+                                            type="submit"
+                                            class="w-full py-2 bg-yellow-600 text-white rounded-lg text-xs
+                                                font-semibold hover:bg-yellow-700 transition flex items-center
+                                                justify-center gap-1.5 shadow-xs">
                                             <i data-lucide="play" class="w-4 h-4"></i> Commencer le nettoyage
                                         </button>
                                     </form>
                                 @else
-                                    <div class="px-3 py-2 bg-white/70 rounded-lg border border-red-200 text-xs text-red-800 mb-2 flex items-center justify-between">
+                                    <div class="px-3 py-2 bg-white/70 rounded-lg border border-red-200 text-xs
+                                        text-red-800 mb-2 flex items-center justify-between">
                                         <span class="italic text-primary/60">Non encore assignée</span>
                                         <button type="button" @click="setTab('affectation', 'depart')"
-                                            class="px-2.5 py-1 bg-red-600 text-white rounded-md text-xs font-semibold hover:bg-red-700 transition flex items-center gap-1 cursor-pointer">
+                                            class="px-2.5 py-1 bg-red-600 text-white rounded-md text-xs font-semibold
+                                                hover:bg-red-700 transition flex items-center gap-1 cursor-pointer">
                                             <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Affecter
                                         </button>
                                     </div>
@@ -312,14 +329,16 @@
 
                     @elseif($status === 'cleaning')
                         {{-- EN NETTOYAGE --}}
-                        <div class="rounded-xl border border-yellow-300 bg-yellow-50 p-4 shadow-sm flex flex-col justify-between">
+                        <div class="rounded-xl border border-yellow-300 bg-yellow-50 p-4 shadow-sm flex flex-col
+                            justify-between">
                             <div>
                                 <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                                     <div>
                                         <h3 class="font-heading font-bold text-yellow-900 text-lg">Chambre {{ $room->number }}</h3>
                                         <p class="text-xs text-yellow-800 font-medium">{{ $room->roomType->name }}</p>
                                     </div>
-                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-yellow-200 text-yellow-900 uppercase tracking-widest flex items-center gap-1">
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-yellow-200
+                                        text-yellow-900 uppercase tracking-widest flex items-center gap-1">
                                         <i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> En cours
                                     </span>
                                 </div>
@@ -336,13 +355,19 @@
                             <div class="mt-4 pt-3 border-t border-yellow-200 flex gap-2">
                                 @if(\App\Services\MinibarService::releveDuAuMenage($room))
                                     <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
-                                       class="flex-1 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition flex items-center justify-center gap-1.5 shadow-xs">
+                                       class="flex-1 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold
+                                           hover:bg-amber-700 transition flex items-center justify-center gap-1.5
+                                           shadow-xs">
                                         <i data-lucide="wine" class="w-4 h-4"></i> Relevé du mini-bar
                                     </a>
                                 @else
                                 <form method="POST" action="{{ route('housekeeping.ready', $room) }}" class="flex-1">
                                     @csrf
-                                    <button type="submit" class="w-full py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700 transition flex items-center justify-center gap-1.5 shadow-xs">
+                                    <button
+                                        type="submit"
+                                        class="w-full py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold
+                                            hover:bg-purple-700 transition flex items-center justify-center gap-1.5
+                                            shadow-xs">
                                         <i data-lucide="check" class="w-4 h-4"></i> Marquer nettoyée
                                     </button>
                                 </form>
@@ -350,7 +375,8 @@
                                 <button type="button"
                                         onclick="window.openHousekeepingIssueModal({{ $room->id }}, '{{ addslashes($room->number) }}', '{{ route('housekeeping.issue', $room) }}')"
                                         @click="$dispatch('open-issue-modal', { roomId: {{ $room->id }}, roomNumber: '{{ $room->number }}', actionUrl: '{{ route('housekeeping.issue', $room) }}' })"
-                                        class="px-3 py-2 bg-white border border-yellow-300 text-yellow-800 rounded-lg text-xs hover:bg-yellow-100 transition cursor-pointer"
+                                        class="px-3 py-2 bg-white border border-yellow-300 text-yellow-800 rounded-lg
+                                            text-xs hover:bg-yellow-100 transition cursor-pointer"
                                         title="Signaler un problème">
                                     <i data-lucide="alert-triangle" class="w-4 h-4"></i>
                                 </button>
@@ -359,14 +385,16 @@
 
                     @elseif($status === 'clean')
                         {{-- À CONTRÔLER --}}
-                        <div class="rounded-xl border border-purple-200 bg-purple-50 p-4 shadow-sm flex flex-col justify-between">
+                        <div class="rounded-xl border border-purple-200 bg-purple-50 p-4 shadow-sm flex flex-col
+                            justify-between">
                             <div>
                                 <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                                     <div>
                                         <h3 class="font-heading font-bold text-purple-900 text-lg">Chambre {{ $room->number }}</h3>
                                         <p class="text-xs text-purple-700 font-medium">{{ $room->roomType->name }}</p>
                                     </div>
-                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-200 text-purple-800 uppercase tracking-widest">À contrôler</span>
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-200
+                                        text-purple-800 uppercase tracking-widest">À contrôler</span>
                                 </div>
                                 @php
                                     $fait = $room->latestHousekeepingAssignment;
@@ -380,20 +408,31 @@
                             <div class="mt-4 pt-3 border-t border-purple-200 flex gap-2">
                                 @if($room->aUnMiniBar() && !$room->miniBarComplet())
                                     <a href="{{ route('housekeeping.minibar.rooms.show', $room) }}"
-                                       class="flex-1 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold hover:bg-amber-700 transition flex items-center justify-center gap-1.5 shadow-xs">
+                                       class="flex-1 py-2 bg-amber-600 text-white rounded-lg text-xs font-semibold
+                                           hover:bg-amber-700 transition flex items-center justify-center gap-1.5
+                                           shadow-xs">
                                         <i data-lucide="package-plus" class="w-4 h-4"></i> Recharger le mini-bar
                                     </a>
                                 @else
                                 <form method="POST" action="{{ route('housekeeping.inspect', $room) }}" class="flex-1">
                                     @csrf
-                                    <button type="submit" class="w-full py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700 transition flex items-center justify-center gap-1.5 shadow-xs">
+                                    <button
+                                        type="submit"
+                                        class="w-full py-2 bg-purple-600 text-white rounded-lg text-xs font-semibold
+                                            hover:bg-purple-700 transition flex items-center justify-center gap-1.5
+                                            shadow-xs">
                                         <i data-lucide="check-circle" class="w-4 h-4"></i> Valider (conforme)
                                     </button>
                                 </form>
                                 <form method="POST" action="{{ route('housekeeping.reject', $room) }}" class="w-10">
                                     @csrf
                                     <input type="hidden" name="reason" value="Contrôle non conforme">
-                                    <button type="submit" class="w-full h-full bg-white border border-purple-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-200 transition flex items-center justify-center cursor-pointer" title="Refuser (renvoyer au nettoyage)">
+                                    <button
+                                        type="submit"
+                                        class="w-full h-full bg-white border border-purple-200 text-red-600 rounded-lg
+                                            hover:bg-red-50 hover:border-red-200 transition flex items-center
+                                            justify-center cursor-pointer"
+                                        title="Refuser (renvoyer au nettoyage)">
                                         <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                                     </button>
                                 </form>
@@ -403,14 +442,16 @@
 
                     @elseif($status === 'inspected')
                         {{-- CONTRÔLÉE : prête à être remise à la vente --}}
-                        <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm flex flex-col justify-between">
+                        <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm flex flex-col
+                            justify-between">
                             <div>
                                 <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
                                     <div>
                                         <h3 class="font-heading font-bold text-emerald-900 text-lg">Chambre {{ $room->number }}</h3>
                                         <p class="text-xs text-emerald-700 font-medium">{{ $room->roomType->name }}</p>
                                     </div>
-                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-200 text-emerald-800 uppercase tracking-widest">Contrôlée</span>
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-200
+                                        text-emerald-800 uppercase tracking-widest">Contrôlée</span>
                                 </div>
                                 <p class="text-xs text-emerald-800/80 mb-4">
                                     Chambre contrôlée conforme par la gouvernante, prête pour la réception.
@@ -419,7 +460,11 @@
                             <div class="mt-4 pt-3 border-t border-emerald-200">
                                 <form method="POST" action="{{ route('housekeeping.available', $room) }}">
                                     @csrf
-                                    <button type="submit" class="w-full py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition flex items-center justify-center gap-1.5 shadow-xs">
+                                    <button
+                                        type="submit"
+                                        class="w-full py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold
+                                            hover:bg-emerald-700 transition flex items-center justify-center gap-1.5
+                                            shadow-xs">
                                         <i data-lucide="door-open" class="w-4 h-4"></i> Rendre disponible
                                     </button>
                                 </form>
@@ -457,18 +502,24 @@
             </div>
 
             @if($assignableRooms->isEmpty())
-                <div class="rounded-xl border border-dashed border-secondary/30 px-6 py-12 text-sm text-primary/40 text-center">
+                <div class="rounded-xl border border-dashed border-secondary/30 px-6 py-12 text-sm text-primary/40
+                    text-center">
                     <i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 text-emerald-500"></i>
                     <p class="font-medium text-primary">Toutes les chambres sont propres ou déjà libérées.</p>
                     <p class="text-xs text-primary/50 mt-1">Aucune chambre à nettoyer ni recouche en attente actuellement.</p>
                 </div>
             @elseif($teams->isEmpty())
-                <div class="rounded-xl border border-dashed border-amber-300 bg-amber-50/50 px-6 py-10 text-sm text-amber-800 text-center">
+                <div class="rounded-xl border border-dashed border-amber-300 bg-amber-50/50 px-6 py-10 text-sm
+                    text-amber-800 text-center">
                     <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2 text-amber-600"></i>
                     <p class="font-semibold">Aucune équipe de nettoyage active.</p>
                     <p class="text-xs mt-1 text-amber-700">Vous devez créer au moins une équipe pour pouvoir lui confier des chambres.</p>
                     @droit('housekeeping.teams.creer')
-                        <button type="button" @click="setTab('equipes')" class="mt-4 px-4 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-surface-dark transition inline-flex items-center gap-1.5 cursor-pointer">
+                        <button
+                            type="button"
+                            @click="setTab('equipes')"
+                            class="mt-4 px-4 py-2 bg-primary text-white rounded-lg text-xs font-semibold
+                                hover:bg-surface-dark transition inline-flex items-center gap-1.5 cursor-pointer">
                             <i data-lucide="users" class="w-4 h-4"></i> Aller à la création des équipes
                         </button>
                     @enddroit
@@ -484,7 +535,11 @@
                                 <label class="block text-xs font-semibold text-primary mb-1.5">
                                     Équipe destinataire <span class="text-red-500">*</span>
                                 </label>
-                                <select name="housekeeping_team_id" required class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary focus:outline-none focus:border-secondary shadow-xs">
+                                <select
+                                    name="housekeeping_team_id"
+                                    required
+                                    class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary focus:outline-none focus:border-secondary shadow-xs">
                                     <option value="">Choisir une équipe…</option>
                                     @foreach($teams as $team)
                                         <option value="{{ $team->id }}">
@@ -498,10 +553,15 @@
                                     Consignes & instructions particulières (optionnel)
                                 </label>
                                 <input type="text" name="notes" placeholder="Ex: Priorité arrivée VIP 14h, draps changés, lit bébé..."
-                                    class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white text-primary focus:outline-none focus:border-secondary shadow-xs">
+                                    class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-xl bg-white
+                                        text-primary focus:outline-none focus:border-secondary shadow-xs">
                             </div>
                             <div class="md:col-span-2">
-                                <button type="submit" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider bg-primary text-white hover:bg-surface-dark transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer">
+                                <button
+                                    type="submit"
+                                    class="w-full py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider
+                                        bg-primary text-white hover:bg-surface-dark transition shadow-xs flex
+                                        items-center justify-center gap-1.5 cursor-pointer">
                                     <i data-lucide="send" class="w-4 h-4"></i>
                                     <span>Affecter</span>
                                 </button>
@@ -537,7 +597,10 @@
 
                         <div class="flex items-center gap-2">
                             @if($distinctFloors->count() > 1)
-                                <select x-model="floorFilter" class="px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-secondary">
+                                <select
+                                    x-model="floorFilter"
+                                    class="px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white
+                                        text-primary focus:outline-none focus:border-secondary">
                                     <option value="all">Tous les étages</option>
                                     @foreach($distinctFloors as $fl)
                                         <option value="{{ $fl }}">Étage {{ $fl }}</option>
@@ -546,13 +609,22 @@
                             @endif
 
                             <input type="text" x-model="searchRoom" placeholder="N° chambre..."
-                                class="px-3 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary w-28 focus:outline-none focus:border-secondary">
+                                class="px-3 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                                    w-28 focus:outline-none focus:border-secondary">
 
-                            <button type="button" @click="toggleAll(true)" class="px-2.5 py-1.5 text-xs text-secondary hover:text-primary font-medium transition cursor-pointer">
+                            <button
+                                type="button"
+                                @click="toggleAll(true)"
+                                class="px-2.5 py-1.5 text-xs text-secondary hover:text-primary font-medium transition
+                                    cursor-pointer">
                                 Tout cocher
                             </button>
                             <span class="text-secondary/30">|</span>
-                            <button type="button" @click="toggleAll(false)" class="px-2.5 py-1.5 text-xs text-primary/50 hover:text-primary transition cursor-pointer">
+                            <button
+                                type="button"
+                                @click="toggleAll(false)"
+                                class="px-2.5 py-1.5 text-xs text-primary/50 hover:text-primary transition
+                                    cursor-pointer">
                                 Décocher
                             </button>
                         </div>
@@ -564,10 +636,12 @@
                             @foreach($assignableRooms as $item)
                                 <label data-assign-row
                                     x-show="matchesFilters('{{ $item['kind'] }}', {{ $item['is_assigned'] ? 'true' : 'false' }}, '{{ $item['floor'] ?? '' }}', '{{ $item['number'] }}')"
-                                    class="flex items-center gap-3.5 px-4 py-3 text-xs text-primary hover:bg-accent/5 cursor-pointer transition select-none">
+                                    class="flex items-center gap-3.5 px-4 py-3 text-xs text-primary hover:bg-accent/5
+                                        cursor-pointer transition select-none">
                                     <input type="checkbox" name="room_ids[]" value="{{ $item['id'] }}"
                                         @change="updateSelectedCount()"
-                                        class="assign-room-checkbox dirty-room-checkbox rounded border-secondary/40 text-primary focus:ring-primary w-4 h-4">
+                                        class="assign-room-checkbox dirty-room-checkbox rounded border-secondary/40
+                                            text-primary focus:ring-primary w-4 h-4">
                                     <div class="w-16">
                                         <span class="font-heading font-bold text-sm text-primary">Ch. {{ $item['number'] }}</span>
                                     </div>
@@ -596,11 +670,14 @@
                                     </div>
                                     <div class="w-44 text-right">
                                         @if($item['is_assigned'])
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg
+                                                text-[11px] font-medium bg-amber-50 text-amber-800 border
+                                                border-amber-200">
                                                 <i data-lucide="users" class="w-3 h-3"></i> {{ $item['assigned_team'] }}
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] text-gray-500 bg-gray-100">
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px]
+                                                text-gray-500 bg-gray-100">
                                                 Non affectée
                                             </span>
                                         @endif
@@ -615,7 +692,11 @@
                         <div class="text-xs text-primary/70">
                             <span x-text="selectedCount" class="font-bold text-primary text-sm">0</span> chambre(s) sélectionnée(s)
                         </div>
-                        <button type="submit" class="px-6 py-2.5 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors shadow-xs flex items-center gap-2 cursor-pointer">
+                        <button
+                            type="submit"
+                            class="px-6 py-2.5 rounded-xl text-sm font-semibold bg-primary text-white
+                                hover:bg-surface-dark transition-colors shadow-xs flex items-center gap-2
+                                cursor-pointer">
                             <i data-lucide="check-check" class="w-4 h-4"></i>
                             <span>Confier les chambres sélectionnées à l'équipe</span>
                         </button>
@@ -636,14 +717,19 @@
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-xs text-primary/50">{{ $occupiedRooms->count() }} chambre{{ $occupiedRooms->count() > 1 ? 's' : '' }} occupée{{ $occupiedRooms->count() > 1 ? 's' : '' }}</span>
-                <button type="button" @click="setTab('affectation', 'recouche')" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition cursor-pointer">
+                <button
+                    type="button"
+                    @click="setTab('affectation', 'recouche')"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs
+                        font-semibold hover:bg-blue-700 transition cursor-pointer">
                     <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Affecter des recouches
                 </button>
             </div>
         </div>
 
         @if($occupiedRooms->isEmpty())
-            <div class="bg-white rounded-xl shadow-sm p-8 text-center text-sm text-primary/40 border border-dashed border-secondary/30">
+            <div class="bg-white rounded-xl shadow-sm p-8 text-center text-sm text-primary/40 border border-dashed
+                border-secondary/30">
                 <i data-lucide="bed-double" class="w-8 h-8 mx-auto mb-2 text-primary/30"></i>
                 <p>Aucune chambre occupée pour le moment.</p>
             </div>
@@ -656,7 +742,8 @@
             {{-- Recouches en cours ou affectées --}}
             @if($aFaire->isNotEmpty())
                 <div>
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-primary/60 mb-3">Recouches confiées aux équipes ({{ $aFaire->count() }})</h3>
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-primary/60
+                        mb-3">Recouches confiées aux équipes ({{ $aFaire->count() }})</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-6">
                         @foreach($aFaire as $room)
                             @include('housekeeping.partials.stayover-card', ['room' => $room])
@@ -673,18 +760,24 @@
                             <h3 class="font-heading font-semibold text-primary text-sm">Chambres occupées en attente d'affectation</h3>
                             <p class="text-xs text-primary/50">Ces chambres sont occupées et n'ont pas encore été confiées à une équipe pour la recouche du jour.</p>
                         </div>
-                        <button type="button" @click="setTab('affectation', 'recouche')" class="px-4 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-surface-dark transition flex items-center gap-1.5 cursor-pointer">
+                        <button
+                            type="button"
+                            @click="setTab('affectation', 'recouche')"
+                            class="px-4 py-2 bg-primary text-white rounded-lg text-xs font-semibold
+                                hover:bg-surface-dark transition flex items-center gap-1.5 cursor-pointer">
                             <i data-lucide="user-plus" class="w-4 h-4"></i> Affecter ces {{ $libres->count() }} recouches
                         </button>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         @foreach($libres as $room)
                             @php $derniere = $room->latestHousekeepingAssignment; @endphp
-                            <div class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-secondary/20 bg-gray-50/70 text-xs text-primary">
+                            <div class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-secondary/20
+                                bg-gray-50/70 text-xs text-primary">
                                 <span class="font-bold text-sm">Ch. {{ $room->number }}</span>
                                 <span class="text-primary/50">{{ $room->roomType->name }}</span>
                                 @if($derniere?->isRecouche() && $derniere->status === 'completed' && $derniere->completed_at?->isToday())
-                                    <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-medium border border-emerald-200">
+                                    <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px]
+                                        font-medium border border-emerald-200">
                                         Faite à {{ $derniere->completed_at->format('H:i') }}@if($derniere->completedBy) par {{ $derniere->completedBy->name }}@endif
                                     </span>
                                 @endif
@@ -709,16 +802,31 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs text-primary/50 mb-1.5">Nom</label>
-                        <input type="text" id="create-team-name" name="name" required class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-secondary">
+                        <input
+                            type="text"
+                            id="create-team-name"
+                            name="name"
+                            required
+                            class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                                focus:outline-none focus:border-secondary">
                     </div>
                     <div>
                         <label class="block text-xs text-primary/50 mb-1.5">Code</label>
-                        <input type="text" id="create-team-code" name="code" placeholder="HK-1" class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-secondary">
+                        <input
+                            type="text"
+                            id="create-team-code"
+                            name="code"
+                            placeholder="HK-1"
+                            class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                                focus:outline-none focus:border-secondary">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs text-primary/50 mb-1.5">Chef d'équipe</label>
-                    <select name="leader_id" class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-secondary">
+                    <select
+                        name="leader_id"
+                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                            focus:outline-none focus:border-secondary">
                         <option value="">Aucun chef désigné</option>
                         @foreach($staff as $member)
                             <option value="{{ $member->id }}">{{ $member->name }}</option>
@@ -727,10 +835,16 @@
                 </div>
                 <div>
                     <label class="block text-xs text-primary/50 mb-2">Membres</label>
-                    <div class="max-h-40 overflow-y-auto rounded-lg border border-secondary/20 divide-y divide-secondary/10">
+                    <div class="max-h-40 overflow-y-auto rounded-lg border border-secondary/20 divide-y
+                        divide-secondary/10">
                         @forelse($staff as $member)
-                            <label class="flex items-center gap-3 px-3 py-2 text-xs text-primary hover:bg-accent/5 cursor-pointer">
-                                <input type="checkbox" name="member_ids[]" value="{{ $member->id }}" class="rounded border-secondary/40 text-primary focus:ring-primary">
+                            <label class="flex items-center gap-3 px-3 py-2 text-xs text-primary hover:bg-accent/5
+                                cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    name="member_ids[]"
+                                    value="{{ $member->id }}"
+                                    class="rounded border-secondary/40 text-primary focus:ring-primary">
                                 <span class="flex-1">{{ $member->name }}</span>
                             </label>
                         @empty
@@ -739,7 +853,10 @@
                     </div>
                 </div>
                 <textarea name="notes" rows="2" class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-secondary resize-none" placeholder="Zone, étage, spécialité…"></textarea>
-                <button type="submit" class="w-full py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark transition-colors cursor-pointer">Enregistrer l'équipe</button>
+                <button
+                    type="submit"
+                    class="w-full py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark
+                        transition-colors cursor-pointer">Enregistrer l'équipe</button>
             </form>
         </div>
         @enddroit
@@ -751,18 +868,21 @@
                     <h2 class="font-heading font-semibold text-primary text-sm">Équipes en activité</h2>
                     <p class="text-xs text-primary/50">Équipes constituées et effectifs assignés.</p>
                 </div>
-                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-secondary/10 text-primary">{{ $teams->count() }} équipe{{ $teams->count() > 1 ? 's' : '' }}</span>
+                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-secondary/10
+                    text-primary">{{ $teams->count() }} équipe{{ $teams->count() > 1 ? 's' : '' }}</span>
             </div>
             @if($teams->isEmpty())
                 <div class="px-5 py-10 text-sm text-primary/40 text-center">Aucune équipe créée pour l'instant.</div>
             @else
                 <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
                     @foreach($teams as $team)
-                        <div class="rounded-xl border border-secondary/20 p-4 bg-accent/10 flex flex-col justify-between">
+                        <div class="rounded-xl border border-secondary/20 p-4 bg-accent/10 flex flex-col
+                            justify-between">
                             <div class="mb-3">
                                 <div class="flex flex-wrap items-start justify-between gap-2 mb-1.5">
                                     <h3 class="font-heading font-semibold text-primary text-base">{{ $team->name }}</h3>
-                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-white border border-secondary/20 text-primary/80">
+                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-white border
+                                        border-secondary/20 text-primary/80">
                                         {{ $team->activeAssignments->count() }} ch. en cours
                                     </span>
                                 </div>
@@ -774,7 +894,8 @@
                                 <p class="text-[11px] text-primary/50 mb-1.5">Membres ({{ $team->members->count() }}) :</p>
                                 <div class="flex flex-wrap gap-1.5">
                                     @forelse($team->members as $member)
-                                        <span class="px-2 py-0.5 rounded-full bg-white border border-secondary/20 text-[11px] text-primary/70">
+                                        <span class="px-2 py-0.5 rounded-full bg-white border border-secondary/20
+                                            text-[11px] text-primary/70">
                                             {{ $member->name }}
                                         </span>
                                     @empty
@@ -804,7 +925,8 @@
                         </h2>
                         <p class="text-xs text-red-900/60">Immobilisées pour intervention technique — elles redeviendront « À nettoyer » dès clôture des travaux.</p>
                     </div>
-                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
+                    <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border
+                        border-red-200">
                         {{ $maintenanceRooms->count() }} en panne
                     </span>
                 </div>
@@ -822,7 +944,8 @@
                                         <span class="font-bold text-sm text-red-950">Chambre {{ $room->number }}</span>
                                         <p class="text-[11px] text-primary/60">{{ $room->roomType->name }} · Étage {{ $room->floor ?? 'RDC' }}</p>
                                     </div>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-700">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider
+                                        bg-red-100 text-red-700">
                                         En réparation
                                     </span>
                                 </div>
@@ -832,9 +955,13 @@
                                     </p>
                                 @endif
                             </div>
-                            <div class="mt-3 pt-2.5 border-t border-red-100 flex items-center justify-between text-[11px]">
+                            <div class="mt-3 pt-2.5 border-t border-red-100 flex items-center justify-between
+                                text-[11px]">
                                 @if($techReq)
-                                    <a href="{{ route('technique.demandes.show', $techReq) }}" class="inline-flex items-center gap-1 font-semibold text-orange-700 hover:text-orange-900 transition">
+                                    <a
+                                        href="{{ route('technique.demandes.show', $techReq) }}"
+                                        class="inline-flex items-center gap-1 font-semibold text-orange-700
+                                            hover:text-orange-900 transition">
                                         <i data-lucide="wrench" class="w-3.5 h-3.5"></i>
                                         <span>{{ $techReq->reference }} ({{ $techReq->statusLabel() }})</span>
                                     </a>
@@ -876,28 +1003,38 @@
                                 @endif
                             </div>
                             @if($assignment->isIssueTechnique() || $assignment->room->status->value === 'maintenance')
-                                <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-800 text-[11px] font-semibold border border-red-200 inline-flex items-center gap-1">
+                                <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-800 text-[11px] font-semibold
+                                    border border-red-200 inline-flex items-center gap-1">
                                     <i data-lucide="wrench" class="w-3 h-3"></i> Problème technique
                                 </span>
                             @elseif($assignment->isIssueInterne())
-                                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[11px] font-semibold border border-amber-300 inline-flex items-center gap-1">
+                                <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[11px]
+                                    font-semibold border border-amber-300 inline-flex items-center gap-1">
                                     <i data-lucide="package-search" class="w-3 h-3"></i> Besoin interne étages
                                 </span>
                             @else
-                                <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-[11px] font-medium border border-red-200">Incident</span>
+                                <span class="px-2 py-0.5 rounded-full bg-red-50 text-red-700 text-[11px] font-medium
+                                    border border-red-200">Incident</span>
                             @endif
                         </div>
 
-                        <p class="text-xs text-primary/80 bg-gray-50 p-2.5 rounded-lg border border-secondary/20 mt-1 mb-2.5">
+                        <p class="text-xs text-primary/80 bg-gray-50 p-2.5 rounded-lg border border-secondary/20 mt-1
+                            mb-2.5">
                             {{ $assignment->issue_notes }}
                         </p>
 
                         <div class="flex flex-wrap items-center gap-2">
                             {{-- Action A : Résolution pour besoin interne (savon, linge, réassort) --}}
                             @if($assignment->isIssueInterne())
-                                <form method="POST" action="{{ route('housekeeping.resolve_issue', $assignment->room) }}">
+                                <form
+                                    method="POST"
+                                    action="{{ route('housekeeping.resolve_issue', $assignment->room) }}">
                                     @csrf
-                                    <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-xs cursor-pointer">
+                                    <button
+                                        type="submit"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold
+                                            rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition
+                                            shadow-xs cursor-pointer">
                                         <i data-lucide="check" class="w-3.5 h-3.5" aria-hidden="true"></i> Marquer résolu / Réapprovisionné
                                     </button>
                                 </form>
@@ -910,12 +1047,19 @@
                                     : null;
                             @endphp
                             @if($intervention)
-                                <a href="{{ route('technique.demandes.show', $intervention) }}" class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg bg-orange-50 text-orange-800 border border-orange-200 hover:bg-orange-100 transition">
+                                <a
+                                    href="{{ route('technique.demandes.show', $intervention) }}"
+                                    class="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-lg
+                                        bg-orange-50 text-orange-800 border border-orange-200 hover:bg-orange-100
+                                        transition">
                                     <i data-lucide="wrench" class="w-3.5 h-3.5" aria-hidden="true"></i>
                                     {{ $intervention->reference }} · {{ $intervention->statusLabel() }}{{ $intervention->technician ? ' · ' . $intervention->technician->name : '' }}
                                 </a>
                             @elseif(\App\Services\MaintenanceService::actif())
-                                <form method="POST" action="{{ route('housekeeping.transmettre_technique', $assignment->room) }}" class="inline-flex items-center">
+                                <form
+                                    method="POST"
+                                    action="{{ route('housekeeping.transmettre_technique', $assignment->room) }}"
+                                    class="inline-flex items-center">
                                     @csrf
                                     <input type="hidden" name="notes" value="{{ $assignment->issue_notes }}">
                                     <button type="submit"

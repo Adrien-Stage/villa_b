@@ -58,7 +58,8 @@ class HousekeepingMinibarController extends Controller
     public function depot(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'service_store_id' => ['nullable', 'integer', Rule::exists('service_stores', 'id')->where('is_active', true)],
+            'service_store_id' => ['nullable', 'integer', Rule::exists('service_stores', 'id')->where('is_active',
+                true)],
         ], [
             'service_store_id.exists' => 'Choisissez un dépôt en service.',
         ]);
@@ -66,9 +67,11 @@ class HousekeepingMinibarController extends Controller
         $depot = isset($data['service_store_id']) ? ServiceStore::find($data['service_store_id']) : null;
         $this->minibars->choisirDepot($depot);
 
-        AuditLog::record(Auth::id(), 'minibar_depot', 'Dépôt du mini-bar : ' . ($depot?->name ?? 'aucun'), 'housekeeping');
+        AuditLog::record(Auth::id(), 'minibar_depot', 'Dépôt du mini-bar : ' . ($depot?->name ?? 'aucun'),
+            'housekeeping');
 
-        return back()->with('success', $depot ? "Les mini-bars se rechargent depuis le dépôt {$depot->name}." : 'Dépôt du mini-bar retiré.');
+        return back()->with('success',
+            $depot ? "Les mini-bars se rechargent depuis le dépôt {$depot->name}." : 'Dépôt du mini-bar retiré.');
     }
 
     public function storeArticle(Request $request): RedirectResponse
@@ -80,7 +83,8 @@ class HousekeepingMinibarController extends Controller
         }
 
         $data = $request->validate([
-            'stock_item_id' => ['required', 'integer', Rule::exists('stock_items', 'id'), Rule::unique('minibar_articles', 'stock_item_id')],
+            'stock_item_id' => ['required', 'integer', Rule::exists('stock_items', 'id'),
+                Rule::unique('minibar_articles', 'stock_item_id')],
             'name'          => ['nullable', 'string', 'max:120'],
             'price'         => ['required', 'integer', 'min:0', 'max:10000000'],
             'sort_order'    => ['nullable', 'integer', 'min:0', 'max:65535'],
@@ -99,7 +103,8 @@ class HousekeepingMinibarController extends Controller
             'is_active'     => true,
         ]);
 
-        AuditLog::record(Auth::id(), 'minibar_article', "Article du mini-bar ajouté : {$article->name}", 'housekeeping');
+        AuditLog::record(Auth::id(), 'minibar_article', "Article du mini-bar ajouté : {$article->name}",
+            'housekeeping');
 
         return back()->with('success', "« {$article->name} » ajouté au mini-bar.");
     }
@@ -123,7 +128,8 @@ class HousekeepingMinibarController extends Controller
 
         if ($avant !== $article->price) {
             AuditLog::record(Auth::id(), 'minibar_article', "Prix de « {$article->name} » : "
-                . number_format($avant / 100, 0, ',', ' ') . ' F → ' . number_format($article->price / 100, 0, ',', ' ') . ' F', 'housekeeping');
+                . number_format($avant / 100, 0, ',', ' ') . ' F → ' . number_format($article->price / 100, 0, ',', ' ')
+                    . ' F', 'housekeeping');
         }
 
         return back()->with('success', "« {$article->name} » mis à jour.");
@@ -143,9 +149,12 @@ class HousekeepingMinibarController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        AuditLog::record(Auth::id(), 'minibar_dotation', "Dotation du mini-bar du type {$roomType->name}", 'housekeeping');
+        AuditLog::record(Auth::id(), 'minibar_dotation', "Dotation du mini-bar du type {$roomType->name}",
+            'housekeeping');
 
-        return back()->with('success', "Dotation du type {$roomType->name} enregistrée et reportée sur {$nombre} chambre" . ($nombre > 1 ? 's' : '') . '.');
+        return back()->with('success',
+            "Dotation du type {$roomType->name} enregistrée et reportée sur {$nombre} chambre"
+            . ($nombre > 1 ? 's' : '') . '.');
     }
 
     /** Le mini-bar d'une chambre : contenu, relevé, rechargement, historique. */
@@ -196,7 +205,8 @@ class HousekeepingMinibarController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        AuditLog::record(Auth::id(), 'minibar_dotation', "Dotation du mini-bar de la chambre {$room->number}", 'housekeeping');
+        AuditLog::record(Auth::id(), 'minibar_dotation', "Dotation du mini-bar de la chambre {$room->number}",
+            'housekeeping');
 
         return back()->with('success', "Dotation du mini-bar de la chambre {$room->number} enregistrée.");
     }
@@ -237,7 +247,8 @@ class HousekeepingMinibarController extends Controller
 
         return back()->with($manquants === [] ? 'success' : 'warning',
             "Mini-bar de la chambre {$room->number} rechargé."
-            . ($manquants !== [] ? ' Le dépôt n\'avait pas tout : il manque encore ' . implode(', ', $manquants) . '.' : ''));
+            . ($manquants !== [] ? ' Le dépôt n\'avait pas tout : il manque encore ' . implode(', ', $manquants)
+                . '.' : ''));
     }
 
     /** Signaler un produit défectueux ou avarié dans le mini-bar. */

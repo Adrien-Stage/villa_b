@@ -59,8 +59,10 @@ class StockTransferService
 
                 // Transféré en cartons ou en paquets : la quantité se ramène à l'unité de l'article.
                 $conditionnement = trim((string) ($ligne['packaging'] ?? ''));
-                $conditionnement = $conditionnement === '' || $conditionnement === $item->unit ? null : $conditionnement;
-                $quantite = round((float) $ligne['quantity'] * ($conditionnement !== null ? $item->facteurDe($conditionnement) : 1.0), 3);
+                $conditionnement = $conditionnement === '' || $conditionnement === $item
+                    ->unit ? null : $conditionnement;
+                $quantite = round((float) $ligne['quantity'] * ($conditionnement !== null ? $item
+                    ->facteurDe($conditionnement) : 1.0), 3);
 
                 // Le moteur refuse une sortie sans stock et pendant un inventaire.
                 $sortie = $this->stock->recordOut(

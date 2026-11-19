@@ -5,7 +5,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Menu — {{ $tenant->name }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #faf6f0; }
@@ -20,7 +22,8 @@
 
 <body class="min-h-screen text-gray-800 pb-32">
     <!-- Header -->
-    <header class="sticky top-0 z-40 bg-[#faf6f0] px-4 md:px-8 py-5 flex flex-wrap items-center justify-between gap-4 border-b border-gray-200/50">
+    <header class="sticky top-0 z-40 bg-[#faf6f0] px-4 md:px-8 py-5 flex flex-wrap items-center justify-between gap-4
+        border-b border-gray-200/50">
         <!-- Logo -->
         <div class="flex flex-col">
             <h1 class="font-serif text-2xl md:text-3xl tracking-wide uppercase text-brand-dark">{{ $tenant->name }}</h1>
@@ -37,25 +40,32 @@
         <div class="flex items-center gap-3 ml-auto">
             <div class="relative hidden md:block w-72">
                 <input id="menu-search-desktop" type="text" placeholder="Rechercher un plat, une boisson..."
-                    class="w-full pl-9 pr-3 py-2 rounded-none border border-gray-300 bg-transparent text-sm outline-none focus:border-brand-dark transition-colors">
+                    class="w-full pl-9 pr-3 py-2 rounded-none border border-gray-300 bg-transparent text-sm
+                        outline-none focus:border-brand-dark transition-colors">
                 <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
             </div>
             
             <button type="button" onclick="toggleCategories()"
-                class="hidden md:inline-flex items-center justify-center h-10 w-10 border border-gray-300 bg-transparent hover:bg-white transition-colors">
+                class="hidden md:inline-flex items-center justify-center h-10 w-10 border border-gray-300
+                    bg-transparent hover:bg-white transition-colors">
                 <i data-lucide="list-filter" class="w-4 h-4 text-gray-600"></i>
             </button>
             
             <a href="#cart" onclick="openCart()" class="relative inline-flex items-center justify-center h-10 w-10">
                 <i data-lucide="shopping-cart" class="w-5 h-5 text-gray-700"></i>
-                <span id="cart-count-badge" class="hidden absolute top-0 right-0 h-4 min-w-[1rem] px-1 rounded-full flex items-center justify-center text-[9px] font-bold bg-gray-600 text-white translate-x-1/4 -translate-y-1/4"></span>
+                <span
+                    id="cart-count-badge"
+                    class="hidden absolute top-0 right-0 h-4 min-w-[1rem] px-1 rounded-full flex items-center
+                        justify-center text-[9px] font-bold bg-gray-600 text-white translate-x-1/4
+                        -translate-y-1/4"></span>
             </a>
         </div>
 
         <!-- Mobile Search (Full width on small screens) -->
         <div class="w-full md:hidden relative mt-2">
             <input id="menu-search-mobile" type="text" placeholder="Rechercher un plat, une boisson..."
-                class="w-full pl-9 pr-3 py-2.5 rounded-none border border-gray-300 bg-transparent text-sm outline-none focus:border-brand-dark transition-colors">
+                class="w-full pl-9 pr-3 py-2.5 rounded-none border border-gray-300 bg-transparent text-sm outline-none
+                    focus:border-brand-dark transition-colors">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
         </div>
     </header>
@@ -64,17 +74,20 @@
     <div id="category-bar" class="px-4 md:px-8 py-4">
         <div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
             <button type="button" data-cat="all" onclick="filterCategory('all')"
-                class="cat-chip px-5 py-1.5 rounded-full text-sm font-medium border border-brand-dark bg-brand-dark text-white whitespace-nowrap transition-colors">
+                class="cat-chip px-5 py-1.5 rounded-full text-sm font-medium border border-brand-dark bg-brand-dark
+                    text-white whitespace-nowrap transition-colors">
                 Tout
             </button>
             @foreach($categories as $category)
                 <button type="button" data-cat="{{ $category->id }}" onclick="filterCategory('{{ $category->id }}')"
-                    class="cat-chip px-5 py-1.5 rounded-full text-sm font-medium border border-gray-300 bg-transparent text-gray-600 hover:border-gray-400 whitespace-nowrap transition-colors">
+                    class="cat-chip px-5 py-1.5 rounded-full text-sm font-medium border border-gray-300 bg-transparent
+                        text-gray-600 hover:border-gray-400 whitespace-nowrap transition-colors">
                     {{ $category->name }}
                 </button>
             @endforeach
             <button type="button" data-cat="none" onclick="filterCategory('none')"
-                class="cat-chip px-5 py-1.5 rounded-full text-sm font-medium border border-gray-300 bg-transparent text-gray-600 hover:border-gray-400 whitespace-nowrap transition-colors">
+                class="cat-chip px-5 py-1.5 rounded-full text-sm font-medium border border-gray-300 bg-transparent
+                    text-gray-600 hover:border-gray-400 whitespace-nowrap transition-colors">
                 Autres
             </button>
         </div>
@@ -116,13 +129,15 @@
                     data-name="{{ $item->name }}"
                     data-price="{{ $item->price }}"
                     data-category="{{ $item->restaurant_menu_category_id ?? 'none' }}"
-                    class="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col transition-transform hover:-translate-y-1 hover:shadow-md duration-300">
+                    class="bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col transition-transform
+                        hover:-translate-y-1 hover:shadow-md duration-300">
                     
                     <!-- Image Area -->
                     <div class="h-48 w-full relative bg-gray-100">
                         <img src="{{ $imgUrl }}" alt="{{ $item->name }}" class="w-full h-full object-cover">
                         @if($badge)
-                            <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded text-[10px] font-bold tracking-wider text-gray-800 shadow-sm">
+                            <div class="absolute top-3 left-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded text-[10px]
+                                font-bold tracking-wider text-gray-800 shadow-sm">
                                 {{ $badge }}
                             </div>
                         @endif
@@ -130,7 +145,8 @@
 
                     <!-- Content Area -->
                     <div class="p-5 flex-1 flex flex-col">
-                        <h2 class="font-serif text-[1.15rem] leading-snug text-brand-dark font-medium">{{ $item->name }}</h2>
+                        <h2 class="font-serif text-[1.15rem] leading-snug text-brand-dark
+                            font-medium">{{ $item->name }}</h2>
                         @if($item->description)
                             <p class="text-xs text-gray-500 mt-1.5 line-clamp-2">{{ $item->description }}</p>
                         @endif
@@ -144,18 +160,23 @@
                                 <!-- Quantity Controls -->
                                 <div class="flex items-center gap-3 bg-[#f5f1eb] rounded-full px-1 py-1">
                                     <button type="button" onclick="decItem({{ $item->id }})"
-                                        class="h-8 w-8 rounded-full flex items-center justify-center text-gray-600 hover:bg-white hover:shadow-sm transition-all">
+                                        class="h-8 w-8 rounded-full flex items-center justify-center text-gray-600
+                                            hover:bg-white hover:shadow-sm transition-all">
                                         <i data-lucide="minus" class="w-3.5 h-3.5"></i>
                                     </button>
-                                    <span id="qty-{{ $item->id }}" class="w-4 text-center text-sm font-medium text-brand-dark">0</span>
+                                    <span
+                                        id="qty-{{ $item->id }}"
+                                        class="w-4 text-center text-sm font-medium text-brand-dark">0</span>
                                     <button type="button" onclick="incItem({{ $item->id }})"
-                                        class="h-8 w-8 rounded-full flex items-center justify-center text-gray-600 hover:bg-white hover:shadow-sm transition-all">
+                                        class="h-8 w-8 rounded-full flex items-center justify-center text-gray-600
+                                            hover:bg-white hover:shadow-sm transition-all">
                                         <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                                     </button>
                                 </div>
                                 <!-- Action Button -->
                                 <button type="button" id="btn-add-{{ $item->id }}" onclick="incItem({{ $item->id }})"
-                                    class="bg-brand-dark text-white px-5 py-2.5 rounded-full text-sm font-medium hover:bg-[#2c1e16] transition-colors whitespace-nowrap">
+                                    class="bg-brand-dark text-white px-5 py-2.5 rounded-full text-sm font-medium
+                                        hover:bg-[#2c1e16] transition-colors whitespace-nowrap">
                                     Ajouter
                                 </button>
                             </div>
@@ -167,10 +188,17 @@
     </main>
 
     <!-- Floating Action Bar -->
-    <div id="floating-cart" class="fixed bottom-6 inset-x-0 z-40 flex justify-center px-4 transition-transform translate-y-24 opacity-0 duration-300">
-        <div class="bg-brand-dark text-white rounded-full px-2 py-2 pr-2 w-full max-w-md shadow-2xl flex items-center justify-between">
+    <div
+        id="floating-cart"
+        class="fixed bottom-6 inset-x-0 z-40 flex justify-center px-4 transition-transform translate-y-24 opacity-0
+            duration-300">
+        <div class="bg-brand-dark text-white rounded-full px-2 py-2 pr-2 w-full max-w-md shadow-2xl flex items-center
+            justify-between">
             <div class="flex items-center gap-3 pl-2">
-                <div id="floating-cart-count" class="bg-white/20 text-white rounded-full h-8 w-8 flex items-center justify-center text-sm font-bold">
+                <div
+                    id="floating-cart-count"
+                    class="bg-white/20 text-white rounded-full h-8 w-8 flex items-center justify-center text-sm
+                        font-bold">
                     0
                 </div>
                 <div class="flex flex-col">
@@ -179,7 +207,8 @@
                 </div>
             </div>
             <button type="button" onclick="openCart()"
-                class="bg-white text-brand-dark px-5 py-2.5 rounded-full text-sm font-semibold flex items-center gap-2 hover:bg-gray-100 transition-colors">
+                class="bg-white text-brand-dark px-5 py-2.5 rounded-full text-sm font-semibold flex items-center gap-2
+                    hover:bg-gray-100 transition-colors">
                 Voir le panier
                 <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
@@ -189,13 +218,20 @@
     <!-- Cart Modal -->
     <div id="cart-modal" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center">
         <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onclick="closeCart()"></div>
-        <div id="cart" class="relative w-full sm:max-w-xl bg-[#faf6f0] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div
+            id="cart"
+            class="relative w-full sm:max-w-xl bg-[#faf6f0] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden
+                max-h-[90vh] flex flex-col">
             <div class="px-6 py-5 bg-white border-b border-gray-100 flex items-center justify-between">
                 <div>
                     <h3 class="font-serif text-xl font-medium text-brand-dark">Votre commande</h3>
                     <p class="text-xs text-gray-500 mt-1">Vérifiez vos articles avant de valider.</p>
                 </div>
-                <button type="button" onclick="closeCart()" class="h-10 w-10 rounded-full border border-gray-200 bg-white inline-flex items-center justify-center hover:bg-gray-50 transition-colors text-gray-500">
+                <button
+                    type="button"
+                    onclick="closeCart()"
+                    class="h-10 w-10 rounded-full border border-gray-200 bg-white inline-flex items-center
+                        justify-center hover:bg-gray-50 transition-colors text-gray-500">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -207,10 +243,20 @@
                     <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4">Informations (Optionnel)</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <input id="customer-name" type="text" class="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 bg-gray-50 outline-none focus:border-brand-dark focus:bg-white transition-colors" placeholder="Votre nom">
+                            <input
+                                id="customer-name"
+                                type="text"
+                                class="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 bg-gray-50
+                                    outline-none focus:border-brand-dark focus:bg-white transition-colors"
+                                placeholder="Votre nom">
                         </div>
                         <div>
-                            <input id="customer-phone" type="text" class="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 bg-gray-50 outline-none focus:border-brand-dark focus:bg-white transition-colors" placeholder="Numéro de téléphone">
+                            <input
+                                id="customer-phone"
+                                type="text"
+                                class="w-full px-4 py-2.5 text-sm rounded-xl border border-gray-200 bg-gray-50
+                                    outline-none focus:border-brand-dark focus:bg-white transition-colors"
+                                placeholder="Numéro de téléphone">
                         </div>
                     </div>
                     <div class="mt-4">
@@ -219,7 +265,11 @@
                 </div>
             </div>
 
-            <form id="order-form" method="POST" action="{{ route('portal.restaurant.store', ['tenant' => $tenant->slug]) }}" class="p-6 bg-white border-t border-gray-100 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
+            <form
+                id="order-form"
+                method="POST"
+                action="{{ route('portal.restaurant.store', ['tenant' => $tenant->slug]) }}"
+                class="p-6 bg-white border-t border-gray-100 shadow-[0_-10px_30px_rgba(0,0,0,0.03)]">
                 @csrf
                 @if($plusieurs && $restaurant)
                     <input type="hidden" name="restaurant" value="{{ $restaurant->slug }}">
@@ -230,7 +280,8 @@
                 <input type="hidden" name="items_json" id="items-json">
 
                 <div class="mb-5">
-                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Numéro de Table <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-400
+                        mb-2">Numéro de Table <span class="text-red-500">*</span></label>
                     <input id="table-number"
                            name="table_number"
                            type="text"
@@ -238,7 +289,8 @@
                            value="{{ $tableNumber }}"
                            placeholder="Ex: 12"
                            required
-                           class="w-full px-4 py-3 text-sm rounded-xl border border-gray-300 bg-white outline-none focus:border-brand-dark focus:ring-1 focus:ring-brand-dark transition-all">
+                           class="w-full px-4 py-3 text-sm rounded-xl border border-gray-300 bg-white outline-none
+                               focus:border-brand-dark focus:ring-1 focus:ring-brand-dark transition-all">
                 </div>
 
                 <div class="flex items-center justify-between gap-4 mt-2">
@@ -246,7 +298,11 @@
                         <span class="text-xs text-gray-500">Total de la commande</span>
                         <span id="cart-total-modal" class="font-serif text-2xl font-medium text-brand-dark">0 FCFA</span>
                     </div>
-                    <button id="submit-order" type="submit" class="inline-flex items-center justify-center gap-2 rounded-full bg-brand-dark text-white px-8 py-3.5 text-sm font-medium hover:bg-[#2c1e16] transition-colors shadow-md">
+                    <button
+                        id="submit-order"
+                        type="submit"
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-brand-dark text-white px-8
+                            py-3.5 text-sm font-medium hover:bg-[#2c1e16] transition-colors shadow-md">
                         Valider
                         <i data-lucide="check" class="w-4 h-4"></i>
                     </button>

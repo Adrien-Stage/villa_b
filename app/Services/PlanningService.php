@@ -66,7 +66,8 @@ class PlanningService
      * @param  Collection<int, User>|null  $personnel
      * @return Collection<int, WorkShift>
      */
-    public function quartsDuDepartement(Department $departement, ?Collection $affectations = null, ?Collection $personnel = null): Collection
+    public function quartsDuDepartement(Department $departement, ?Collection $affectations = null,
+        ?Collection $personnel = null): Collection
     {
         $departement->loadMissing('workRegime');
         $personnel ??= $this->personnel($departement);
@@ -187,16 +188,19 @@ class PlanningService
     }
 
     /** @throws ValidationException */
-    public function affecter(User $par, Department $departement, User $employe, WorkShift $quart, CarbonImmutable $jour): ShiftAssignment
+    public function affecter(User $par, Department $departement, User $employe, WorkShift $quart,
+        CarbonImmutable $jour): ShiftAssignment
     {
         $this->exigerDePouvoirPlanifier($par, $departement, self::lundi($jour));
 
         if ($employe->department_id !== $departement->id || ! $employe->is_active) {
-            throw ValidationException::withMessages(['user_id' => "{$employe->name} ne fait pas partie du personnel actif de ce service."]);
+            throw ValidationException::withMessages(
+                ['user_id' => "{$employe->name} ne fait pas partie du personnel actif de ce service."]);
         }
 
         if (! $quart->is_active) {
-            throw ValidationException::withMessages(['work_shift_id' => "Le quart « {$quart->name} » n'est plus en service."]);
+            throw ValidationException::withMessages(
+                ['work_shift_id' => "Le quart « {$quart->name} » n'est plus en service."]);
         }
 
         return ShiftAssignment::firstOrCreate(
@@ -232,12 +236,14 @@ class PlanningService
 
         DB::transaction(function () use ($departement, $lundi, $personnel, $quarts, $par, &$ajoutes) {
             foreach ($this->semaine($departement, $lundi->subWeek()) as $precedente) {
-                if (! in_array($precedente->user_id, $personnel, true) || ! in_array($precedente->work_shift_id, $quarts, true)) {
+                if (! in_array($precedente->user_id, $personnel, true) || ! in_array($precedente->work_shift_id,
+                    $quarts, true)) {
                     continue;
                 }
 
                 $copie = ShiftAssignment::firstOrCreate(
-                    ['user_id' => $precedente->user_id, 'date' => $precedente->jour()->addWeek()->toDateString(), 'work_shift_id' => $precedente->work_shift_id],
+                    ['user_id' => $precedente->user_id, 'date' => $precedente->jour()->addWeek()->toDateString(),
+                        'work_shift_id' => $precedente->work_shift_id],
                     ['department_id' => $departement->id, 'assigned_by' => $par->id, 'source' => 'manual']
                 );
                 $ajoutes += $copie->wasRecentlyCreated ? 1 : 0;
@@ -282,9 +288,11 @@ class PlanningService
     }
 
     /** La semaine a-t-elle changé depuis son dernier envoi ? Null si jamais envoyée. */
-    public function modifieeDepuisEnvoi(Department $departement, CarbonImmutable $lundi, ?ShiftWeek $semaine = null): ?bool
+    public function modifieeDepuisEnvoi(Department $departement, CarbonImmutable $lundi,
+        ?ShiftWeek $semaine = null): ?bool
     {
-        $semaine ??= ShiftWeek::query()->where('department_id', $departement->id)->where('week_start', $lundi->toDateString())->first();
+        $semaine ??= ShiftWeek::query()->where('department_id', $departement->id)->where('week_start',
+            $lundi->toDateString())->first();
 
         if ($semaine?->published_at === null) {
             return null;
@@ -348,7 +356,8 @@ class PlanningService
         $user->loadMissing(['workRegime', 'department.workRegime']);
         if ($user->department !== null && $user->regimeEffectif()?->estFixe()) {
             $lundiCourant = self::lundi();
-            foreach ([self::lundi($instant), self::lundi($instant)->addWeek(), self::lundi($instant)->addWeeks(2)] as $lundi) {
+            foreach ([self::lundi($instant), self::lundi($instant)->addWeek(), self::lundi($instant)
+                ->addWeeks(2)] as $lundi) {
                 if ($lundi->greaterThanOrEqualTo($lundiCourant)) {
                     $this->assurerPreRemplissage($user->department, $lundi);
                 }
@@ -374,7 +383,8 @@ class PlanningService
      */
     public function semainesAProgrammer(CarbonImmutable $lundi): Collection
     {
-        $envoyees = ShiftWeek::query()->where('week_start', $lundi->toDateString())->whereNotNull('published_at')->pluck('department_id')->all();
+        $envoyees = ShiftWeek::query()->where('week_start', $lundi->toDateString())->whereNotNull('published_at')
+            ->pluck('department_id')->all();
 
         return Department::query()->where('is_active', true)->whereNotIn('id', $envoyees)->with('workRegime')->get()
             ->filter(fn (Department $d) => $this->personnelEnQuarts($d)->isNotEmpty())
@@ -491,7 +501,8 @@ class PlanningService
      * d'aujourd'hui pour les personnes concernées (les retouches manuelles
      * restent intactes) et autorise le recalcul des semaines en cours et futures.
      */
-    public function invaliderPreRemplissageFutur(?Department $departement = null, ?User $user = null, ?WorkRegime $regime = null): void
+    public function invaliderPreRemplissageFutur(?Department $departement = null, ?User $user = null,
+        ?WorkRegime $regime = null): void
     {
         $aujourdhui = CarbonImmutable::today();
         $lundiCourant = self::lundi($aujourdhui)->toDateString();
@@ -526,7 +537,8 @@ class PlanningService
 
             $userIds = $userIds
                 ->merge(User::query()->where('work_regime_id', $regime->id)->pluck('id'))
-                ->when($deptIds->isNotEmpty(), fn ($c) => $c->merge(User::query()->whereIn('department_id', $deptIds)->pluck('id')))
+                ->when($deptIds->isNotEmpty(), fn ($c) => $c->merge(User::query()->whereIn('department_id', $deptIds)
+                    ->pluck('id')))
                 ->when($shiftIds->isNotEmpty(), fn ($c) => $c->merge(
                     ShiftAssignment::query()
                         ->whereIn('work_shift_id', $shiftIds)
@@ -572,7 +584,8 @@ class PlanningService
      */
     public function chefsDe(Department $departement): Collection
     {
-        $chefs = $this->personnel($departement)->filter(fn (User $u) => $this->resolveur->allows($u, self::DROIT_PLANIFIER));
+        $chefs = $this->personnel($departement)->filter(fn (User $u) => $this->resolveur->allows($u,
+            self::DROIT_PLANIFIER));
 
         if ($chefs->isNotEmpty()) {
             return $chefs->values();
@@ -591,14 +604,16 @@ class PlanningService
         }
 
         if (! $this->departementsPlanifiables($par)->contains('id', $departement->id)) {
-            throw ValidationException::withMessages(['departement' => "Vous ne planifiez pas le service « {$departement->name} »."]);
+            throw ValidationException::withMessages(
+                ['departement' => "Vous ne planifiez pas le service « {$departement->name} »."]);
         }
     }
 
     /** Empreinte des quarts d'une personne : change dès qu'un quart change. */
     private function signature(Collection $quarts): string
     {
-        return sha1($quarts->map(fn (ShiftAssignment $a) => $a->jour()->toDateString() . '#' . $a->work_shift_id)->sort()->implode('|'));
+        return sha1($quarts->map(fn (ShiftAssignment $a) => $a->jour()->toDateString() . '#' . $a->work_shift_id)
+            ->sort()->implode('|'));
     }
 
     /** @return list<array{jour: string, quart: string, horaire: string}> */

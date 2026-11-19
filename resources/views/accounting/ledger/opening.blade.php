@@ -11,7 +11,8 @@
 @include('accounting.ledger.partials.nav')
 
 @if(session('error'))
-    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm
+        text-red-700">{{ session('error') }}</div>
 @endif
 @if($errors->any())
     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -21,7 +22,8 @@
     </div>
 @endif
 
-<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70 leading-relaxed">
+<div class="px-4 py-3 mb-5 rounded-xl bg-accent/20 border border-secondary/20 text-[11px] text-primary/70
+    leading-relaxed">
     <strong>Continuité d'exploitation.</strong> Un établissement en activité ne démarre pas sa comptabilité à zéro :
     les soldes de bilan de l'exercice précédent (classes 1 à 5) sont reportés en ouverture. Les comptes de gestion,
     eux, repartent à zéro chaque année — ils ne figurent donc pas dans la liste ci-dessous.
@@ -31,7 +33,10 @@
 @if(!$exercice)
     <div class="bg-white rounded-xl border border-secondary/20 p-8 text-center">
         <p class="text-sm text-primary/70 mb-3">Aucun exercice n'est ouvert.</p>
-        <a href="{{ route('accounting.ledger.periods') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+        <a
+            href="{{ route('accounting.ledger.periods') }}"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                hover:bg-surface-dark transition-colors">
             Ouvrir un exercice
         </a>
     </div>
@@ -43,7 +48,10 @@
             Repris le {{ $exercice->opening_posted_at->format('d/m/Y à H:i') }}.
             Toute correction passe désormais par une contre-passation.
         </p>
-        <a href="{{ route('accounting.ledger.balance') }}" class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+        <a
+            href="{{ route('accounting.ledger.balance') }}"
+            class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                hover:bg-surface-dark transition-colors">
             Voir la balance
         </a>
     </div>
@@ -73,7 +81,11 @@
                 <p class="text-sm font-semibold text-primary">{{ $exercice->label }}</p>
                 <p class="text-xs text-primary/50">Écriture datée du {{ $exercice->starts_on->format('d/m/Y') }}</p>
             </div>
-            <button type="button" @click="ajouter()" class="inline-flex items-center gap-1.5 px-3 py-2 border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors">
+            <button
+                type="button"
+                @click="ajouter()"
+                class="inline-flex items-center gap-1.5 px-3 py-2 border border-secondary/30 text-primary text-xs
+                    font-semibold rounded-lg hover:bg-accent/20 transition-colors">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter une ligne
             </button>
         </div>
@@ -104,15 +116,21 @@
                                 <td class="px-3 py-2">
                                     <input type="number" step="1" min="0" :name="`lines[${i}][debit]`" x-model.number="l.debit"
                                            @input="if (l.debit > 0) l.credit = 0"
-                                           class="w-full text-right rounded-lg border border-secondary/25 bg-white text-xs p-2">
+                                           class="w-full text-right rounded-lg border border-secondary/25 bg-white
+                                               text-xs p-2">
                                 </td>
                                 <td class="px-3 py-2">
                                     <input type="number" step="1" min="0" :name="`lines[${i}][credit]`" x-model.number="l.credit"
                                            @input="if (l.credit > 0) l.debit = 0"
-                                           class="w-full text-right rounded-lg border border-secondary/25 bg-white text-xs p-2">
+                                           class="w-full text-right rounded-lg border border-secondary/25 bg-white
+                                               text-xs p-2">
                                 </td>
                                 <td class="px-4 py-2 text-center">
-                                    <button type="button" @click="retirer(i)" class="text-primary/35 hover:text-red-600 transition-colors" title="Retirer">
+                                    <button
+                                        type="button"
+                                        @click="retirer(i)"
+                                        class="text-primary/35 hover:text-red-600 transition-colors"
+                                        title="Retirer">
                                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
                                     </button>
                                 </td>
@@ -148,11 +166,15 @@
         </div>
 
         <div class="flex flex-col sm:flex-row justify-end gap-2">
-            <a href="{{ route('accounting.ledger.index') }}" class="px-5 py-2.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors text-center">
+            <a
+                href="{{ route('accounting.ledger.index') }}"
+                class="px-5 py-2.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg
+                    hover:bg-slate-50 transition-colors text-center">
                 Annuler
             </a>
             <button type="submit" :disabled="!equilibre"
-                    class="px-5 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                    class="px-5 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark
+                        transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                 Enregistrer les à-nouveaux
             </button>
         </div>

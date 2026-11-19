@@ -15,13 +15,15 @@
         <div class="flex items-center gap-3">
             <div x-data="{ open: false }" class="relative">
                 <button @click="open = !open" @click.away="open = false" 
-                        class="flex items-center gap-2 px-4 py-1.5 text-xs font-medium rounded-md bg-white border border-secondary/20 shadow-sm text-primary hover:bg-accent/20 transition-colors">
+                        class="flex items-center gap-2 px-4 py-1.5 text-xs font-medium rounded-md bg-white border
+                            border-secondary/20 shadow-sm text-primary hover:bg-accent/20 transition-colors">
                     <i data-lucide="printer" class="w-4 h-4 text-primary/70"></i>
                     Imprimer le rapport
                     <i data-lucide="chevron-down" class="w-3 h-3 ml-1 opacity-50"></i>
                 </button>
                 <div x-show="open" x-transition style="display: none;" 
-                     class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-secondary/20 py-1 z-50">
+                     class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-secondary/20 py-1
+                         z-50">
                     <a href="{{ route('analytics.print', ['period' => $period, 'year' => $year, 'department' => 'all']) }}" target="_blank"
                        class="block px-4 py-2 text-xs text-primary hover:bg-accent/20">Rapport Global</a>
                     <a href="{{ route('analytics.print', ['period' => $period, 'year' => $year, 'department' => 'hotel']) }}" target="_blank"
@@ -78,7 +80,8 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Chiffre d'Affaires Global -->
         <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-5 relative overflow-hidden group">
-            <div class="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-green-100 to-transparent opacity-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+            <div class="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-green-100 to-transparent opacity-50
+                rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
             <div class="flex justify-between items-start relative z-10">
                 <div>
                     <p class="text-xs font-medium text-primary/50 uppercase tracking-wider">CA Global</p>
@@ -97,7 +100,8 @@
 
         <!-- Revenus Hôtel -->
         <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-5 relative overflow-hidden group">
-            <div class="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-blue-100 to-transparent opacity-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+            <div class="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-blue-100 to-transparent opacity-50
+                rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
             <div class="flex justify-between items-start relative z-10">
                 <div>
                     <p class="text-xs font-medium text-primary/50 uppercase tracking-wider">Hébergement</p>
@@ -118,7 +122,8 @@
 
         <!-- Revenus Restaurant -->
         <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-5 relative overflow-hidden group">
-            <div class="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-orange-100 to-transparent opacity-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+            <div class="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-orange-100 to-transparent opacity-50
+                rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
             <div class="flex justify-between items-start relative z-10">
                 <div>
                     <p class="text-xs font-medium text-primary/50 uppercase tracking-wider">Restaurant</p>
@@ -139,7 +144,8 @@
 
         <!-- Revenus Boutique -->
         <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-5 relative overflow-hidden group">
-            <div class="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-purple-100 to-transparent opacity-50 rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+            <div class="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-purple-100 to-transparent opacity-50
+                rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
             <div class="flex justify-between items-start relative z-10">
                 <div>
                     <p class="text-xs font-medium text-primary/50 uppercase tracking-wider">Boutique</p>
@@ -223,10 +229,12 @@
             </div>
         </div>
         <!-- Espace pour d'autres KPIs futurs (taux d'occupation etc) -->
-        <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-5 flex items-center justify-center opacity-50 border-dashed">
+        <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-5 flex items-center justify-center
+            opacity-50 border-dashed">
             <p class="text-xs text-primary/40 text-center">Indicateur Taux d'Occupation<br>(À venir)</p>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-5 flex items-center justify-center opacity-50 border-dashed">
+        <div class="bg-white rounded-xl shadow-sm border border-secondary/10 p-5 flex items-center justify-center
+            opacity-50 border-dashed">
             <p class="text-xs text-primary/40 text-center">Indicateur Coût d'Acquisition<br>(À venir)</p>
         </div>
     </div>

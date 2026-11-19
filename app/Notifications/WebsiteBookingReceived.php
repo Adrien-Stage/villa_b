@@ -33,7 +33,8 @@ class WebsiteBookingReceived extends Notification
         $customer = $this->booking->customer
             ? trim($this->booking->customer->first_name . ' ' . $this->booking->customer->last_name)
             : 'Client';
-        $dates = ($this->booking->check_in?->format('d/m') ?? '?') . ' → ' . ($this->booking->check_out?->format('d/m') ?? '?');
+        $dates = ($this->booking->check_in?->format('d/m') ?? '?') . ' → ' . ($this->booking->check_out?->format('d/m')
+            ?? '?');
 
         return [
             'room' => $room,

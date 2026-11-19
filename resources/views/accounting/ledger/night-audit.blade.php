@@ -15,10 +15,12 @@
 @include('accounting.ledger.partials.nav')
 
 @if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700">{{ session('success') }}</div>
 @endif
 @if(session('error'))
-    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm
+        text-red-700">{{ session('error') }}</div>
 @endif
 
 {{-- Journées oubliées --}}
@@ -42,7 +44,10 @@
         <form method="GET" class="flex gap-2">
             <input type="date" name="date" value="{{ $jour->toDateString() }}" max="{{ now()->toDateString() }}"
                    class="rounded-lg border border-secondary/25 bg-white text-xs p-2">
-            <button type="submit" class="px-3 py-2 border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-accent/20 transition-colors">
+            <button
+                type="submit"
+                class="px-3 py-2 border border-secondary/30 text-primary text-xs font-semibold rounded-lg
+                    hover:bg-accent/20 transition-colors">
                 Voir
             </button>
         </form>
@@ -118,7 +123,10 @@
                 <input type="hidden" name="date" value="{{ $apercu['date']->toDateString() }}">
                 <input type="text" name="notes" maxlength="500" placeholder="Commentaire (facultatif)"
                        class="w-full rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
-                <button type="submit" class="px-5 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm shrink-0">
+                <button
+                    type="submit"
+                    class="px-5 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark
+                        transition-colors shadow-sm shrink-0">
                     Clôturer la journée
                 </button>
             </form>
@@ -151,7 +159,8 @@
                         <td class="px-3 py-2 text-right text-primary/70 whitespace-nowrap">{{ $fcfa($a->revenue_accommodation) }}</td>
                         <td class="px-3 py-2 text-right text-primary/70 whitespace-nowrap">{{ $fcfa($a->revenue_restaurant) }}</td>
                         <td class="px-3 py-2 text-right text-primary/70 whitespace-nowrap">{{ $fcfa($a->revenue_shop) }}</td>
-                        <td class="px-3 py-2 text-right font-semibold text-primary whitespace-nowrap">{{ $fcfa($a->revenue_total) }}</td>
+                        <td class="px-3 py-2 text-right font-semibold text-primary
+                            whitespace-nowrap">{{ $fcfa($a->revenue_total) }}</td>
                         <td class="px-3 py-2 text-right whitespace-nowrap {{ $a->hasDiscrepancy() ? 'text-amber-700 font-semibold' : 'text-primary/40' }}">
                             {{ $fcfa($a->cash_discrepancy) }}
                         </td>

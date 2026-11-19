@@ -24,8 +24,10 @@ class DepartmentRoles
         return [
             'direction_generale'       => ['manager'],
             'reception_front_office'   => ['reception', 'cashier'],
-            'housekeeping_hebergement' => ['housekeeping', 'housekeeping_leader', 'housekeeping_supervisor', 'housekeeping_staff'],
-            'restauration_fb'          => ['restaurant_chief', 'restaurant_staff', 'restaurant_cook', 'restaurant_barman', 'cashier'],
+            'housekeeping_hebergement' => ['housekeeping', 'housekeeping_leader', 'housekeeping_supervisor',
+                'housekeeping_staff'],
+            'restauration_fb'          => ['restaurant_chief', 'restaurant_staff', 'restaurant_cook',
+                'restaurant_barman', 'cashier'],
             'comptabilite_finance'     => ['accountant', 'cashier', 'controller'],
             'boutique_commerce'        => ['shop_manager', 'shop_cashier'],
             'ressources_humaines'      => ['manager'],

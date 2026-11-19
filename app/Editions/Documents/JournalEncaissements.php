@@ -42,7 +42,8 @@ class JournalEncaissements extends Edition
         $lignes = $this->registres->encaissements($du, $au, $valeurs['service'], $valeurs['mode']);
 
         $parMode = $lignes->groupBy('mode')->map(fn ($l) => $l->sum('montant'))->sortDesc();
-        $recap = $parMode->map(fn ($m, $mode) => $mode . ' : ' . number_format($m / 100, 0, ',', ' ') . ' FCFA')->implode(' · ');
+        $recap = $parMode->map(fn ($m, $mode) => $mode . ' : ' . number_format($m / 100, 0, ',', ' ') . ' FCFA')
+            ->implode(' · ');
 
         return $this->base($valeurs, $user)
             ->colonnes([

@@ -49,7 +49,8 @@ class PublicBookingController extends Controller
         $room = Room::with('roomType')->findOrFail($data['room_id']);
 
         if (!$room->roomType || !$room->roomType->is_active) {
-            return response()->json(['ok' => false, 'message' => "Cette chambre n'est plus disponible à la réservation."], 409);
+            return response()->json(['ok' => false,
+                'message' => "Cette chambre n'est plus disponible à la réservation."], 409);
         }
 
         // Capacité
@@ -68,7 +69,24 @@ class PublicBookingController extends Controller
             return response()->json(['ok' => false, 'message' => $refus], 409);
         }
 
-        // Client : réutilise un client existant (email ou téléphone), sinon en crée un
+        $customer = $this->clientPourReservation($data, $room);
+
+        $booking = $this->creerReservation($data, $room, $customer);
+
+        // Notifier managers + réception (in-app + push système). Passe par le
+        // Notifier : il résout aussi les rôles portés par le pivot, donc les
+        // utilisateurs multi-modules ne sont pas oubliés.
+        app(Notifier::class)->toRoles(['manager', 'reception'], new WebsiteBookingReceived($booking));
+
+        return response()->json([
+            'ok'             => true,
+            'booking_number' => $booking->booking_number,
+            'message'        => 'Votre demande de réservation a bien été enregistrée. La réception vous recontactera pour la confirmer.',
+        ], 201);
+    }
+
+    private function clientPourReservation(array $data, Room $room): Customer
+    {
         $customer = null;
         if (!empty($data['email'])) {
             $customer = Customer::where('email', $data['email'])->first();
@@ -86,16 +104,22 @@ class PublicBookingController extends Controller
             ]);
         }
 
+        return $customer;
+    }
+
+    private function creerReservation(array $data, Room $room, Customer $customer): Booking
+    {
         // Tarification d'après la grille tarifaire du type de chambre : le site
         // propose le même tarif que la réception.
         $checkIn  = \Carbon\Carbon::parse($data['check_in']);
         $checkOut = \Carbon\Carbon::parse($data['check_out']);
         $nights   = max(1, $checkIn->diffInDays($checkOut));
         $pricePerNight = app(\App\Services\TarifSejour::class)->calculer(
-            $room->roomType, $checkIn, $checkIn->copy()->addDays($nights), (int) ($data['adults'] ?? 1), (int) ($data['children'] ?? 0))['par_nuit'];
+            $room->roomType, $checkIn, $checkIn->copy()->addDays($nights), (int) ($data['adults'] ?? 1),
+                (int) ($data['children'] ?? 0))['par_nuit'];
         $totalRoom = $nights * $pricePerNight;
 
-        $booking = Booking::create([
+        return Booking::create([
             'room_id'           => $room->id,
             'customer_id'       => $customer->id,
             'status'            => BookingStatus::PENDING,
@@ -119,16 +143,5 @@ class PublicBookingController extends Controller
             'created_by'        => null,
             'tenant_id'         => $room->tenant_id,
         ]);
-
-        // Notifier managers + réception (in-app + push système). Passe par le
-        // Notifier : il résout aussi les rôles portés par le pivot, donc les
-        // utilisateurs multi-modules ne sont pas oubliés.
-        app(Notifier::class)->toRoles(['manager', 'reception'], new WebsiteBookingReceived($booking));
-
-        return response()->json([
-            'ok'             => true,
-            'booking_number' => $booking->booking_number,
-            'message'        => 'Votre demande de réservation a bien été enregistrée. La réception vous recontactera pour la confirmer.',
-        ], 201);
     }
 }

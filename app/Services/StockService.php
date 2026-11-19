@@ -67,7 +67,8 @@ class StockService
             ]);
             $etat = $this->conditionnements->appliquer($item, $currentQty, $quantity, $niveau);
 
-            return $this->log($item, StockMovement::TYPE_IN, $quantity, $unitCost, $sourceType, $sourceId, $reason, $etat);
+            return $this->log($item, StockMovement::TYPE_IN, $quantity, $unitCost, $sourceType, $sourceId, $reason,
+                $etat);
         });
     }
 
@@ -83,7 +84,8 @@ class StockService
      * les entrées suivantes. Au grand livre, cette valeur entre par les
      * à-nouveaux du comptable, pas par le night audit.
      */
-    public function recordOpening(StockItem $item, float $quantity, int $unitCost, ?string $reason = null, ?string $niveau = null): StockMovement
+    public function recordOpening(StockItem $item, float $quantity, int $unitCost, ?string $reason = null,
+        ?string $niveau = null): StockMovement
     {
         if ($quantity <= 0) {
             throw new \InvalidArgumentException('La quantité reprise doit être positive.');
@@ -143,7 +145,8 @@ class StockService
         // qu'une fois le déstockage réellement acquis en base.
         $crossedThreshold = null;
 
-        $movement = DB::transaction(function () use ($item, $quantity, $sourceType, $sourceId, $reason, $niveau, &$crossedThreshold) {
+        $movement = DB::transaction(function () use ($item, $quantity, $sourceType, $sourceId, $reason, $niveau,
+            &$crossedThreshold) {
             $item = StockItem::lockForUpdate()->find($item->id);
             $this->ensureStoreNotFrozen($sourceType);
 
@@ -168,7 +171,8 @@ class StockService
                 $crossedThreshold = $item;
             }
 
-            return $this->log($item, StockMovement::TYPE_OUT, -$quantity, $item->average_cost, $sourceType, $sourceId, $reason, $etat);
+            return $this->log($item, StockMovement::TYPE_OUT, -$quantity, $item->average_cost, $sourceType, $sourceId,
+                $reason, $etat);
         });
 
         if ($crossedThreshold) {
@@ -176,7 +180,8 @@ class StockService
             // englobante (livraison d'une demande). On n'alerte pas sur un
             // déstockage qui finirait par être annulé.
             DB::afterCommit(fn () => app(Notifier::class)
-                ->toRoles(['econome', 'manager', 'finance_manager', 'purchasing_manager'], new StockItemBelowThreshold($crossedThreshold)));
+                ->toRoles(['econome', 'manager', 'finance_manager', 'purchasing_manager'],
+                    new StockItemBelowThreshold($crossedThreshold)));
         }
 
         return $movement;
@@ -233,7 +238,8 @@ class StockService
             ]);
             $etat = $this->conditionnements->appliquer($item, $currentQty, -$quantity, $niveau);
 
-            return $this->log($item, StockMovement::TYPE_OUT, -$quantity, $unitCost, $sourceType, $sourceId, $reason, $etat);
+            return $this->log($item, StockMovement::TYPE_OUT, -$quantity, $unitCost, $sourceType, $sourceId, $reason,
+                $etat);
         });
     }
 
@@ -271,7 +277,8 @@ class StockService
             ]);
             $etat = $this->conditionnements->appliquer($item, $courant, $quantity, $niveau);
 
-            return $this->log($item, StockMovement::TYPE_IN, $quantity, $unitCost, $sourceType, $sourceId, $reason, $etat);
+            return $this->log($item, StockMovement::TYPE_IN, $quantity, $unitCost, $sourceType, $sourceId, $reason,
+                $etat);
         });
     }
 
@@ -292,7 +299,8 @@ class StockService
 
         $crossedThreshold = null;
 
-        $movement = DB::transaction(function () use ($item, $countedQuantity, $reason, $sourceType, $sourceId, &$crossedThreshold) {
+        $movement = DB::transaction(function () use ($item, $countedQuantity, $reason, $sourceType, $sourceId,
+            &$crossedThreshold) {
             $item = StockItem::lockForUpdate()->find($item->id);
             $this->ensureStoreNotFrozen($sourceType);
             $delta = $countedQuantity - (float) $item->current_stock;
@@ -329,7 +337,8 @@ class StockService
             // englobante (livraison d'une demande). On n'alerte pas sur un
             // déstockage qui finirait par être annulé.
             DB::afterCommit(fn () => app(Notifier::class)
-                ->toRoles(['econome', 'manager', 'finance_manager', 'purchasing_manager'], new StockItemBelowThreshold($crossedThreshold)));
+                ->toRoles(['econome', 'manager', 'finance_manager', 'purchasing_manager'],
+                    new StockItemBelowThreshold($crossedThreshold)));
         }
 
         return $movement;
@@ -340,7 +349,8 @@ class StockService
      * conditionnement du dessous ou en vrac. Le stock et sa valeur ne changent
      * pas ; le mouvement, de quantité nulle, garde la trace de l'ouverture.
      */
-    public function ouvrirConditionnement(StockItem $item, string $niveau, int $nombre, ?string $motif = null): StockMovement
+    public function ouvrirConditionnement(StockItem $item, string $niveau, int $nombre,
+        ?string $motif = null): StockMovement
     {
         return DB::transaction(function () use ($item, $niveau, $nombre, $motif) {
             $item = StockItem::lockForUpdate()->find($item->id);
@@ -370,7 +380,8 @@ class StockService
             $texte = $etat['niveaux'] === []
                 ? 'Conditionnements retirés : tout le stock est compté en ' . $item->unit
                 : 'Conditionnements : ' . implode(', ', array_map(
-                    fn ($n) => '1 ' . $n['nom'] . ' = ' . \App\Support\Conditionnement::libelle($n['facteur'], $item->unit),
+                    fn ($n) => '1 ' . $n['nom'] . ' = ' . \App\Support\Conditionnement::libelle($n['facteur'],
+                        $item->unit),
                     $etat['niveaux']
                 ));
 
@@ -408,7 +419,8 @@ class StockService
             }
 
             return $this->log($item, StockMovement::TYPE_PACKAGING, 0.0, $item->average_cost, $sourceType, $sourceId,
-                $motif . ' — unités fermées comptées : ' . \App\Support\Conditionnement::decomposition($apres, (string) $item->unit), $apres);
+                $motif . ' — unités fermées comptées : ' . \App\Support\Conditionnement::decomposition($apres,
+                    (string) $item->unit), $apres);
         });
     }
 

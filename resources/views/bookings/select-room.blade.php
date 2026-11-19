@@ -51,12 +51,14 @@
         </div>
         <div class="flex-1 h-px bg-primary/20"></div>
         <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">2</div>
+            <div class="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs
+                font-semibold">2</div>
             <span class="text-xs font-medium text-primary">Chambre & dates</span>
         </div>
         <div class="flex-1 h-px bg-secondary/20"></div>
         <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-full bg-secondary/20 text-primary/40 flex items-center justify-center text-xs font-semibold">3</div>
+            <div class="w-7 h-7 rounded-full bg-secondary/20 text-primary/40 flex items-center justify-center text-xs
+                font-semibold">3</div>
             <span class="text-xs text-primary/40">Confirmation</span>
         </div>
     </div>
@@ -72,7 +74,9 @@
             <div class="flex items-center gap-2 text-sm text-primary">
                 <i data-lucide="calendar" class="w-4 h-4 text-primary/40"></i>
                 <span>{{ \Carbon\Carbon::parse($checkIn)->locale('fr')->isoFormat('D MMM') }}</span>
-                <span class="text-xs font-semibold text-primary/70 bg-slate-100 px-1.5 py-0.5 rounded" x-text="checkInTime"></span>
+                <span
+                    class="text-xs font-semibold text-primary/70 bg-slate-100 px-1.5 py-0.5 rounded"
+                    x-text="checkInTime"></span>
                 <span>→ {{ \Carbon\Carbon::parse($checkOut)->locale('fr')->isoFormat('D MMM YYYY') }}</span>
             </div>
             <div class="w-px h-4 bg-secondary/30"></div>
@@ -101,7 +105,8 @@
                 $totalPeople = $adults + $children;
             @endphp
             @if($totalPeople > $maxCapacityLimit)
-                <p class="text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200/50 rounded-lg p-3 inline-block max-w-md mx-auto">
+                <p class="text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200/50 rounded-lg p-3
+                    inline-block max-w-md mx-auto">
                     Le nombre de personnes ({{ $totalPeople }} occupants) dépasse la capacité maximale de nos chambres (Maximum {{ $maxCapacityLimit }} personnes par chambre).
                 </p>
                 <p class="text-xs text-primary/50 mt-2">Veuillez réduire le nombre d'occupants ou effectuer des réservations séparées.</p>
@@ -125,9 +130,11 @@
                     <button type="button" 
                             @click="activeCategory = 'all'; $dispatch('expand-all-categories')"
                             :class="activeCategory === 'all' ? 'bg-primary text-white border-transparent' : 'bg-white text-primary/60 hover:text-primary border-secondary/30'"
-                            class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shadow-xs cursor-pointer border flex items-center gap-2">
+                            class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shadow-xs
+                                cursor-pointer border flex items-center gap-2">
                         Toutes les catégories
-                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                        <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px]
+                            font-bold"
                               :class="activeCategory === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'">
                             {{ $availableRooms->flatten(1)->count() }}
                         </span>
@@ -138,9 +145,11 @@
                         <button type="button" 
                                 @click="activeCategory = '{{ $type->id }}'; $dispatch('expand-category-{{ $type->id }}')"
                                 :class="activeCategory === '{{ $type->id }}' ? 'bg-primary text-white border-transparent' : 'bg-white text-primary/60 hover:text-primary border-secondary/30'"
-                                class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shadow-xs cursor-pointer border flex items-center gap-2">
+                                class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shadow-xs
+                                    cursor-pointer border flex items-center gap-2">
                             {{ $type->name }}
-                            <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold"
+                            <span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px]
+                                font-bold"
                                   :class="activeCategory === '{{ $type->id }}' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'">
                                 {{ $rooms->count() }}
                             </span>
@@ -152,13 +161,15 @@
                 <div class="flex items-center gap-2 text-xs font-medium">
                     <button type="button"
                             @click="$dispatch('expand-all-categories')"
-                            class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-primary/70 hover:text-primary transition-colors flex items-center gap-1.5">
+                            class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-primary/70
+                                hover:text-primary transition-colors flex items-center gap-1.5">
                         <i data-lucide="chevrons-down" class="w-3.5 h-3.5"></i>
                         Tout déplier
                     </button>
                     <button type="button"
                             @click="$dispatch('collapse-all-categories')"
-                            class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-primary/70 hover:text-primary transition-colors flex items-center gap-1.5">
+                            class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-primary/70
+                                hover:text-primary transition-colors flex items-center gap-1.5">
                         <i data-lucide="chevrons-up" class="w-3.5 h-3.5"></i>
                         Tout replier
                     </button>
@@ -178,28 +189,33 @@
                          x-transition:enter="transition ease-out duration-200"
                          x-transition:enter-start="opacity-0 transform scale-[0.98]"
                          x-transition:enter-end="opacity-100 transform scale-100"
-                         class="bg-white rounded-xl shadow-sm border border-secondary/15 overflow-hidden transition-all duration-200">
+                         class="bg-white rounded-xl shadow-sm border border-secondary/15 overflow-hidden transition-all
+                             duration-200">
                         
                         {{-- En-tête interactif de la catégorie (Accordéon) --}}
                         <div @click="isOpen = !isOpen"
-                             class="px-5 py-4 flex items-center justify-between cursor-pointer select-none bg-white hover:bg-slate-50/80 transition-colors border-b border-transparent group"
+                             class="px-5 py-4 flex items-center justify-between cursor-pointer select-none bg-white
+                                 hover:bg-slate-50/80 transition-colors border-b border-transparent group"
                              :class="isOpen ? 'border-secondary/10' : ''"
                              role="button"
                              :aria-expanded="isOpen">
                             
                             <div class="flex items-center gap-3.5">
                                 {{-- Chevron animé interactif --}}
-                                <div class="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center text-primary/60 transition-all duration-300 flex-shrink-0"
+                                <div class="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-slate-200 flex items-center
+                                    justify-center text-primary/60 transition-all duration-300 flex-shrink-0"
                                      :class="isOpen ? 'rotate-180 bg-primary/10 text-primary group-hover:bg-primary/20' : 'rotate-0'">
                                     <i data-lucide="chevron-down" class="w-4 h-4 transition-transform"></i>
                                 </div>
 
                                 <div>
                                     <div class="flex items-center gap-2">
-                                        <h3 class="font-heading font-semibold text-primary text-base group-hover:text-secondary transition-colors">
+                                        <h3 class="font-heading font-semibold text-primary text-base
+                                            group-hover:text-secondary transition-colors">
                                             {{ $type->name }}
                                         </h3>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px]
+                                            font-bold bg-slate-100 text-slate-700">
                                             {{ $rooms->count() }} chambre{{ $rooms->count() > 1 ? 's' : '' }}
                                         </span>
                                     </div>
@@ -211,7 +227,9 @@
                                         @endif
                                         @if($type->includes_breakfast)
                                             <span>&bull;</span>
-                                            <span class="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10px]">
+                                            <span class="inline-flex items-center gap-1 font-semibold text-emerald-700
+                                                bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200
+                                                text-[10px]">
                                                 <i data-lucide="coffee" class="w-3 h-3"></i> PDJ inclus ({{ $type->base_capacity }} adulte{{ $type->base_capacity > 1 ? 's' : '' }})
                                             </span>
                                         @else
@@ -220,7 +238,11 @@
                                         @endif
                                         @if($type->allows_extra_bed)
                                             <span>&bull;</span>
-                                            <span class="inline-flex items-center gap-1 font-medium text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 text-[10px]" title="{{ $type->extra_bed_price ? number_format($type->extra_bed_price / 100, 0, ',', ' ') . ' FCFA/nuit' : 'Tarif standard' }}">
+                                            <span
+                                                class="inline-flex items-center gap-1 font-medium text-blue-700
+                                                    bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200
+                                                    text-[10px]"
+                                                title="{{ $type->extra_bed_price ? number_format($type->extra_bed_price / 100, 0, ',', ' ') . ' FCFA/nuit' : 'Tarif standard' }}">
                                                 <i data-lucide="bed" class="w-3 h-3"></i> Lit d'appoint compatible
                                             </span>
                                         @endif
@@ -249,7 +271,8 @@
                              x-transition:leave="transition ease-in duration-200"
                              x-transition:leave-start="opacity-100 translate-y-0"
                              x-transition:leave-end="opacity-0 -translate-y-2"
-                             class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 bg-slate-50/40 border-t border-slate-100">
+                             class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 bg-slate-50/40 border-t
+                                 border-slate-100">
                             @foreach($rooms as $room)
                                 @php
                                     $roomData = [
@@ -278,13 +301,16 @@
                                         'conflictType' => $room->conflict_type,
                                     ];
                                 @endphp
-                                <div class="border border-secondary/20 rounded-xl p-3.5 bg-white hover:border-primary/50 hover:shadow-sm transition-all text-left flex flex-col justify-between group/card relative cursor-pointer"
+                                <div class="border border-secondary/20 rounded-xl p-3.5 bg-white
+                                    hover:border-primary/50 hover:shadow-sm transition-all text-left flex flex-col
+                                    justify-between group/card relative cursor-pointer"
                                      @click="selectRoom(@js($roomData))">
                                     
                                     <div>
                                         <div class="flex items-center justify-between gap-2 mb-1.5">
                                             <div class="flex items-center gap-2">
-                                                <span class="font-heading font-bold text-primary text-base group-hover/card:text-secondary transition-colors">
+                                                <span class="font-heading font-bold text-primary text-base
+                                                    group-hover/card:text-secondary transition-colors">
                                                     Chambre {{ $room->number }}
                                                 </span>
                                                 @if($room->floor)
@@ -294,18 +320,24 @@
 
                                             {{-- Badge de statut actuel --}}
                                             @if($room->is_currently_occupied)
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
+                                                    text-[10px] font-semibold bg-amber-50 text-amber-800 border
+                                                    border-amber-200">
                                                     <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                                                     Occupée
                                                 </span>
                                             @elseif($room->is_being_cleaned)
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-yellow-50 text-yellow-800 border border-yellow-200"
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
+                                                    text-[10px] font-semibold bg-yellow-50 text-yellow-800 border
+                                                    border-yellow-200"
                                                       title="{{ $room->cleaning_label ?? 'Nettoyage en cours' }}">
                                                     <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
                                                     En nettoyage
                                                 </span>
                                             @else
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full
+                                                    text-[10px] font-semibold bg-emerald-50 text-emerald-800 border
+                                                    border-emerald-200">
                                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                                     Disponible
                                                 </span>
@@ -321,7 +353,9 @@
                                             <div class="mt-2 p-2 rounded-lg {{ $room->has_cleaning_conflict ? 'bg-amber-50/95 border border-amber-200 text-amber-950' : 'bg-yellow-50/80 border border-yellow-200 text-yellow-950' }} text-[11px]">
                                                 <div class="flex items-center justify-between gap-1 font-semibold {{ $room->has_cleaning_conflict ? 'text-amber-800' : 'text-yellow-800' }} mb-0.5">
                                                     <span class="flex items-center gap-1">
-                                                        <i data-lucide="{{ $room->has_cleaning_conflict ? 'alert-triangle' : 'sparkles' }}" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                                                        <i
+                                                            data-lucide="{{ $room->has_cleaning_conflict ? 'alert-triangle' : 'sparkles' }}"
+                                                            class="w-3.5 h-3.5 flex-shrink-0"></i>
                                                         <span>{{ $room->has_cleaning_conflict ? 'Nettoyage en cours (Conflit)' : 'Ménage en cours' }}</span>
                                                     </span>
                                                     <span class="font-mono text-xs font-bold">{{ $room->cleaning_ready_time }}</span>
@@ -337,7 +371,8 @@
 
                                         {{-- 2. Détail d'occupation en cours si occupée --}}
                                         @if($room->is_currently_occupied && $room->current_checkout_formatted)
-                                            <div class="mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-600 space-y-0.5 bg-slate-50/70 rounded p-1.5">
+                                            <div class="mt-2 pt-2 border-t border-slate-100 text-[11px] text-slate-600
+                                                space-y-0.5 bg-slate-50/70 rounded p-1.5">
                                                 <div class="flex items-center justify-between">
                                                     <span class="text-slate-500">Départ occupant :</span>
                                                     <span class="font-medium text-slate-700">{{ $room->current_checkout_formatted }} à {{ $room->current_checkout_time }}</span>
@@ -353,7 +388,9 @@
                                         @if($room->has_same_day_departure)
                                             <div class="mt-2 p-2 rounded-lg {{ $room->has_rotation_conflict ? 'bg-amber-50/90 border border-amber-200 text-amber-900' : 'bg-blue-50/70 border border-blue-200 text-blue-900' }} text-[11px]">
                                                 <div class="flex items-center gap-1.5 font-semibold {{ $room->has_rotation_conflict ? 'text-amber-800' : 'text-blue-800' }} mb-0.5">
-                                                    <i data-lucide="{{ $room->has_rotation_conflict ? 'alert-triangle' : 'refresh-cw' }}" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                                                    <i
+                                                        data-lucide="{{ $room->has_rotation_conflict ? 'alert-triangle' : 'refresh-cw' }}"
+                                                        class="w-3.5 h-3.5 flex-shrink-0"></i>
                                                     <span>{{ $room->has_rotation_conflict ? 'Conflit de rotation' : 'Rotation le jour d\'arrivée' }}</span>
                                                 </div>
                                                 <p class="text-[10px] leading-tight text-slate-600">
@@ -363,9 +400,13 @@
                                         @endif
                                     </div>
 
-                                    <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-primary font-medium group-hover/card:text-secondary">
+                                    <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between
+                                        text-xs text-primary font-medium group-hover/card:text-secondary">
                                         <span>Sélectionner cette chambre</span>
-                                        <i data-lucide="arrow-right" class="w-4 h-4 text-primary/30 group-hover/card:text-secondary group-hover/card:translate-x-0.5 transition-all"></i>
+                                        <i
+                                            data-lucide="arrow-right"
+                                            class="w-4 h-4 text-primary/30 group-hover/card:text-secondary
+                                                group-hover/card:translate-x-0.5 transition-all"></i>
                                     </div>
                                 </div>
                             @endforeach
@@ -378,7 +419,8 @@
 
     <div class="mt-6 flex justify-start">
         <a :href="'{{ route('bookings.create') }}?customer_id=' + customerId + '&booker_id=' + bookerId + '&check_in=' + checkIn + '&check_out=' + checkOut + '&check_in_time=' + encodeURIComponent(checkInTime) + '&adults=' + adults + '&children=' + children + '&source=' + encodeURIComponent(source) + '{{ $extraQuery }}'"
-           class="px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-xs">
+           class="px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg
+               hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-xs">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
             Précédent
         </a>
@@ -419,7 +461,8 @@
          x-transition:leave="transition ease-in duration-150"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+         class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center
+             p-4"
          style="display: none;">
         
         <div @click.away="isModalOpen = false"
@@ -443,11 +486,16 @@
                             x-text="getModalTitle()">
                         </h3>
                         <p class="text-xs text-primary/50" x-show="selectedRoom">
-                            Chambre <span class="font-bold text-primary" x-text="selectedRoom ? selectedRoom.number : ''"></span> &bull; <span x-text="selectedRoom ? selectedRoom.typeName : ''"></span>
+                            Chambre <span
+                                class="font-bold text-primary"
+                                x-text="selectedRoom ? selectedRoom.number : ''"></span> &bull; <span x-text="selectedRoom ? selectedRoom.typeName : ''"></span>
                         </p>
                     </div>
                 </div>
-                <button type="button" @click="isModalOpen = false" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                <button
+                    type="button"
+                    @click="isModalOpen = false"
+                    class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -458,7 +506,9 @@
                 {{-- Bloc Explicatif & Alerte --}}
                 <div class="p-4 rounded-xl border leading-relaxed text-xs space-y-2"
                      :class="isTimeConflicting() ? 'bg-amber-50/90 border-amber-200/90 text-amber-950' : 'bg-blue-50/70 border-blue-200 text-blue-950'">
-                    <div class="flex items-center gap-2 font-semibold" :class="isTimeConflicting() ? 'text-amber-800' : 'text-blue-800'">
+                    <div
+                        class="flex items-center gap-2 font-semibold"
+                        :class="isTimeConflicting() ? 'text-amber-800' : 'text-blue-800'">
                         <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0"></i>
                         <span x-text="isTimeConflicting() ? 'Avertissement : Conflit d\'horaire avec le ménage' : 'Disponibilité post-ménage'"></span>
                     </div>
@@ -476,7 +526,9 @@
                         </p>
                     </template>
 
-                    <div class="pt-1 flex items-center justify-between text-[11px] border-t" :class="isTimeConflicting() ? 'border-amber-200' : 'border-blue-200'">
+                    <div
+                        class="pt-1 flex items-center justify-between text-[11px] border-t"
+                        :class="isTimeConflicting() ? 'border-amber-200' : 'border-blue-200'">
                         <span>Délai de ménage (housekeeping) :</span>
                         <span class="font-semibold">+<span x-text="selectedRoom ? selectedRoom.cleaningDelay : 120"></span> minutes</span>
                     </div>
@@ -502,11 +554,15 @@
                             <input type="time"
                                    x-model="checkInTime"
                                    required
-                                   class="flex-1 px-3 py-2 text-sm font-semibold rounded-lg border border-slate-300 bg-white text-slate-900 outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+                                   class="flex-1 px-3 py-2 text-sm font-semibold rounded-lg border border-slate-300
+                                       bg-white text-slate-900 outline-none focus:border-secondary focus:ring-1
+                                       focus:ring-secondary">
                             
                             <button type="button"
                                     @click="adjustToReadyTime()"
-                                    class="px-3 py-2 bg-secondary/15 hover:bg-secondary/25 text-primary text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0">
+                                    class="px-3 py-2 bg-secondary/15 hover:bg-secondary/25 text-primary text-xs
+                                        font-semibold rounded-lg transition-colors flex items-center gap-1.5
+                                        flex-shrink-0">
                                 <i data-lucide="clock" class="w-3.5 h-3.5"></i>
                                 Régler sur <span x-text="selectedRoom ? selectedRoom.effectiveReadyTime : ''"></span>
                             </button>
@@ -536,12 +592,14 @@
             <div class="px-6 py-4 border-t border-secondary/10 bg-slate-50/50 flex items-center justify-between gap-3">
                 <button type="button"
                         @click="isModalOpen = false"
-                        class="px-4 py-2.5 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-slate-100 transition-colors">
+                        class="px-4 py-2.5 bg-white border border-secondary/30 text-primary text-sm font-medium
+                            rounded-lg hover:bg-slate-100 transition-colors">
                     Annuler
                 </button>
                 <button type="button"
                         @click="confirmModalAndSubmit()"
-                        class="px-5 py-2.5 bg-primary hover:bg-surface-dark text-white text-sm font-semibold rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                        class="px-5 py-2.5 bg-primary hover:bg-surface-dark text-white text-sm font-semibold rounded-lg
+                            transition-colors flex items-center gap-2 shadow-sm">
                     <span>Valider et continuer</span>
                     <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>

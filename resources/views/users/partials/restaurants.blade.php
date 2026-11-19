@@ -25,7 +25,8 @@
             Restaurant d'affectation <span class="text-red-500" aria-hidden="true">*</span>
         </label>
         <select id="restaurant-{{ $contexte }}" name="restaurant_id" :disabled="! visible" :required="visible"
-                class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary outline-none bg-white">
+                class="mt-1 w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg focus:border-secondary
+                    outline-none bg-white">
             @if($restaurantsHotel->count() > 1)
                 <option value="">— Choisir le restaurant —</option>
             @endif

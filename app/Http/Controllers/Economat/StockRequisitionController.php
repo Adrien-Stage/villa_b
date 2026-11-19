@@ -115,7 +115,8 @@ class StockRequisitionController extends Controller
             ])
             ->lignes($lignes)
             ->note($lignes->count() >= self::MAX_EXPORT
-                ? 'Export limité aux ' . self::MAX_EXPORT . ' demandes les plus récentes. Affinez les filtres pour le reste.'
+                ? 'Export limité aux ' . self::MAX_EXPORT
+                    . ' demandes les plus récentes. Affinez les filtres pour le reste.'
                 : null);
 
         return $exporteur->rendre($document, $format);
@@ -202,7 +203,8 @@ class StockRequisitionController extends Controller
         $restaurantsAccessibles = $contexte->accessibles($request->user())->pluck('id');
         $stores = ServiceStore::active()
             ->whereIn('department', array_keys($departments))
-            ->where(fn (Builder $query) => $query->whereNull('point_of_sale_id')->orWhereIn('point_of_sale_id', $restaurantsAccessibles))
+            ->where(fn (Builder $query) => $query->whereNull('point_of_sale_id')->orWhereIn('point_of_sale_id',
+                $restaurantsAccessibles))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get(['id', 'name', 'department', 'point_of_sale_id']);
@@ -210,11 +212,13 @@ class StockRequisitionController extends Controller
         // Restaurants dont la personne peut alimenter le garde-manger : ceux
         // qui tiennent un stock.
         $restaurants = $contexte->offrant($request->user(), PointOfSale::SERVICE_STOCK);
-        $restaurantParDefaut = $restaurants->firstWhere('id', $contexte->pourCreation(Auth::user())?->id) ?? $restaurants->first();
+        $restaurantParDefaut = $restaurants->firstWhere('id', $contexte->pourCreation(Auth::user())?->id)
+            ?? $restaurants->first();
 
         $depotParDefaut = $stores->firstWhere('id', $request->integer('depot'));
 
-        return view('economat.requisitions.create', compact('items', 'departments', 'stores', 'restaurants', 'restaurantParDefaut', 'avecVisa', 'depotParDefaut'));
+        return view('economat.requisitions.create', compact('items', 'departments', 'stores', 'restaurants',
+            'restaurantParDefaut', 'avecVisa', 'depotParDefaut'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -246,7 +250,9 @@ class StockRequisitionController extends Controller
             if ($depotChoisi && $depotChoisi->point_of_sale_id) {
                 $restaurant = $depotChoisi->pointOfSale;
                 if (! app(RestaurantContext::class)->peutVoir($request->user(), $restaurant)) {
-                    return back()->withInput()->withErrors(['service_store_id' => "Ce dépôt appartient à un restaurant qui ne vous est pas accessible."]);
+                    return back()->withInput()
+                        ->withErrors(
+                        ['service_store_id' => "Ce dépôt appartient à un restaurant qui ne vous est pas accessible."]);
                 }
             }
         } elseif ($validated['department'] === 'restaurant') {
@@ -256,7 +262,8 @@ class StockRequisitionController extends Controller
                 : $contexte->pourCreation(Auth::user());
 
             if (! $restaurant) {
-                return back()->withInput()->withErrors(['point_of_sale_id' => "Ce restaurant n'existe pas ou ne vous est pas accessible."]);
+                return back()->withInput()
+                    ->withErrors(['point_of_sale_id' => "Ce restaurant n'existe pas ou ne vous est pas accessible."]);
             }
 
             // La livraison entrera dans son garde-manger : il doit en tenir un.
@@ -292,7 +299,8 @@ class StockRequisitionController extends Controller
      * Visa du chef de service : il vise la demande d'un membre de son service,
      * qui part alors à l'économat, ou la refuse avec un motif.
      */
-    public function endorse(Request $request, StockRequisition $requisition, StockRequisitionService $service): RedirectResponse
+    public function endorse(Request $request, StockRequisition $requisition,
+        StockRequisitionService $service): RedirectResponse
     {
         $validated = $request->validate([
             'decision' => ['required', 'in:viser,refuser'],
@@ -349,11 +357,13 @@ class StockRequisitionController extends Controller
 
         return view('economat.requisitions.print', [
             'requisition' => $requisition,
-            'tenant'      => $requisition->tenant_id ? \App\Models\Tenant::find($requisition->tenant_id) : \App\Models\Tenant::first(),
+            'tenant'      => $requisition->tenant_id ? \App\Models\Tenant::find($requisition
+                ->tenant_id) : \App\Models\Tenant::first(),
         ]);
     }
 
-    public function approve(Request $request, StockRequisition $requisition, StockRequisitionService $service): RedirectResponse
+    public function approve(Request $request, StockRequisition $requisition,
+        StockRequisitionService $service): RedirectResponse
     {
         $this->authorizeKeeper('economat.requisitions.approve');
 
@@ -368,7 +378,8 @@ class StockRequisitionController extends Controller
         return back()->with('success', "Demande {$requisition->number} validée. Vous pouvez procéder à la livraison.");
     }
 
-    public function reject(Request $request, StockRequisition $requisition, StockRequisitionService $service): RedirectResponse
+    public function reject(Request $request, StockRequisition $requisition,
+        StockRequisitionService $service): RedirectResponse
     {
         $this->authorizeKeeper('economat.requisitions.reject');
 
@@ -408,14 +419,16 @@ class StockRequisitionController extends Controller
                     ?? \App\Models\Tenant::current()?->id,
             ]);
 
-            $articles = StockItem::with('packagings')->whereKey(collect($validated['lines'])->pluck('stock_item_id'))->get()->keyBy('id');
+            $articles = StockItem::with('packagings')->whereKey(collect($validated['lines'])->pluck('stock_item_id'))
+                ->get()->keyBy('id');
 
             foreach ($validated['lines'] as $line) {
                 // Demandé en paquets ou en cartons : la ligne garde le
                 // conditionnement, et sa quantité dans l'unité de l'article.
                 $article = $articles->get((int) $line['stock_item_id']);
                 $conditionnement = trim((string) ($line['packaging'] ?? ''));
-                $conditionnement = $conditionnement === '' || $conditionnement === $article?->unit ? null : $conditionnement;
+                $conditionnement = $conditionnement === '' || $conditionnement === $article
+                    ?->unit ? null : $conditionnement;
                 $facteur = $conditionnement !== null ? $article->facteurDe($conditionnement) : 1.0;
 
                 StockRequisitionLine::create([
@@ -431,7 +444,8 @@ class StockRequisitionController extends Controller
         });
     }
 
-    public function deliver(Request $request, StockRequisition $requisition, StockRequisitionService $service): RedirectResponse
+    public function deliver(Request $request, StockRequisition $requisition,
+        StockRequisitionService $service): RedirectResponse
     {
         $this->authorizeKeeper('economat.requisitions.deliver');
 

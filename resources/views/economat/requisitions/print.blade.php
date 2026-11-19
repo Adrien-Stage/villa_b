@@ -427,7 +427,9 @@
                                 {{ rtrim(rtrim(number_format($line->quantity_requested, 3, ',', ' '), '0'), ',') }}
                             @endif
                         </td>
-                        <td class="text-right font-mono font-bold" style="color: {{ $requisition->status === 'delivered' ? '#15803d' : '#475569' }};">
+                        <td
+                            class="text-right font-mono font-bold"
+                            style="color: {{ $requisition->status === 'delivered' ? '#15803d' : '#475569' }};">
                             @if($requisition->status === 'delivered')
                                 @if($line->packaging_name)
                                     {{ $line->quantiteServie() }}
@@ -457,7 +459,9 @@
                     <td class="text-right font-mono" style="font-size: 9.5px;">
                         {{ rtrim(rtrim(number_format($requisition->lines->sum('quantity_requested'), 3, ',', ' '), '0'), ',') }}
                     </td>
-                    <td class="text-right font-mono" style="font-size: 9.5px; color: {{ $requisition->status === 'delivered' ? '#15803d' : '#475569' }};">
+                    <td
+                        class="text-right font-mono"
+                        style="font-size: 9.5px; color: {{ $requisition->status === 'delivered' ? '#15803d' : '#475569' }};">
                         @if($requisition->status === 'delivered')
                             {{ rtrim(rtrim(number_format($requisition->lines->sum('quantity_issued'), 3, ',', ' '), '0'), ',') }}
                         @else

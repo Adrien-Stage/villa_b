@@ -35,7 +35,8 @@ class RestaurantCashRegisterController extends Controller
             'sessions' => CashRegisterSession::query()
                 ->where('module', self::MODULE)
                 // Chacun voit les caisses des restaurants qu'il voit.
-                ->when(app(RestaurantContext::class)->plusieurs(), fn ($q) => $q->whereIn('point_of_sale_id', app(RestaurantContext::class)->idsVisibles(Auth::user())))
+                ->when(app(RestaurantContext::class)->plusieurs(), fn ($q) => $q->whereIn('point_of_sale_id',
+                    app(RestaurantContext::class)->idsVisibles(Auth::user())))
                 ->with(['user', 'pointOfSale', 'witness'])
                 ->latest('opened_at')
                 ->paginate(15),
@@ -55,7 +56,8 @@ class RestaurantCashRegisterController extends Controller
         return view('restaurant.cash_register.open', [
             'caisses' => $caisses,
             'courant' => app(RestaurantContext::class)->courant(Auth::user()),
-            'tenues' => $caisses->mapWithKeys(fn (PointOfSale $p) => [$p->id => $this->circuit->tiroirTenu($p, self::MODULE)]),
+            'tenues' => $caisses->mapWithKeys(fn (PointOfSale $p) => [$p->id => $this->circuit->tiroirTenu($p,
+                self::MODULE)]),
         ]);
     }
 
@@ -75,11 +77,13 @@ class RestaurantCashRegisterController extends Controller
             : $caisses->firstWhere('id', (int) ($valide['point_of_sale_id'] ?? 0));
 
         if ($caisses->isNotEmpty() && ! $pointDeVente) {
-            return back()->withInput()->withErrors(['point_of_sale_id' => "Cette caisse n'existe pas ou n'est plus active."]);
+            return back()->withInput()
+                ->withErrors(['point_of_sale_id' => "Cette caisse n'existe pas ou n'est plus active."]);
         }
 
         try {
-            $this->circuit->ouvrir(Auth::user(), self::MODULE, (int) round($valide['opening_amount'] * 100), $pointDeVente);
+            $this->circuit->ouvrir(Auth::user(), self::MODULE, (int) round($valide['opening_amount'] * 100),
+                $pointDeVente);
         } catch (\DomainException $refus) {
             return back()->withInput()->withErrors(['cash_register' => $refus->getMessage()]);
         }
@@ -93,25 +97,36 @@ class RestaurantCashRegisterController extends Controller
         $session = $this->circuit->ouverte(Auth::user(), self::MODULE);
 
         if (! $session) {
-            return redirect()->route('restaurant.cash_register.index')->with('info', "Vous n'avez pas de caisse ouverte à compter.");
+            return redirect()->route('restaurant.cash_register.index')->with('info',
+                "Vous n'avez pas de caisse ouverte à compter.");
         }
 
         return view('restaurant.cash_register.close', [
             'session' => $session->load('pointOfSale'),
             'theorique' => $session->theoreticalBalance(),
-            'especes' => (int) $session->restaurantOrders()->where('payment_method', 'cash')->where('payment_status', 'paid')->sum('amount_paid'),
+            'especes' => (int) $session->restaurantOrders()->where('payment_method', 'cash')->where('payment_status',
+                'paid')->sum('amount_paid'),
             // Le buffet au forfait et les banquets s'encaissent à la même caisse.
-            'especesBuffet' => (int) RestaurantBuffetEntry::where('cash_register_session_id', $session->id)->where('payment_method', 'cash')->sum('amount'),
-            'especesBanquets' => (int) RestaurantBanquetPayment::where('cash_register_session_id', $session->id)->where('payment_method', 'cash')->sum('amount'),
-            'autresModes' => $session->restaurantOrders()->where('payment_status', 'paid')->where('payment_method', '!=', 'cash')
-                ->selectRaw('payment_method, count(*) as nombre, sum(amount_paid) as montant')->groupBy('payment_method')->toBase()
-                ->unionAll(RestaurantBuffetEntry::where('cash_register_session_id', $session->id)->where('payment_method', '!=', 'cash')
-                    ->selectRaw('payment_method, count(*) as nombre, sum(amount) as montant')->groupBy('payment_method')->toBase())
-                ->unionAll(RestaurantBanquetPayment::where('cash_register_session_id', $session->id)->where('payment_method', '!=', 'cash')
-                    ->selectRaw('payment_method, count(*) as nombre, sum(amount) as montant')->groupBy('payment_method')->toBase())
+            'especesBuffet' => (int) RestaurantBuffetEntry::where('cash_register_session_id', $session->id)
+                ->where('payment_method', 'cash')->sum('amount'),
+            'especesBanquets' => (int) RestaurantBanquetPayment::where('cash_register_session_id', $session->id)
+                ->where('payment_method', 'cash')->sum('amount'),
+            'autresModes' => $session->restaurantOrders()->where('payment_status', 'paid')->where('payment_method',
+                '!=', 'cash')
+                ->selectRaw('payment_method, count(*) as nombre, sum(amount_paid) as montant')
+                    ->groupBy('payment_method')->toBase()
+                ->unionAll(RestaurantBuffetEntry::where('cash_register_session_id', $session->id)
+                    ->where('payment_method', '!=', 'cash')
+                    ->selectRaw('payment_method, count(*) as nombre, sum(amount) as montant')->groupBy('payment_method')
+                        ->toBase())
+                ->unionAll(RestaurantBanquetPayment::where('cash_register_session_id', $session->id)
+                    ->where('payment_method', '!=', 'cash')
+                    ->selectRaw('payment_method, count(*) as nombre, sum(amount) as montant')->groupBy('payment_method')
+                        ->toBase())
                 ->get()
                 ->groupBy('payment_method')
-                ->map(fn ($lignes, $mode) => (object) ['payment_method' => $mode, 'nombre' => $lignes->sum('nombre'), 'montant' => $lignes->sum('montant')])
+                ->map(fn ($lignes, $mode) => (object) ['payment_method' => $mode, 'nombre' => $lignes->sum('nombre'),
+                    'montant' => $lignes->sum('montant')])
                 ->values(),
             'decaissements' => $session->disbursements()->get(),
         ]);
@@ -127,7 +142,8 @@ class RestaurantCashRegisterController extends Controller
             'closing_notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $this->circuit->compter($session, (int) round($valide['actual_closing_amount'] * 100), $valide['closing_notes'] ?? null);
+        $this->circuit->compter($session, (int) round($valide['actual_closing_amount'] * 100), $valide['closing_notes']
+            ?? null);
 
         return redirect()->route('restaurant.cash_register.index')->with('success',
             'Comptage enregistré. La caisse sera close après contrôle par '.CashClosurePolicy::witnessLabel().'.');

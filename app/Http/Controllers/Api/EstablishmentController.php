@@ -21,7 +21,8 @@ use Illuminate\Http\Request;
 class EstablishmentController extends Controller
 {
     /** Couleurs du thème que l'application lit (layouts, classeurs, courriels). */
-    private const COULEURS = ['primary', 'secondary', 'accent', 'dark', 'surface_dark', 'text_on_light', 'text_on_dark'];
+    private const COULEURS = ['primary', 'secondary', 'accent', 'dark', 'surface_dark', 'text_on_light',
+        'text_on_dark'];
 
     public function show(): JsonResponse
     {
@@ -79,7 +80,8 @@ class EstablishmentController extends Controller
         $tenant->save();
 
         $apres = $this->identite($tenant);
-        $changes = array_keys(array_filter($apres, fn ($valeur, $cle) => $valeur !== ($avant[$cle] ?? null), ARRAY_FILTER_USE_BOTH));
+        $changes = array_keys(array_filter($apres, fn ($valeur, $cle) => $valeur !== ($avant[$cle] ?? null),
+            ARRAY_FILTER_USE_BOTH));
 
         if ($changes !== []) {
             AuditLog::record(null, 'tenant_console',

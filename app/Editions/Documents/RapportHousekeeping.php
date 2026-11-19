@@ -41,12 +41,14 @@ class RapportHousekeeping extends Edition
     {
         [$du, $au] = $valeurs['periode'];
         [$du, $au] = [$du->startOfDay(), $au->endOfDay()];
-        $heure = fn ($t, ?User $qui) => $t ? $t->format($du->isSameDay($au) ? 'H:i' : 'd/m H:i') . ($qui ? ' — ' . $qui->name : '') : '';
+        $heure = fn ($t, ?User $qui) => $t ? $t->format($du->isSameDay($au) ? 'H:i' : 'd/m H:i') . ($qui ? ' — ' . $qui
+            ->name : '') : '';
 
         $passages = HousekeepingAssignment::query()
             ->with(['room', 'team', 'startedBy', 'completedBy', 'inspectedBy', 'releasedBy'])
             ->where(fn ($q) => $q->whereBetween('started_at', [$du, $au])->orWhereBetween('completed_at', [$du, $au]))
-            ->when($valeurs['equipe'] !== Filtre::TOUS, fn ($q) => $q->where('housekeeping_team_id', (int) $valeurs['equipe']))
+            ->when($valeurs['equipe'] !== Filtre::TOUS, fn ($q) => $q->where('housekeeping_team_id',
+                (int) $valeurs['equipe']))
             ->orderBy('started_at')
             ->get();
 
@@ -63,7 +65,8 @@ class RapportHousekeeping extends Edition
 
         $faits = $passages->filter(fn ($a) => $a->dureeEnMinutes() !== null);
         $note = $faits->count() . ' passage(s) terminé(s)'
-            . ($faits->isNotEmpty() ? ', durée moyenne ' . (int) round($faits->avg(fn ($a) => $a->dureeEnMinutes())) . ' min' : '') . '.';
+            . ($faits->isNotEmpty() ? ', durée moyenne ' . (int) round($faits->avg(fn ($a) => $a->dureeEnMinutes()))
+                . ' min' : '') . '.';
 
         return $this->base($valeurs, $user)
             ->colonnes([

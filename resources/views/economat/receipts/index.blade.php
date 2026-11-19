@@ -22,14 +22,16 @@
             @enddroit
 
             <a href="{{ route('economat.orders.index') }}"
-                class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+                class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary text-xs
+                    font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
                 <i data-lucide="shopping-cart" class="w-4 h-4 text-primary/70"></i>
                 <span>Bons de commande</span>
             </a>
 
             @droit('economat.receipts.direct.creer')
                 <a href="{{ route('economat.receipts.direct.create') }}"
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-xs font-semibold
+                        rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
                     <i data-lucide="package-plus" class="w-4 h-4"></i>
                     <span>Réception directe</span>
                 </a>
@@ -41,7 +43,9 @@
 
     {{-- Synthèse & Indicateurs KPI --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <a href="{{ route('economat.receipts.index', ['statut' => \App\Models\GoodsReceipt::STATUS_PENDING]) }}" class="bg-white border border-amber-200 rounded-xl p-4 shadow-sm bg-amber-50/30 hover:border-amber-400">
+        <a
+            href="{{ route('economat.receipts.index', ['statut' => \App\Models\GoodsReceipt::STATUS_PENDING]) }}"
+            class="bg-white border border-amber-200 rounded-xl p-4 shadow-sm bg-amber-50/30 hover:border-amber-400">
             <span class="text-xs text-amber-800 font-medium">Livraisons attendues</span>
             <div class="text-2xl font-bold font-mono text-amber-800 mt-1">{{ number_format($stats['en_attente'], 0, ',', ' ') }}</div>
             <div class="text-[11px] text-amber-700/70 mt-0.5">Bons en attente, ouverts à l'envoi des commandes</div>
@@ -76,10 +80,16 @@
 
     {{-- Barre de filtres multicritères --}}
     <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-sm">
-        <form method="GET" action="{{ route('economat.receipts.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <form
+            method="GET"
+            action="{{ route('economat.receipts.index') }}"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div>
                 <label class="block text-[11px] font-semibold text-primary/60 uppercase mb-1">Fournisseur</label>
-                <select name="supplier_id" class="w-full px-3 py-1.5 text-sm border border-secondary/30 rounded-lg text-primary focus:outline-none focus:border-primary bg-white">
+                <select
+                    name="supplier_id"
+                    class="w-full px-3 py-1.5 text-sm border border-secondary/30 rounded-lg text-primary
+                        focus:outline-none focus:border-primary bg-white">
                     <option value="">Tous les fournisseurs</option>
                     @foreach($suppliers as $sup)
                         <option value="{{ $sup->id }}" @selected(request('supplier_id') == $sup->id)>{{ $sup->name }}</option>
@@ -89,7 +99,10 @@
 
             <div>
                 <label class="block text-[11px] font-semibold text-primary/60 uppercase mb-1">Conformité / Litige</label>
-                <select name="litige" class="w-full px-3 py-1.5 text-sm border border-secondary/30 rounded-lg text-primary focus:outline-none focus:border-primary bg-white">
+                <select
+                    name="litige"
+                    class="w-full px-3 py-1.5 text-sm border border-secondary/30 rounded-lg text-primary
+                        focus:outline-none focus:border-primary bg-white">
                     <option value="">Tous les bons d'entrée</option>
                     <option value="sans" @selected(request('litige') === 'sans')>100% Conforme (Sans litige)</option>
                     <option value="avec" @selected(request('litige') === 'avec')>Avec Litige / Refus</option>
@@ -98,12 +111,22 @@
 
             <div>
                 <label class="block text-[11px] font-semibold text-primary/60 uppercase mb-1">Date début</label>
-                <input type="date" name="du" value="{{ request('du', request('date_from')) }}" class="w-full px-3 py-1.5 text-sm border border-secondary/30 rounded-lg text-primary focus:outline-none focus:border-primary bg-white">
+                <input
+                    type="date"
+                    name="du"
+                    value="{{ request('du', request('date_from')) }}"
+                    class="w-full px-3 py-1.5 text-sm border border-secondary/30 rounded-lg text-primary
+                        focus:outline-none focus:border-primary bg-white">
             </div>
 
             <div>
                 <label class="block text-[11px] font-semibold text-primary/60 uppercase mb-1">Date fin</label>
-                <input type="date" name="au" value="{{ request('au', request('date_to')) }}" class="w-full px-3 py-1.5 text-sm border border-secondary/30 rounded-lg text-primary focus:outline-none focus:border-primary bg-white">
+                <input
+                    type="date"
+                    name="au"
+                    value="{{ request('au', request('date_to')) }}"
+                    class="w-full px-3 py-1.5 text-sm border border-secondary/30 rounded-lg text-primary
+                        focus:outline-none focus:border-primary bg-white">
             </div>
 
             <div class="flex items-end gap-2">
@@ -116,11 +139,17 @@
                         width="w-full"
                     />
                 </div>
-                <button type="submit" class="px-4 py-1.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm shrink-0">
+                <button
+                    type="submit"
+                    class="px-4 py-1.5 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-surface-dark
+                        transition-colors shadow-sm shrink-0">
                     Filtrer
                 </button>
                 @if(request()->hasAny(['supplier_id', 'du', 'au', 'date_from', 'date_to', 'litige', 'recherche']))
-                    <a href="{{ route('economat.receipts.index') }}" class="px-2.5 py-1.5 text-xs text-primary/50 hover:text-primary shrink-0" title="Réinitialiser">
+                    <a
+                        href="{{ route('economat.receipts.index') }}"
+                        class="px-2.5 py-1.5 text-xs text-primary/50 hover:text-primary shrink-0"
+                        title="Réinitialiser">
                         ✕
                     </a>
                 @endif
@@ -130,7 +159,11 @@
 
     {{-- Tableau des Bons d'Entrée --}}
     <div id="receipts-table-container">
-    <x-table :rows="$receipts" empty="Aucun bon d'entrée trouvé pour ces critères. Ils naissent du pointage des bons de commande, ou d'une réception directe quand la marchandise arrive sans commande." empty-icon="package-open" caption="Bons d'entrée en stock">
+    <x-table
+        :rows="$receipts"
+        empty="Aucun bon d'entrée trouvé pour ces critères. Ils naissent du pointage des bons de commande, ou d'une réception directe quand la marchandise arrive sans commande."
+        empty-icon="package-open"
+        caption="Bons d'entrée en stock">
         <x-slot:head>
             <x-table.col>N° bon d'entrée</x-table.col>
             <x-table.col hide="xl">N° bon de commande</x-table.col>
@@ -147,7 +180,9 @@
         @foreach($receipts as $rc)
             <x-table.row :href="route('economat.receipts.show', $rc)">
                 <x-table.cell nowrap>
-                    <a href="{{ route('economat.receipts.show', $rc) }}" class="font-mono font-bold text-primary hover:underline">{{ $rc->number }}</a>
+                    <a
+                        href="{{ route('economat.receipts.show', $rc) }}"
+                        class="font-mono font-bold text-primary hover:underline">{{ $rc->number }}</a>
                     {{-- Visible à toute largeur : la colonne « Litige » se replie sur petit écran. --}}
                     @if($rc->estEnAttente())
                         <span class="block text-[10px] font-semibold text-amber-700">En attente de livraison</span>
@@ -161,7 +196,9 @@
                 <x-table.cell hide="xl" nowrap>
                     @if($rc->purchaseOrder)
                         @droit('economat.orders.voir')
-                            <a href="{{ route('economat.orders.show', $rc->purchaseOrder) }}" class="font-mono text-xs text-primary/80 hover:underline">{{ $rc->purchaseOrder->number }}</a>
+                            <a
+                                href="{{ route('economat.orders.show', $rc->purchaseOrder) }}"
+                                class="font-mono text-xs text-primary/80 hover:underline">{{ $rc->purchaseOrder->number }}</a>
                         @else
                             <span class="font-mono text-xs text-primary/80">{{ $rc->purchaseOrder->number }}</span>
                         @enddroit
@@ -178,13 +215,26 @@
                 <x-table.cell align="right" nowrap class="font-mono font-bold text-emerald-800">{{ $rc->estEnAttente() ? '—' : number_format($rc->total_amount / 100, 0, ',', ' ') . ' F' }}</x-table.cell>
                 <x-table.cell hide="lg" nowrap>
                     @if($rc->estEnAttente())
-                        <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800"><i data-lucide="clock" class="h-3 w-3" aria-hidden="true"></i> En attente de livraison</span>
+                        <span class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50
+                            px-2 py-0.5 text-[11px] font-bold text-amber-800"><i
+                            data-lucide="clock"
+                            class="h-3 w-3"
+                            aria-hidden="true"></i> En attente de livraison</span>
                     @elseif($rc->status === \App\Models\GoodsReceipt::STATUS_CANCELLED)
-                        <span class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-semibold text-gray-500">Annulé</span>
+                        <span class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2
+                            py-0.5 text-[11px] font-semibold text-gray-500">Annulé</span>
                     @elseif($rc->hasRejections())
-                        <span class="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-700"><i data-lucide="alert-circle" class="h-3 w-3" aria-hidden="true"></i> Refusé ({{ rtrim(rtrim(number_format($rc->totalRejectedQuantity(), 2, ',', ' '), '0'), ',') }})</span>
+                        <span class="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2
+                            py-0.5 text-[11px] font-bold text-rose-700"><i
+                            data-lucide="alert-circle"
+                            class="h-3 w-3"
+                            aria-hidden="true"></i> Refusé ({{ rtrim(rtrim(number_format($rc->totalRejectedQuantity(), 2, ',', ' '), '0'), ',') }})</span>
                     @else
-                        <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700"><i data-lucide="check" class="h-3 w-3" aria-hidden="true"></i> 100 % conforme</span>
+                        <span class="inline-flex items-center gap-1 rounded-full border border-emerald-200
+                            bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700"><i
+                            data-lucide="check"
+                            class="h-3 w-3"
+                            aria-hidden="true"></i> 100 % conforme</span>
                     @endif
                     @if($rc->deliveryLabel())
                         <span class="block mt-0.5 text-[10px] text-primary/50">{{ $rc->deliveryLabel() }}</span>
@@ -192,7 +242,10 @@
                 </x-table.cell>
                 <x-table.cell hide="3xl" nowrap>
                     @unless($rc->estEnAttente())
-                        <span class="inline-flex items-center gap-1.5 rounded border border-indigo-200/70 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-900" title="Signature certifiée">
+                        <span
+                            class="inline-flex items-center gap-1.5 rounded border border-indigo-200/70 bg-indigo-50
+                                px-2 py-0.5 text-[11px] font-medium text-indigo-900"
+                            title="Signature certifiée">
                             <i data-lucide="pen-tool" class="h-3 w-3 text-indigo-600" aria-hidden="true"></i><span>{{ $rc->receiverSignature() ?? ($rc->receivedBy?->name ?? 'Économe') }}</span>
                         </span>
                     @endunless
@@ -201,7 +254,9 @@
                 <x-table.actions :label="'Actions pour le bon d\'entrée '.$rc->number">
                     @if($rc->estEnAttente() && $rc->purchaseOrder)
                         @droit('economat.receipts.creer')
-                            <x-table.action :href="route('economat.receipts.create', $rc->purchaseOrder)" icon="package-check">Réceptionner la livraison</x-table.action>
+                            <x-table.action
+                                :href="route('economat.receipts.create', $rc->purchaseOrder)"
+                                icon="package-check">Réceptionner la livraison</x-table.action>
                         @enddroit
                     @endif
                     <x-table.action :href="route('economat.receipts.show', $rc)" icon="eye">Détails</x-table.action>

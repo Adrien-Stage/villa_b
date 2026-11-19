@@ -51,12 +51,14 @@ class StockMovementController extends Controller
 
         return view('economat.movements.index', [
             'mouvements'    => $mouvements,
-            'lignes'        => collect($mouvements->items())->map(fn (StockMovement $m) => $this->journal->ligne($m, $documents)),
+            'lignes'        => collect($mouvements->items())->map(fn (StockMovement $m) => $this->journal->ligne($m,
+                $documents)),
             'synthese'      => $this->journal->synthese($filtres),
             'article'       => $article,
             'fiche'         => $article ? $this->journal->fiche($article, $filtres['du'], $filtres['au']) : null,
             'filtres'       => $filtres,
-            'articles'      => StockItem::query()->orderBy('name')->get(['id', 'name', 'reference', 'unit', 'is_active']),
+            'articles'      => StockItem::query()->orderBy('name')->get(['id', 'name', 'reference', 'unit',
+                'is_active']),
             'categories'    => StockCategory::query()->orderBy('sort_order')->orderBy('name')->get(['id', 'name']),
             'departments'   => [
                 'economat' => 'Économat (Magasin central)',
@@ -74,7 +76,8 @@ class StockMovementController extends Controller
         $filtres = $this->filtres($request);
         $article = $filtres['article'] ? StockItem::find($filtres['article']) : null;
 
-        $mouvements = $this->journal->query($filtres)->orderBy('occurred_at')->orderBy('id')->limit(self::MAX_EXPORT)->get();
+        $mouvements = $this->journal->query($filtres)->orderBy('occurred_at')->orderBy('id')->limit(self::MAX_EXPORT)
+            ->get();
         $documents = $this->journal->documents($mouvements);
         $lignes = $mouvements->map(fn (StockMovement $m) => $this->journal->ligne($m, $documents));
 
@@ -110,7 +113,8 @@ class StockMovementController extends Controller
                 . ' · ajustements : ' . $this->qte($fiche['ajustements'], true)
                 . ' · stock en fin : ' . $this->qte($fiche['fin']) . ' ' . $article->unit . '.');
         } elseif ($lignes->count() >= self::MAX_EXPORT) {
-            $document->note('Export limité aux ' . self::MAX_EXPORT . ' premiers mouvements. Affinez la période pour le reste.');
+            $document->note('Export limité aux ' . self::MAX_EXPORT
+                . ' premiers mouvements. Affinez la période pour le reste.');
         }
 
         return $exporteur->rendre($document, $format);
@@ -129,8 +133,10 @@ class StockMovementController extends Controller
             'au'        => $parDefaut ? now() : $this->date($request->query('au')),
             'article'   => (int) $request->query('article') ?: null,
             'categorie' => (int) $request->query('categorie') ?: null,
-            'type'      => array_key_exists((string) $request->query('type'), StockMovement::TYPES) ? $request->query('type') : null,
-            'source'    => array_key_exists((string) $request->query('source'), StockMovement::SOURCES) ? $request->query('source') : null,
+            'type'      => array_key_exists((string) $request->query('type'), StockMovement::TYPES) ? $request
+                ->query('type') : null,
+            'source'    => array_key_exists((string) $request->query('source'), StockMovement::SOURCES) ? $request
+                ->query('source') : null,
             'service'   => trim((string) $request->query('service')) ?: null,
             'recherche' => trim((string) $request->query('recherche')) ?: null,
         ];

@@ -25,7 +25,8 @@ class ShiftPlanningReminder extends Notification
 
     private function semaine(): string
     {
-        return 'du ' . $this->lundi->locale('fr')->isoFormat('D') . ' au ' . $this->lundi->addDays(6)->locale('fr')->isoFormat('D MMMM');
+        return 'du ' . $this->lundi->locale('fr')->isoFormat('D') . ' au ' . $this->lundi->addDays(6)->locale('fr')
+            ->isoFormat('D MMMM');
     }
 
     private function title(): string
@@ -40,7 +41,8 @@ class ShiftPlanningReminder extends Notification
 
     private function url(): string
     {
-        return route('planning.index', ['semaine' => $this->lundi->toDateString(), 'departement' => $this->departementId], false);
+        return route('planning.index', ['semaine' => $this->lundi->toDateString(), 'departement' => $this
+            ->departementId], false);
     }
 
     public function toArray(object $notifiable): array

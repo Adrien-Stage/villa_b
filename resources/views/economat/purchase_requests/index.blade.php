@@ -27,7 +27,10 @@
             <p class="text-sm text-primary/60 mt-0.5">Besoins exprimés par l'économat et les services : le responsable des achats les vérifie, ajuste au besoin les quantités, puis les commande. Une demande commandée passe aux archives.</p>
         </div>
         @droit('economat.purchase_requests.creer')
-            <a href="{{ route('economat.purchase_requests.create') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+            <a
+                href="{{ route('economat.purchase_requests.create') }}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                    hover:bg-surface-dark transition-colors shadow-sm">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i> Exprimer un besoin d'achat
             </a>
         @enddroit
@@ -66,10 +69,16 @@
 
     {{-- Filtres --}}
     <div class="bg-white border border-secondary/20 rounded-xl p-4 shadow-sm">
-        <form method="GET" action="{{ route('economat.purchase_requests.index') }}" class="flex flex-wrap items-center gap-3">
+        <form
+            method="GET"
+            action="{{ route('economat.purchase_requests.index') }}"
+            class="flex flex-wrap items-center gap-3">
             <input type="hidden" name="vue" value="{{ $vue }}">
             <div class="flex-1 min-w-[160px]">
-                <select name="status" class="w-full px-3 py-1.5 text-sm border border-secondary/20 rounded-lg text-primary focus:outline-none focus:border-primary">
+                <select
+                    name="status"
+                    class="w-full px-3 py-1.5 text-sm border border-secondary/20 rounded-lg text-primary
+                        focus:outline-none focus:border-primary">
                     <option value="">Tous les statuts</option>
                     @foreach($statuses as $key => $lbl)
                         <option value="{{ $key }}" @selected(request('status') === $key)>{{ $lbl }}</option>
@@ -77,7 +86,10 @@
                 </select>
             </div>
             <div class="flex-1 min-w-[160px]">
-                <select name="department" class="w-full px-3 py-1.5 text-sm border border-secondary/20 rounded-lg text-primary focus:outline-none focus:border-primary">
+                <select
+                    name="department"
+                    class="w-full px-3 py-1.5 text-sm border border-secondary/20 rounded-lg text-primary
+                        focus:outline-none focus:border-primary">
                     <option value="">Tous les départements</option>
                     @foreach($departments as $key => $lbl)
                         <option value="{{ $key }}" @selected(request('department') === $key)>{{ $lbl }}</option>
@@ -85,18 +97,26 @@
                 </select>
             </div>
             <div class="flex-1 min-w-[140px]">
-                <select name="priority" class="w-full px-3 py-1.5 text-sm border border-secondary/20 rounded-lg text-primary focus:outline-none focus:border-primary">
+                <select
+                    name="priority"
+                    class="w-full px-3 py-1.5 text-sm border border-secondary/20 rounded-lg text-primary
+                        focus:outline-none focus:border-primary">
                     <option value="">Toutes priorités</option>
                     <option value="low" @selected(request('priority') === 'low')>Basse</option>
                     <option value="normal" @selected(request('priority') === 'normal')>Normale</option>
                     <option value="urgent" @selected(request('priority') === 'urgent')>Urgente</option>
                 </select>
             </div>
-            <button type="submit" class="px-4 py-1.5 bg-secondary/10 hover:bg-secondary/20 text-primary text-sm font-medium rounded-lg transition-colors">
+            <button
+                type="submit"
+                class="px-4 py-1.5 bg-secondary/10 hover:bg-secondary/20 text-primary text-sm font-medium rounded-lg
+                    transition-colors">
                 Filtrer
             </button>
             @if(request()->hasAny(['status', 'department', 'priority']))
-                <a href="{{ route('economat.purchase_requests.index', ['vue' => $vue]) }}" class="px-3 py-1.5 text-xs text-primary/50 hover:text-primary">
+                <a
+                    href="{{ route('economat.purchase_requests.index', ['vue' => $vue]) }}"
+                    class="px-3 py-1.5 text-xs text-primary/50 hover:text-primary">
                     Effacer
                 </a>
             @endif
@@ -104,7 +124,11 @@
     </div>
 
     {{-- Tableau des demandes --}}
-    <x-table :rows="$requests" :empty="$vue === 'archives' ? 'Aucune demande archivée.' : 'Aucune demande d\'achat en cours.'" empty-icon="clipboard-list" caption="Demandes d'achat">
+    <x-table
+        :rows="$requests"
+        :empty="$vue === 'archives' ? 'Aucune demande archivée.' : 'Aucune demande d\'achat en cours.'"
+        empty-icon="clipboard-list"
+        caption="Demandes d'achat">
         <x-slot:head>
             <x-table.col>Numéro</x-table.col>
             <x-table.col>Département</x-table.col>
@@ -125,7 +149,9 @@
         @foreach($requests as $req)
             <x-table.row :href="route('economat.purchase_requests.show', $req)">
                 <x-table.cell nowrap>
-                    <a href="{{ route('economat.purchase_requests.show', $req) }}" class="font-mono font-bold text-primary hover:underline">{{ $req->number }}</a>
+                    <a
+                        href="{{ route('economat.purchase_requests.show', $req) }}"
+                        class="font-mono font-bold text-primary hover:underline">{{ $req->number }}</a>
                 </x-table.cell>
                 <x-table.cell class="text-primary/70">{{ $req->departmentLabel() }}</x-table.cell>
                 @if($peutVoirPrix)

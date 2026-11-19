@@ -57,7 +57,8 @@ class InterventionController extends Controller
         ]);
 
         if (Intervention::enCoursPour($admin)) {
-            return back()->with('error', 'Une intervention est déjà en cours : terminez-la avant d\'en ouvrir une autre.');
+            return back()->with('error',
+                'Une intervention est déjà en cours : terminez-la avant d\'en ouvrir une autre.');
         }
 
         $intervention = Intervention::create([

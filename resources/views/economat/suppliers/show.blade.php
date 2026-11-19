@@ -24,17 +24,22 @@
     {{-- En-tête --}}
     <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div class="flex items-start gap-3">
-            <a href="{{ route('economat.suppliers.index') }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors" aria-label="Retour aux fournisseurs">
+            <a
+                href="{{ route('economat.suppliers.index') }}"
+                class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors"
+                aria-label="Retour aux fournisseurs">
                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
             </a>
             <div>
                 <div class="flex items-center gap-2 flex-wrap">
                     <h1 class="text-2xl font-heading font-semibold text-primary">{{ $supplier->name }}</h1>
                     @if($supplier->code)
-                        <span class="px-1.5 py-0.5 text-[11px] font-mono bg-gray-100 text-primary/70 rounded">{{ $supplier->code }}</span>
+                        <span class="px-1.5 py-0.5 text-[11px] font-mono bg-gray-100 text-primary/70
+                            rounded">{{ $supplier->code }}</span>
                     @endif
                     @if(! $supplier->is_active)
-                        <span class="px-1.5 py-0.5 text-[11px] font-medium bg-red-100 text-red-700 rounded">Inactif</span>
+                        <span class="px-1.5 py-0.5 text-[11px] font-medium bg-red-100 text-red-700
+                            rounded">Inactif</span>
                     @endif
                 </div>
                 <p class="text-sm text-primary/60 mt-0.5">
@@ -45,7 +50,8 @@
         <div class="flex items-center gap-2">
             @droit('economat.orders.creer')
                 <a href="{{ route('economat.orders.create', ['fournisseur' => $supplier->id]) }}"
-                   class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                       hover:bg-surface-dark transition-colors">
                     <i data-lucide="shopping-cart" class="w-4 h-4"></i> Commander
                 </a>
             @enddroit
@@ -103,7 +109,8 @@
 
     {{-- Catalogue --}}
     <section class="bg-white border border-secondary/20 rounded-xl overflow-hidden" aria-labelledby="titre-catalogue">
-        <div class="px-5 py-3.5 border-b border-secondary/15 bg-gray-50/80 flex flex-wrap items-center justify-between gap-2">
+        <div class="px-5 py-3.5 border-b border-secondary/15 bg-gray-50/80 flex flex-wrap items-center justify-between
+            gap-2">
             <h2 id="titre-catalogue" class="text-sm font-semibold text-primary">Articles qu'il nous livre <span class="text-primary/40 font-normal">({{ $catalogue->count() }})</span></h2>
             <p class="text-xs text-primary/50">Prix d'achat dans l'unité de stock de chaque article ; chaque réception met à jour le sien.</p>
         </div>
@@ -112,7 +119,8 @@
         @else
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50/50 text-[11px] font-semibold uppercase tracking-wider text-primary/50 border-b border-secondary/10">
+                    <thead class="bg-gray-50/50 text-[11px] font-semibold uppercase tracking-wider text-primary/50
+                        border-b border-secondary/10">
                         <tr>
                             <th class="px-5 py-2.5 text-left">Article</th>
                             <th class="px-4 py-2.5 text-left">Catégorie</th>
@@ -129,7 +137,8 @@
                                     @if($ligne['item']->reference)<span class="ml-1 text-[11px] font-mono text-primary/40">{{ $ligne['item']->reference }}</span>@endif
                                 </td>
                                 <td class="px-4 py-2.5 text-primary/60">{{ $ligne['item']->category?->name ?? '—' }}</td>
-                                <td class="px-4 py-2.5 text-right font-mono font-semibold text-primary whitespace-nowrap">
+                                <td class="px-4 py-2.5 text-right font-mono font-semibold text-primary
+                                    whitespace-nowrap">
                                     @if($ligne['prix'] > 0)
                                         {{ $fcfa($ligne['prix']) }} F <span class="text-[11px] font-sans font-normal text-primary/40">/ {{ $ligne['item']->shortUnit() }}</span>
                                     @else
@@ -139,8 +148,12 @@
                                 <td class="px-4 py-2.5 text-primary/60 whitespace-nowrap">{{ $ligne['date']?->format('d/m/Y') ?? '—' }}</td>
                                 <td class="px-4 py-2.5">
                                     <div class="flex flex-wrap gap-1">
-                                        @if($ligne['habituel'])<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-emerald-200 bg-emerald-50 text-emerald-700">Fournisseur habituel</span>@endif
-                                        @if($ligne['moinsCher'])<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-sky-200 bg-sky-50 text-sky-700">Moins cher</span>@endif
+                                        @if($ligne['habituel'])<span class="text-[10px] font-semibold px-1.5 py-0.5
+                                            rounded border border-emerald-200 bg-emerald-50
+                                            text-emerald-700">Fournisseur habituel</span>@endif
+                                        @if($ligne['moinsCher'])<span class="text-[10px] font-semibold px-1.5 py-0.5
+                                            rounded border border-sky-200 bg-sky-50
+                                            text-sky-700">Moins cher</span>@endif
                                         @if($ligne['autres'] > 0)
                                             <span class="text-[11px] text-primary/50">{{ $ligne['autres'] }} autre(s) fournisseur(s)</span>
                                         @elseif(! $ligne['habituel'] && ! $ligne['moinsCher'])
@@ -158,13 +171,16 @@
 
     {{-- Commandes en cours et livraisons attendues --}}
     @if($voitBons && $enCours->isNotEmpty())
-        <section class="bg-white border border-secondary/20 rounded-xl overflow-hidden" aria-labelledby="titre-en-cours">
+        <section
+            class="bg-white border border-secondary/20 rounded-xl overflow-hidden"
+            aria-labelledby="titre-en-cours">
             <div class="px-5 py-3.5 border-b border-secondary/15 bg-gray-50/80">
                 <h2 id="titre-en-cours" class="text-sm font-semibold text-primary">Bons de commande en cours <span class="text-primary/40 font-normal">({{ $enCours->count() }})</span></h2>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50/50 text-[11px] font-semibold uppercase tracking-wider text-primary/50 border-b border-secondary/10">
+                    <thead class="bg-gray-50/50 text-[11px] font-semibold uppercase tracking-wider text-primary/50
+                        border-b border-secondary/10">
                         <tr>
                             <th class="px-5 py-2.5 text-left">Bon</th>
                             <th class="px-4 py-2.5 text-left">Envoyé le</th>
@@ -177,7 +193,9 @@
                         @foreach($enCours as $bon)
                             <tr>
                                 <td class="px-5 py-2.5 font-mono text-xs">
-                                    @if($voitBons)<a href="{{ route('economat.orders.show', $bon) }}" class="text-primary hover:underline">{{ $bon->number }}</a>@else{{ $bon->number }}@endif
+                                    @if($voitBons)<a
+                                        href="{{ route('economat.orders.show', $bon) }}"
+                                        class="text-primary hover:underline">{{ $bon->number }}</a>@else{{ $bon->number }}@endif
                                 </td>
                                 <td class="px-4 py-2.5 text-primary/70">{{ $bon->sent_at?->format('d/m/Y') ?? '—' }}</td>
                                 <td class="px-4 py-2.5 text-primary/70">{{ $bon->expected_at?->format('d/m/Y') ?? '—' }}</td>
@@ -193,7 +211,8 @@
 
     {{-- Historique des livraisons --}}
     <section class="bg-white border border-secondary/20 rounded-xl overflow-hidden" aria-labelledby="titre-livraisons">
-        <div class="px-5 py-3.5 border-b border-secondary/15 bg-gray-50/80 flex flex-wrap items-center justify-between gap-2">
+        <div class="px-5 py-3.5 border-b border-secondary/15 bg-gray-50/80 flex flex-wrap items-center justify-between
+            gap-2">
             <div>
                 <h2 id="titre-livraisons" class="text-sm font-semibold text-primary">Historique des livraisons</h2>
                 @if($livraisons->count() >= \App\Support\FicheFournisseur::LIVRAISONS_A_L_ECRAN)
@@ -205,20 +224,25 @@
                 @php $historique = ['edition' => 'historique-livraisons', 'fournisseur' => $supplier->id]; @endphp
                 <div class="flex items-center gap-2">
                     <a href="{{ route('editions.print', $historique) }}" target="_blank" rel="noopener"
-                       class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-accent/20">
+                       class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3
+                           py-1.5 text-xs font-semibold text-primary hover:bg-accent/20">
                         <i data-lucide="printer" class="h-3.5 w-3.5" aria-hidden="true"></i> Imprimer
                     </a>
                     @droit('editions.export')
                         <a href="{{ route('editions.export', $historique + ['format' => 'excel']) }}"
-                           class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-accent/20">
+                           class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3
+                               py-1.5 text-xs font-semibold text-primary hover:bg-accent/20">
                             <i data-lucide="sheet" class="h-3.5 w-3.5" aria-hidden="true"></i> Excel
                         </a>
                         <a href="{{ route('editions.export', $historique + ['format' => 'pdf']) }}"
-                           class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-accent/20">
+                           class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/30 bg-white px-3
+                               py-1.5 text-xs font-semibold text-primary hover:bg-accent/20">
                             <i data-lucide="file-text" class="h-3.5 w-3.5" aria-hidden="true"></i> PDF
                         </a>
                     @enddroit
-                    <a href="{{ route('editions.show', $historique) }}" class="text-xs text-primary/50 underline hover:text-primary">Choisir la période</a>
+                    <a
+                        href="{{ route('editions.show', $historique) }}"
+                        class="text-xs text-primary/50 underline hover:text-primary">Choisir la période</a>
                 </div>
             @enddroit
         </div>
@@ -227,7 +251,8 @@
         @else
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50/50 text-[11px] font-semibold uppercase tracking-wider text-primary/50 border-b border-secondary/10">
+                    <thead class="bg-gray-50/50 text-[11px] font-semibold uppercase tracking-wider text-primary/50
+                        border-b border-secondary/10">
                         <tr>
                             <th class="px-5 py-2.5 text-left">Reçu le</th>
                             <th class="px-4 py-2.5 text-left">Bon d'entrée</th>
@@ -243,7 +268,11 @@
                             <tr class="{{ $recu->status === \App\Models\GoodsReceipt::STATUS_CANCELLED ? 'text-primary/40 line-through' : '' }}">
                                 <td class="px-5 py-2.5 whitespace-nowrap">{{ $recu->received_at?->format('d/m/Y H:i') ?? '—' }}</td>
                                 <td class="px-4 py-2.5 font-mono text-xs">
-                                    @if($voitReceptions)<a href="{{ route('economat.receipts.print', $recu) }}" target="_blank" rel="noopener" class="text-primary hover:underline">{{ $recu->number }}</a>@else{{ $recu->number }}@endif
+                                    @if($voitReceptions)<a
+                                        href="{{ route('economat.receipts.print', $recu) }}"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="text-primary hover:underline">{{ $recu->number }}</a>@else{{ $recu->number }}@endif
                                 </td>
                                 <td class="px-4 py-2.5 font-mono text-xs">{{ $recu->purchaseOrder?->number ?? '—' }}</td>
                                 <td class="px-4 py-2.5 text-primary/70">

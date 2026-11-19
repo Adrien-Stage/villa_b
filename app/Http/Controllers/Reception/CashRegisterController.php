@@ -107,7 +107,8 @@ class CashRegisterController extends Controller
             'opened_at' => now(),
         ]);
 
-        return redirect()->route('bookings.index')->with('success', 'Caisse de réception ouverte avec succès. Bon travail !');
+        return redirect()->route('bookings.index')->with('success',
+            'Caisse de réception ouverte avec succès. Bon travail !');
     }
 
     public function showCloseForm()
@@ -235,6 +236,7 @@ class CashRegisterController extends Controller
                 ->with('success', "Caisse {$moduleName} réactivée. Veuillez procéder à la clôture.");
         }
 
-        return redirect()->back()->with('success', "Caisse {$moduleName} réactivée avec succès. Vous pouvez continuer votre travail.");
+        return redirect()->back()->with('success',
+            "Caisse {$moduleName} réactivée avec succès. Vous pouvez continuer votre travail.");
     }
 }

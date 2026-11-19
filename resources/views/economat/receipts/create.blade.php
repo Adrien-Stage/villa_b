@@ -20,11 +20,15 @@
 <div class="max-w-5xl mx-auto space-y-6" x-data="goodsReceiptForm()">
     <div class="flex items-center gap-3">
         @droit('economat.orders.voir')
-            <a href="{{ route('economat.orders.show', $order) }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors">
+            <a
+                href="{{ route('economat.orders.show', $order) }}"
+                class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors">
                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
             </a>
         @else
-            <a href="{{ route('economat.receipts.index') }}" class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors">
+            <a
+                href="{{ route('economat.receipts.index') }}"
+                class="p-2 rounded-lg hover:bg-gray-100 text-primary/60 transition-colors">
                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
             </a>
         @enddroit
@@ -39,7 +43,11 @@
 
     @include('economat.partials.flash')
 
-    <form method="POST" action="{{ route('economat.receipts.store', $order) }}" enctype="multipart/form-data" class="space-y-6">
+    <form
+        method="POST"
+        action="{{ route('economat.receipts.store', $order) }}"
+        enctype="multipart/form-data"
+        class="space-y-6">
         @csrf
 
         {{-- Métadonnées de livraison --}}
@@ -49,34 +57,60 @@
                     <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">
                         N° Bon de Livraison (BL Fournisseur)
                     </label>
-                    <input type="text" name="delivery_note_number" placeholder="Ex: BL-98421" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary font-mono">
+                    <input
+                        type="text"
+                        name="delivery_note_number"
+                        placeholder="Ex: BL-98421"
+                        class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary
+                            focus:outline-none focus:border-primary font-mono">
                 </div>
                 <div>
                     {{-- La date de chaque livraison se saisit : elle n'est jamais supposée. --}}
-                    <label for="recu-le" class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Date et heure de réception *</label>
+                    <label
+                        for="recu-le"
+                        class="block text-xs font-semibold text-primary uppercase tracking-wider
+                            mb-1.5">Date et heure de réception *</label>
                     <input id="recu-le" type="datetime-local" name="received_at" required value="{{ old('received_at') }}" max="{{ now()->format('Y-m-d\TH:i') }}"
                            @if($order->sent_at) min="{{ $order->sent_at->copy()->startOfDay()->format('Y-m-d\TH:i') }}" @endif
                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
                     @error('received_at')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Magasinier réceptionnaire</label>
-                    <input type="text" readonly disabled value="{{ auth()->user()->name }}" class="w-full px-3 py-2 text-sm border border-secondary/20 bg-gray-50 rounded-lg text-primary/70">
+                    <label class="block text-xs font-semibold text-primary uppercase tracking-wider
+                        mb-1.5">Magasinier réceptionnaire</label>
+                    <input
+                        type="text"
+                        readonly
+                        disabled
+                        value="{{ auth()->user()->name }}"
+                        class="w-full px-3 py-2 text-sm border border-secondary/20 bg-gray-50 rounded-lg
+                            text-primary/70">
                 </div>
             </div>
 
             <div>
-                <label for="bordereaux" class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Bordereaux de livraison (facultatif)</label>
+                <label
+                    for="bordereaux"
+                    class="block text-xs font-semibold text-primary uppercase tracking-wider
+                        mb-1.5">Bordereaux de livraison (facultatif)</label>
                 <input id="bordereaux" type="file" name="bordereaux[]" multiple accept="application/pdf,image/*"
-                       class="block w-full text-sm text-primary file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-surface-dark">
+                       class="block w-full text-sm text-primary file:mr-3 file:rounded-lg file:border-0 file:bg-primary
+                           file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white
+                           hover:file:bg-surface-dark">
                 <p class="mt-1 text-[11px] text-primary/50">PDF ou photo du bordereau signé (plusieurs possibles, 10 Mo chacun). Vous pourrez en joindre d'autres depuis la fiche du bon.</p>
                 @error('bordereaux')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                 @error('bordereaux.*')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-primary uppercase tracking-wider mb-1.5">Observations / Remarques de livraison</label>
-                <input type="text" name="notes" placeholder="Ex: Chauffeur M. Talla, camion frigorifique conforme..." class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                <label class="block text-xs font-semibold text-primary uppercase tracking-wider
+                    mb-1.5">Observations / Remarques de livraison</label>
+                <input
+                    type="text"
+                    name="notes"
+                    placeholder="Ex: Chauffeur M. Talla, camion frigorifique conforme..."
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary
+                        focus:outline-none focus:border-primary">
             </div>
         </div>
 
@@ -87,14 +121,19 @@
                     <h2 class="text-sm font-semibold text-primary">Pointage des articles livrés</h2>
                     <p class="text-xs text-primary/50">Saisissez les quantités déchargées. Les quantités refusées ne modifient pas le stock et font l'objet d'un litige.</p>
                 </div>
-                <button type="button" @click="receiveAll()" class="px-3 py-1.5 bg-secondary/10 hover:bg-secondary/20 text-primary text-xs font-medium rounded-lg transition-colors">
+                <button
+                    type="button"
+                    @click="receiveAll()"
+                    class="px-3 py-1.5 bg-secondary/10 hover:bg-secondary/20 text-primary text-xs font-medium
+                        rounded-lg transition-colors">
                     Tout recevoir conforme
                 </button>
             </div>
 
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
-                    <thead class="bg-gray-50/40 text-[11px] font-semibold uppercase text-primary/50 border-b border-secondary/10">
+                    <thead class="bg-gray-50/40 text-[11px] font-semibold uppercase text-primary/50 border-b
+                        border-secondary/10">
                         <tr>
                             <th class="px-4 py-2.5 text-left w-1/4">Article</th>
                             <th class="px-3 py-2.5 text-right w-24">Commandé</th>
@@ -150,17 +189,22 @@
                                         <div class="text-[11px] text-primary/60">Ranger en : <strong>{{ $line->item->zone->name }}</strong></div>
                                     @endif
                                     <template x-if="unites.length > 1">
-                                        <label class="mt-1 inline-flex items-center gap-1.5 text-[11px] text-primary/60">
+                                        <label class="mt-1 inline-flex items-center gap-1.5 text-[11px]
+                                            text-primary/60">
                                             Reçu en
                                             <select :name="'lines[' + id + '][packaging]'" x-model="unite" @change="onDeliveredChange()"
-                                                class="px-1.5 py-0.5 text-[11px] border border-secondary/30 rounded bg-white text-primary">
+                                                class="px-1.5 py-0.5 text-[11px] border border-secondary/30 rounded
+                                                    bg-white text-primary">
                                                 <template x-for="u in unites" :key="u.nom">
                                                     <option :value="u.nom" x-text="u.nom" :selected="u.nom === unite"></option>
                                                 </template>
                                             </select>
                                         </label>
                                     </template>
-                                    <p x-show="facteur() > 1" class="text-[10px] text-primary/50" x-text="'1 ' + unite + ' = ' + facteur() + ' ' + accorde(@js((string) $line->item?->unit), facteur()) + ' · reste ' + restant() + ' ' + accorde(unite, restant())"></p>
+                                    <p
+                                        x-show="facteur() > 1"
+                                        class="text-[10px] text-primary/50"
+                                        x-text="'1 ' + unite + ' = ' + facteur() + ' ' + accorde(@js((string) $line->item?->unit), facteur()) + ' · reste ' + restant() + ' ' + accorde(unite, restant())"></p>
                                 </td>
                                 <td class="px-3 py-3 text-right font-mono text-primary/70">
                                     {{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}
@@ -173,14 +217,17 @@
                                         :name="'lines[' + id + '][quantity_delivered]'"
                                         x-model.number="delivered"
                                         @input="onDeliveredChange()"
-                                        class="w-24 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg text-right font-mono text-primary focus:outline-none focus:border-primary"
+                                        class="w-24 px-2 py-1.5 text-sm border border-secondary/30 rounded-lg
+                                            text-right font-mono text-primary focus:outline-none focus:border-primary"
                                         placeholder="0">
                                 </td>
                                 <td class="px-3 py-3 text-center bg-emerald-50/20">
                                     <input type="number" step="0.001" min="0" :max="restant()"
                                         :name="'lines[' + id + '][quantity_accepted]'"
                                         x-model.number="accepted"
-                                        class="w-24 px-2 py-1.5 text-sm border border-emerald-400 bg-emerald-50/50 rounded-lg text-right font-mono font-bold text-emerald-800 focus:outline-none focus:border-emerald-600"
+                                        class="w-24 px-2 py-1.5 text-sm border border-emerald-400 bg-emerald-50/50
+                                            rounded-lg text-right font-mono font-bold text-emerald-800
+                                            focus:outline-none focus:border-emerald-600"
                                         placeholder="0">
                                 </td>
                                 <td class="px-3 py-3 text-center bg-rose-50/20">
@@ -188,17 +235,28 @@
                                         :name="'lines[' + id + '][quantity_rejected]'"
                                         x-model.number="rejected"
                                         @input="onRejectedChange()"
-                                        class="w-24 px-2 py-1.5 text-sm border border-rose-300 bg-rose-50/30 rounded-lg text-right font-mono text-rose-800 focus:outline-none focus:border-rose-500"
+                                        class="w-24 px-2 py-1.5 text-sm border border-rose-300 bg-rose-50/30 rounded-lg
+                                            text-right font-mono text-rose-800 focus:outline-none
+                                            focus:border-rose-500"
                                         placeholder="0">
                                 </td>
                                 <td class="px-3 py-3">
-                                    <select :name="'lines[' + id + '][rejection_reason]'" x-show="rejected > 0" class="w-full px-2 py-1 text-xs border border-rose-300 rounded-lg bg-rose-50/40 text-rose-900 focus:outline-none">
+                                    <select
+                                        :name="'lines[' + id + '][rejection_reason]'"
+                                        x-show="rejected > 0"
+                                        class="w-full px-2 py-1 text-xs border border-rose-300 rounded-lg bg-rose-50/40
+                                            text-rose-900 focus:outline-none">
                                         <option value="">Sélectionner motif...</option>
                                         @foreach($reasons as $rCode => $rLbl)
                                             <option value="{{ $rCode }}">{{ $rLbl }}</option>
                                         @endforeach
                                     </select>
-                                    <input type="text" :name="'lines[' + id + '][notes]'" placeholder="Note..." class="w-full mt-1 px-2 py-1 text-xs border border-secondary/20 rounded bg-white text-primary">
+                                    <input
+                                        type="text"
+                                        :name="'lines[' + id + '][notes]'"
+                                        placeholder="Note..."
+                                        class="w-full mt-1 px-2 py-1 text-xs border border-secondary/20 rounded
+                                            bg-white text-primary">
                                 </td>
                             </tr>
                         @endforeach
@@ -213,14 +271,16 @@
             <p class="text-xs font-semibold text-primary uppercase tracking-wider mb-2">La livraison est… *</p>
             @error('livraison')<p class="mb-2 text-xs text-red-600">{{ $message }}</p>@enderror
             <div class="grid gap-3 sm:grid-cols-2">
-                <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-secondary/30 p-3 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
+                <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-secondary/30 p-3
+                    has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/50">
                     <input type="radio" name="livraison" value="{{ \App\Models\GoodsReceipt::DELIVERY_COMPLETE }}" required @checked(old('livraison') === \App\Models\GoodsReceipt::DELIVERY_COMPLETE) class="mt-0.5 text-emerald-600 focus:ring-emerald-500">
                     <span>
                         <span class="block text-sm font-semibold text-primary">{{ $livraisons[\App\Models\GoodsReceipt::DELIVERY_COMPLETE] }}</span>
                         <span class="block text-xs text-primary/60">Le bon de commande est soldé : ce qui manque n'est plus attendu.</span>
                     </span>
                 </label>
-                <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-secondary/30 p-3 has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/50">
+                <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-secondary/30 p-3
+                    has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50/50">
                     <input type="radio" name="livraison" value="{{ \App\Models\GoodsReceipt::DELIVERY_PARTIAL }}" required @checked(old('livraison') === \App\Models\GoodsReceipt::DELIVERY_PARTIAL) class="mt-0.5 text-amber-600 focus:ring-amber-500">
                     <span>
                         <span class="block text-sm font-semibold text-primary">{{ $livraisons[\App\Models\GoodsReceipt::DELIVERY_PARTIAL] }}</span>
@@ -231,7 +291,8 @@
         </fieldset>
 
         {{-- Engagement & Signature Numérique Automatique --}}
-        <div class="bg-white border border-secondary/20 rounded-xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="bg-white border border-secondary/20 rounded-xl p-5 shadow-sm flex flex-col sm:flex-row items-center
+            justify-between gap-4">
             <div class="space-y-1">
                 <div class="flex items-center gap-2">
                     <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
@@ -241,7 +302,8 @@
                     En validant, vous certifiez l'exactitude du pointage. Les marchandises acceptées intègrent immédiatement les stocks et valorisent le CUMP.
                 </p>
             </div>
-            <div class="px-5 py-2.5 bg-gray-50 border border-dashed border-secondary/30 rounded-xl text-center shrink-0 min-w-[200px]">
+            <div class="px-5 py-2.5 bg-gray-50 border border-dashed border-secondary/30 rounded-xl text-center shrink-0
+                min-w-[200px]">
                 <div class="text-[10px] uppercase font-semibold text-primary/40 tracking-wider">Signature Économe</div>
                 <div class="font-signature text-3xl text-primary leading-tight py-0.5 select-none">
                     {{ auth()->user()->signatureName() }}
@@ -255,15 +317,22 @@
         {{-- Actions --}}
         <div class="flex items-center justify-between pt-2">
             @droit('economat.orders.voir')
-                <a href="{{ route('economat.orders.show', $order) }}" class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
+                <a
+                    href="{{ route('economat.orders.show', $order) }}"
+                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
                     Annuler
                 </a>
             @else
-                <a href="{{ route('economat.receipts.index') }}" class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
+                <a
+                    href="{{ route('economat.receipts.index') }}"
+                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">
                     Annuler
                 </a>
             @enddroit
-            <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+            <button
+                type="submit"
+                class="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold
+                    rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
                 <i data-lucide="package-check" class="w-4 h-4"></i> Valider et Signer le Bon d'Entrée
             </button>
         </div>

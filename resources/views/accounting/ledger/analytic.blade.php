@@ -13,7 +13,8 @@
         <p class="text-sm text-primary/60 mt-1">{{ $periode['label'] }} — rentabilité par point de vente</p>
     </div>
     <a href="{{ route('accounting.ledger.analytic.margins', ['from' => $periode['from']->toDateString(), 'to' => $periode['to']->toDateString()]) }}"
-       class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-secondary/25 bg-white text-xs font-semibold text-primary/70 hover:bg-accent/20 transition-colors shrink-0">
+       class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-secondary/25 bg-white text-xs
+           font-semibold text-primary/70 hover:bg-accent/20 transition-colors shrink-0">
         <i data-lucide="bed-double" class="w-3.5 h-3.5"></i>
         Marges par type de chambre
     </a>
@@ -22,10 +23,12 @@
 @include('accounting.ledger.partials.nav')
 
 @if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700">{{ session('success') }}</div>
 @endif
 @if(session('error'))
-    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ session('error') }}</div>
+    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm
+        text-red-700">{{ session('error') }}</div>
 @endif
 
 <form method="GET" class="flex flex-col sm:flex-row gap-2 mb-5">
@@ -40,7 +43,10 @@
                class="rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
     </div>
     <div class="flex items-end">
-        <button type="submit" class="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+        <button
+            type="submit"
+            class="px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark
+                transition-colors">
             Afficher
         </button>
     </div>
@@ -49,7 +55,8 @@
 {{-- La qualité de l'analytique se dit avant ses résultats : une marge calculée
      sur un tiers des charges n'est pas une marge. --}}
 @if($ventilation['rate'] !== null && $ventilation['rate'] < 80)
-    <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[11px] text-amber-900 leading-relaxed">
+    <div class="mb-5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-[11px] text-amber-900
+        leading-relaxed">
         <strong>{{ $ventilation['rate'] }} % des charges seulement portent un centre d'analyse.</strong>
         Les marges ci-dessous sont calculées sur cette part ; les
         {{ $fcfa($ventilation['unassigned']) }} FCFA restants figurent en « non ventilé ».
@@ -219,13 +226,15 @@
             @endif
             <button type="submit"
                     onclick="return {{ $reflet['mirrored'] ? "confirm('Contre-passer le reflet existant et le recalculer ?')" : 'true' }}"
-                    class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors whitespace-nowrap">
+                    class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-primary text-white text-xs font-semibold
+                        rounded-lg hover:bg-surface-dark transition-colors whitespace-nowrap">
                 <i data-lucide="{{ $reflet['mirrored'] ? 'refresh-cw' : 'copy' }}" class="w-3.5 h-3.5"></i>
                 {{ $reflet['mirrored'] ? 'Recalculer' : 'Produire le reflet' }}
             </button>
             @if($reflet['entry'])
                 <a href="{{ route('accounting.ledger.entry', $reflet['entry']) }}"
-                   class="block text-center mt-2 text-[11px] text-primary/50 hover:text-primary transition-colors">Voir l'écriture</a>
+                   class="block text-center mt-2 text-[11px] text-primary/50 hover:text-primary
+                       transition-colors">Voir l'écriture</a>
             @endif
         </form>
     </div>

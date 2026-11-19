@@ -5,7 +5,8 @@
     PWA doit s'installer même si l'utilisateur refuse les notifications.
 --}}
 <div id="pwa-install-banner"
-     class="hidden fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 z-[9998] bg-white border border-secondary/25 rounded-2xl shadow-2xl p-4">
+     class="hidden fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-80 z-[9998] bg-white border
+         border-secondary/25 rounded-2xl shadow-2xl p-4">
     <div class="flex items-start gap-3">
         <div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0">
             <i data-lucide="download" class="w-5 h-5"></i>
@@ -17,7 +18,8 @@
             </p>
             <div class="flex items-center gap-2 mt-3">
                 <button type="button" id="pwa-install-accept"
-                        class="px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                        class="px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark
+                            transition-colors">
                     Installer
                 </button>
                 <button type="button" id="pwa-install-dismiss"

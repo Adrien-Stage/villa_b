@@ -286,10 +286,14 @@
             ← Retour au bon de commande
         </a>
         <div style="display: inline-flex; border-radius: 6px; overflow: hidden; border: 1px solid #475569;">
-            <a href="{{ route('economat.orders.print', [$order, 'prix' => 1]) }}" style="padding: 5px 12px; font-size: 11px; font-weight: 600; text-decoration: none; {{ $avecPrix ? 'background: #2563eb; color: #fff;' : 'background: #334155; color: #cbd5e1;' }}">
+            <a
+                href="{{ route('economat.orders.print', [$order, 'prix' => 1]) }}"
+                style="padding: 5px 12px; font-size: 11px; font-weight: 600; text-decoration: none; {{ $avecPrix ? 'background: #2563eb; color: #fff;' : 'background: #334155; color: #cbd5e1;' }}">
                 Version avec prix
             </a>
-            <a href="{{ route('economat.orders.print', [$order, 'prix' => 0]) }}" style="padding: 5px 12px; font-size: 11px; font-weight: 600; text-decoration: none; {{ !$avecPrix ? 'background: #2563eb; color: #fff;' : 'background: #334155; color: #cbd5e1;' }}">
+            <a
+                href="{{ route('economat.orders.print', [$order, 'prix' => 0]) }}"
+                style="padding: 5px 12px; font-size: 11px; font-weight: 600; text-decoration: none; {{ !$avecPrix ? 'background: #2563eb; color: #fff;' : 'background: #334155; color: #cbd5e1;' }}">
                 Version sans prix
             </a>
         </div>

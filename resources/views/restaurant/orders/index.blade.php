@@ -13,7 +13,8 @@
     @droit('restaurant.orders.creer')
     <button type="button"
         onclick="openCreateOrderModal()"
-        class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 transition-opacity">
+        class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+            hover:opacity-95 transition-opacity">
         <i data-lucide="plus" class="w-3.5 h-3.5"></i>
         Nouvelle commande
     </button>
@@ -27,7 +28,8 @@
             <div class="flex items-center gap-3">
                 <span class="relative flex h-2.5 w-2.5">
                     @if($onDuty)
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400
+                            opacity-75"></span>
                     @endif
                     <span class="relative inline-flex rounded-full h-2.5 w-2.5 {{ $onDuty ? 'bg-green-500' : 'bg-primary/25' }}"></span>
                 </span>
@@ -49,7 +51,9 @@
                         En salle : {{ $onDutyServers->pluck('name')->implode(', ') }}
                     </span>
                 @endif
-                <form method="POST" action="{{ $onDuty ? route('restaurant.shifts.close') : route('restaurant.shifts.open') }}">
+                <form
+                    method="POST"
+                    action="{{ $onDuty ? route('restaurant.shifts.close') : route('restaurant.shifts.open') }}">
                     @csrf
                     <button type="submit"
                         class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-colors
@@ -70,7 +74,8 @@
 @endif
 
 @if(session('stock_warning'))
-    <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+    <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-start
+        gap-2">
         <i data-lucide="alert-triangle" class="w-4 h-4 mt-0.5 shrink-0"></i>
         <span>{{ session('stock_warning') }}</span>
     </div>
@@ -132,7 +137,11 @@
     ];
 @endphp
 <div id="orders-table-container">
-<x-table :rows="$orders" empty="Aucune commande. Les commandes du portail apparaîtront ici." empty-icon="receipt" caption="Commandes">
+<x-table
+    :rows="$orders"
+    empty="Aucune commande. Les commandes du portail apparaîtront ici."
+    empty-icon="receipt"
+    caption="Commandes">
     <x-slot:head>
         <x-table.col>Commande</x-table.col>
         <x-table.col>Table</x-table.col>
@@ -146,7 +155,9 @@
     @foreach($orders as $order)
         <x-table.row :href="route('restaurant.orders.show', $order)">
             <x-table.cell nowrap>
-                <a href="{{ route('restaurant.orders.show', $order) }}" class="text-sm font-semibold text-primary hover:underline">#{{ $order->id }}</a>
+                <a
+                    href="{{ route('restaurant.orders.show', $order) }}"
+                    class="text-sm font-semibold text-primary hover:underline">#{{ $order->id }}</a>
                 <p class="mt-0.5 text-xs text-primary/45">{{ $order->items_count }} article{{ $order->items_count > 1 ? 's' : '' }} · {{ $order->placed_at?->format('d/m H:i') }}</p>
             </x-table.cell>
             <x-table.cell class="text-primary/70">{{ $order->table_number ?? '—' }}</x-table.cell>
@@ -158,7 +169,9 @@
                 @endif
             </x-table.cell>
             <x-table.cell hide="2xl">
-                <span class="inline-flex items-center rounded-full border border-secondary/15 bg-accent/30 px-2 py-0.5 text-[11px] font-semibold text-primary">{{ ($order->source ?? 'portal') === 'portal' ? 'Portail' : 'Salle' }}</span>
+                <span class="inline-flex items-center rounded-full border border-secondary/15 bg-accent/30 px-2 py-0.5
+                    text-[11px] font-semibold
+                    text-primary">{{ ($order->source ?? 'portal') === 'portal' ? 'Portail' : 'Salle' }}</span>
             </x-table.cell>
             <x-table.cell nowrap>
                 <span class="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold {{ $statusStyles[$order->status] ?? 'bg-white text-primary border-secondary/25' }}">{{ $statusLabels[$order->status] ?? ucfirst($order->status) }}</span>
@@ -183,17 +196,27 @@
 
 @droit('restaurant.orders.creer')
 {{-- Create order modal --}}
-<x-modal id="create-order-modal" title="Nouvelle commande" subtitle="Saisie manuelle (client sans QR)" max-width="max-w-4xl" closeAction="closeCreateOrderModal()">
+<x-modal
+    id="create-order-modal"
+    title="Nouvelle commande"
+    subtitle="Saisie manuelle (client sans QR)"
+    max-width="max-w-4xl"
+    closeAction="closeCreateOrderModal()">
 
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] h-full">
         <div class="p-5 border-b lg:border-b-0 lg:border-r border-secondary/15 flex flex-col h-[50vh] lg:h-full">
             <div class="flex items-center justify-between gap-3 mb-4 shrink-0">
                 <div class="relative flex-1">
                     <input id="menu-search" type="text" placeholder="Rechercher un article..."
-                        class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-secondary/25 bg-white text-sm outline-none focus:border-secondary">
-                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30"></i>
+                        class="w-full pl-9 pr-3 py-2.5 rounded-xl border border-secondary/25 bg-white text-sm
+                            outline-none focus:border-secondary">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2
+                        text-primary/30"></i>
                 </div>
-                <select id="cat-filter" class="px-3 py-2.5 text-sm border border-secondary/25 rounded-xl bg-white text-primary outline-none focus:border-secondary">
+                <select
+                    id="cat-filter"
+                    class="px-3 py-2.5 text-sm border border-secondary/25 rounded-xl bg-white text-primary outline-none
+                        focus:border-secondary">
                     <option value="all">Toutes</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -211,7 +234,8 @@
                         data-price="{{ $item->price }}"
                         data-category="{{ $item->restaurant_menu_category_id ?? 'none' }}"
                         onclick="addToCart({{ $item->id }})"
-                        class="text-left rounded-2xl border border-secondary/15 bg-white p-4 hover:bg-accent/10 transition-colors">
+                        class="text-left rounded-2xl border border-secondary/15 bg-white p-4 hover:bg-accent/10
+                            transition-colors">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="font-heading text-sm font-semibold text-primary truncate">{{ $item->name }}</p>
@@ -232,19 +256,43 @@
         </div>
 
         <div class="p-5 bg-accent/10 flex flex-col h-[50vh] lg:h-full">
-            <form id="order-form" method="POST" action="{{ route('restaurant.orders.store') }}" class="flex flex-col flex-1 min-h-0">
+            <form
+                id="order-form"
+                method="POST"
+                action="{{ route('restaurant.orders.store') }}"
+                class="flex flex-col flex-1 min-h-0">
                 @csrf
                 <input type="hidden" name="items_json" id="items-json">
 
                 <div class="space-y-4 flex-1 overflow-y-auto pr-1">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45 mb-1.5">Table</label>
-                            <input name="table_number" type="text" maxlength="10" required class="w-full px-3 py-2 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary" placeholder="12">
+                            <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45
+                                mb-1.5">Table</label>
+                            <input
+                                name="table_number"
+                                type="text"
+                                maxlength="10"
+                                required
+                                class="w-full px-3 py-2 text-sm rounded-xl border border-secondary/25 outline-none
+                                    focus:border-secondary"
+                                placeholder="12">
                         </div>
                         <div>
-                            <label for="covers-commande" class="block text-xs font-semibold uppercase tracking-widest text-primary/45 mb-1.5">Couverts</label>
-                            <input id="covers-commande" name="covers" type="number" inputmode="numeric" min="1" max="500" class="w-full px-3 py-2 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary" placeholder="2">
+                            <label
+                                for="covers-commande"
+                                class="block text-xs font-semibold uppercase tracking-widest text-primary/45
+                                    mb-1.5">Couverts</label>
+                            <input
+                                id="covers-commande"
+                                name="covers"
+                                type="number"
+                                inputmode="numeric"
+                                min="1"
+                                max="500"
+                                class="w-full px-3 py-2 text-sm rounded-xl border border-secondary/25 outline-none
+                                    focus:border-secondary"
+                                placeholder="2">
                         </div>
                         <div class="text-right">
                             <p class="text-xs font-semibold uppercase tracking-widest text-primary/45 mb-1.5">Total</p>
@@ -253,15 +301,28 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45 mb-1.5">Nom (optionnel)</label>
-                        <input name="customer_name" type="text" maxlength="120" class="w-full px-3 py-2 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary">
+                        <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45
+                            mb-1.5">Nom (optionnel)</label>
+                        <input
+                            name="customer_name"
+                            type="text"
+                            maxlength="120"
+                            class="w-full px-3 py-2 text-sm rounded-xl border border-secondary/25 outline-none
+                                focus:border-secondary">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45 mb-1.5">Téléphone (optionnel)</label>
-                        <input name="customer_phone" type="text" maxlength="30" class="w-full px-3 py-2 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary">
+                        <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45
+                            mb-1.5">Téléphone (optionnel)</label>
+                        <input
+                            name="customer_phone"
+                            type="text"
+                            maxlength="30"
+                            class="w-full px-3 py-2 text-sm rounded-xl border border-secondary/25 outline-none
+                                focus:border-secondary">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45 mb-1.5">Note (optionnel)</label>
+                        <label class="block text-xs font-semibold uppercase tracking-widest text-primary/45
+                            mb-1.5">Note (optionnel)</label>
                         <textarea name="notes" rows="2" maxlength="2000" class="w-full px-3 py-2 text-sm rounded-xl border border-secondary/25 outline-none focus:border-secondary"></textarea>
                     </div>
 
@@ -272,8 +333,15 @@
                 </div>
 
                 <div class="flex justify-end gap-2 pt-4 mt-2 border-t border-secondary/15 shrink-0">
-                    <button type="button" onclick="closeCreateOrderModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                    <button id="submit-order" type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Valider</button>
+                    <button
+                        type="button"
+                        onclick="closeCreateOrderModal()"
+                        class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                            hover:bg-accent/20">Annuler</button>
+                    <button
+                        id="submit-order"
+                        type="submit"
+                        class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Valider</button>
                 </div>
             </form>
         </div>

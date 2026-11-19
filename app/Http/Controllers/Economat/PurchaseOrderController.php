@@ -63,8 +63,10 @@ class PurchaseOrderController extends Controller
             'total'        => (clone $statsQuery)->count(),
             'draft'        => (clone $statsQuery)->where('status', PurchaseOrder::STATUS_DRAFT)->count(),
             'sent'         => (clone $statsQuery)->where('status', PurchaseOrder::STATUS_SENT)->count(),
-            'received'     => (clone $statsQuery)->whereIn('status', [PurchaseOrder::STATUS_RECEIVED, PurchaseOrder::STATUS_PARTIALLY_RECEIVED])->count(),
-            'total_amount' => (int) (clone $statsQuery)->where('status', '!=', PurchaseOrder::STATUS_CANCELLED)->sum('total_amount'),
+            'received'     => (clone $statsQuery)->whereIn('status', [PurchaseOrder::STATUS_RECEIVED,
+                PurchaseOrder::STATUS_PARTIALLY_RECEIVED])->count(),
+            'total_amount' => (int) (clone $statsQuery)->where('status', '!=', PurchaseOrder::STATUS_CANCELLED)
+                ->sum('total_amount'),
         ];
 
         $suppliers = Supplier::active()->orderBy('name')->get();
@@ -106,7 +108,8 @@ class PurchaseOrderController extends Controller
             ])
             ->lignes($lignes)
             ->note($lignes->count() >= self::MAX_EXPORT
-                ? 'Export limité aux ' . self::MAX_EXPORT . ' commandes les plus récentes. Affinez les filtres pour le reste.'
+                ? 'Export limité aux ' . self::MAX_EXPORT
+                    . ' commandes les plus récentes. Affinez les filtres pour le reste.'
                 : null);
 
         return $exporteur->rendre($document, $format);
@@ -277,7 +280,8 @@ class PurchaseOrderController extends Controller
 
                     $item = StockItem::find($line['stock_item_id']);
                     if ($item && empty($item->supplier_id)) {
-                        app(\App\Services\SupplierTariffService::class)->fixer($item, (int) $supplierId, $unitPriceCentimes);
+                        app(\App\Services\SupplierTariffService::class)->fixer($item, (int) $supplierId,
+                            $unitPriceCentimes);
                     }
                 }
 
@@ -305,7 +309,8 @@ class PurchaseOrderController extends Controller
 
     public function show(PurchaseOrder $order): View
     {
-        $order->load(['supplier', 'lines.item.category', 'lines.item.packagings', 'createdBy', 'receivedBy', 'purchaseRequest', 'receipts.receivedBy', 'receipts.attachments', 'receipts.lines.item', 'invoices']);
+        $order->load(['supplier', 'lines.item.category', 'lines.item.packagings', 'createdBy', 'receivedBy',
+            'purchaseRequest', 'receipts.receivedBy', 'receipts.attachments', 'receipts.lines.item', 'invoices']);
 
         return view('economat.orders.show', compact('order'));
     }
@@ -387,13 +392,15 @@ class PurchaseOrderController extends Controller
         ]);
 
         try {
-            $service->receive($order, array_map('floatval', $validated['received']), $validated['received_packaging'] ?? []);
+            $service->receive($order, array_map('floatval', $validated['received']), $validated['received_packaging']
+                ?? []);
         } catch (\RuntimeException|\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
 
         // La marchandise est entrée en stock : la facture fournisseur suit.
-        $this->notifier->toRoles(self::A_LA_RECEPTION, new PurchaseOrderUpdated($order->fresh('supplier')), auth()->id());
+        $this->notifier->toRoles(self::A_LA_RECEPTION, new PurchaseOrderUpdated($order->fresh('supplier')),
+            auth()->id());
 
         return back()->with('success', "Réception enregistrée pour le bon {$order->number}.");
     }

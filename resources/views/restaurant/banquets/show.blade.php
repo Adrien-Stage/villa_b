@@ -38,7 +38,8 @@
     <div class="flex flex-wrap items-center gap-2">
         <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $couleurs[$banquet->status] ?? '' }}">{{ $banquet->libelleStatut() }}</span>
         <a href="{{ route('restaurant.banquets.print', $banquet) }}"
-           class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/25 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-accent/20">
+           class="inline-flex items-center gap-1.5 rounded-lg border border-secondary/25 bg-white px-3 py-1.5 text-xs
+               font-semibold text-primary hover:bg-accent/20">
             <i data-lucide="printer" class="w-3.5 h-3.5"></i>
             Imprimer devis / reçu
         </a>
@@ -55,14 +56,17 @@
                     @if($statut === 'annule') onsubmit="return confirm('Annuler ce banquet ?')" @endif>
                     @csrf
                     <input type="hidden" name="status" value="{{ $statut }}">
-                    <button type="submit" class="rounded-lg px-3 py-1.5 text-xs font-semibold cursor-pointer {{ $statut === 'annule' ? 'border border-red-200 bg-white text-red-600 hover:bg-red-50' : 'bg-primary text-white hover:opacity-95' }}">{{ $libelle }}</button>
+                    <button
+                        type="submit"
+                        class="rounded-lg px-3 py-1.5 text-xs font-semibold cursor-pointer {{ $statut === 'annule' ? 'border border-red-200 bg-white text-red-600 hover:bg-red-50' : 'bg-primary text-white hover:opacity-95' }}">{{ $libelle }}</button>
                 </form>
             @endforeach
         @enddroit
         @if($banquet->estModifiable())
             @droit('restaurant.banquets.modifier')
                 <button type="button" onclick="document.getElementById('banquet-edit').classList.remove('hidden')"
-                    class="rounded-lg border border-secondary/25 bg-white px-3 py-1.5 text-xs font-semibold text-primary hover:bg-accent/20 cursor-pointer">Modifier</button>
+                    class="rounded-lg border border-secondary/25 bg-white px-3 py-1.5 text-xs font-semibold
+                        text-primary hover:bg-accent/20 cursor-pointer">Modifier</button>
             @enddroit
         @endif
     </div>
@@ -73,7 +77,8 @@
 @endif
 
 @if(session('success'))
-    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>
+    <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm
+        text-green-700">{{ session('success') }}</div>
 @endif
 @if($errors->any())
     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -88,10 +93,13 @@
             <dt class="text-primary/50">Client</dt>
             <dd class="text-primary font-medium">
                 @if($banquet->customer)
-                    <a href="{{ route('customers.show', $banquet->customer) }}" class="text-primary underline decoration-secondary hover:text-surface-dark">
+                    <a
+                        href="{{ route('customers.show', $banquet->customer) }}"
+                        class="text-primary underline decoration-secondary hover:text-surface-dark">
                         {{ $banquet->client_name }}
                     </a>
-                    <span class="ml-1 rounded bg-secondary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary/80">Fiche CRM</span>
+                    <span class="ml-1 rounded bg-secondary/15 px-1.5 py-0.5 text-[10px] font-medium
+                        text-primary/80">Fiche CRM</span>
                 @else
                     {{ $banquet->client_name }}
                 @endif
@@ -105,7 +113,9 @@
             @if($banquet->booking)
                 <dt class="text-primary/50">Séjour résident</dt>
                 <dd class="text-primary">
-                    <a href="{{ route('bookings.show', $banquet->booking) }}" class="underline decoration-secondary font-medium hover:text-surface-dark">
+                    <a
+                        href="{{ route('bookings.show', $banquet->booking) }}"
+                        class="underline decoration-secondary font-medium hover:text-surface-dark">
                         {{ $banquet->booking->booking_number }}
                     </a>
                     @if($banquet->booking->room)
@@ -142,7 +152,8 @@
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-primary/60">Menu &amp; Prestations</h3>
                     @if($groupedMenu->isNotEmpty() && $banquet->menuItemsUnitTotal() > 0)
-                        <span class="rounded-full bg-secondary/15 px-2.5 py-0.5 text-[11px] font-medium text-primary/75">
+                        <span class="rounded-full bg-secondary/15 px-2.5 py-0.5 text-[11px] font-medium
+                            text-primary/75">
                             Valeur carte : {{ $fcfa($banquet->menuItemsUnitTotal()) }} / couvert
                         </span>
                     @endif
@@ -152,7 +163,8 @@
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-3">
                         @foreach($groupedMenu as $section)
                             <div class="rounded-lg border border-secondary/15 bg-secondary/5 p-3">
-                                <p class="text-[11px] font-bold uppercase tracking-wider text-primary/70 mb-1.5">{{ $section['label'] }}</p>
+                                <p class="text-[11px] font-bold uppercase tracking-wider text-primary/70
+                                    mb-1.5">{{ $section['label'] }}</p>
                                 <ul class="space-y-1.5 text-xs text-primary">
                                     @foreach($section['items'] as $item)
                                         <li class="flex items-start justify-between gap-2">
@@ -222,11 +234,13 @@
         @if($resteDu > 0 && ! in_array($banquet->status, ['annule', 'solde'], true))
             @droit('restaurant.banquets.payments.creer')
                 @if(! $caisse)
-                    <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800 space-y-2">
+                    <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800
+                        space-y-2">
                         <p>Ouvrez votre caisse avant d'encaisser un règlement.</p>
                         @droit('bookings.cash_register.open')
                             <a href="{{ route('bookings.cash_register.open') }}"
-                               class="inline-flex items-center gap-1.5 rounded-lg bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-800">
+                               class="inline-flex items-center gap-1.5 rounded-lg bg-amber-700 px-3 py-1.5 text-xs
+                                   font-semibold text-white hover:bg-amber-800">
                                 <i data-lucide="unlock" class="w-3.5 h-3.5"></i>
                                 Ouvrir ma caisse Réception
                             </a>
@@ -237,7 +251,10 @@
                         Encaissement dans : <strong>{{ $caisse->module === 'reception' ? 'Caisse Réception' : 'Caisse Restaurant' }}</strong>
                         (#{{ $caisse->id }}@if($caisse->user) · {{ $caisse->user->name }}@endif)
                     </div>
-                    <form method="POST" action="{{ route('restaurant.banquets.payments.store', $banquet) }}" class="space-y-2.5">
+                    <form
+                        method="POST"
+                        action="{{ route('restaurant.banquets.payments.store', $banquet) }}"
+                        class="space-y-2.5">
                         @csrf
                         <div>
                             <div class="flex items-center justify-between">
@@ -252,11 +269,15 @@
                                 </div>
                             </div>
                             <input type="number" name="amount" required min="1" max="{{ (int) floor($resteDu / 100) }}" value="{{ old('amount', $montantSuggere ?: '') }}"
-                                class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm outline-none focus:border-secondary">
+                                class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm outline-none
+                                    focus:border-secondary">
                         </div>
                         <label class="block">
                             <span class="text-xs text-primary/60">Mode de paiement</span>
-                            <select name="payment_method" class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-sm outline-none focus:border-secondary">
+                            <select
+                                name="payment_method"
+                                class="mt-1 w-full rounded-lg border border-secondary/30 bg-white px-3 py-2 text-sm
+                                    outline-none focus:border-secondary">
                                 @foreach($paymentMethods as $methode)
                                     <option value="{{ $methode }}" @selected(old('payment_method') === $methode)>{{ $libellesModes[$methode] ?? $methode }}</option>
                                 @endforeach
@@ -265,18 +286,23 @@
                         <label class="block">
                             <span class="text-xs text-primary/60">Notes / Référence (optionnel)</span>
                             <input type="text" name="notes" maxlength="255" value="{{ old('notes') }}" placeholder="Ex. N° chèque, référence Mobile Money..."
-                                class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-1.5 text-xs outline-none focus:border-secondary">
+                                class="mt-1 w-full rounded-lg border border-secondary/30 px-3 py-1.5 text-xs
+                                    outline-none focus:border-secondary">
                         </label>
                         @if($banquet->status === 'devis')
                             @droit('restaurant.banquets.status')
-                                <label class="flex items-start gap-2 rounded-lg border border-sky-200 bg-sky-50/70 px-2.5 py-2 text-xs text-sky-900 cursor-pointer select-none">
+                                <label class="flex items-start gap-2 rounded-lg border border-sky-200 bg-sky-50/70
+                                    px-2.5 py-2 text-xs text-sky-900 cursor-pointer select-none">
                                     <input type="checkbox" name="confirm_now" value="1" checked
                                         class="mt-0.5 rounded border-sky-300 text-primary focus:ring-primary">
                                     <span>Confirmer automatiquement le banquet dès que l'acompte demandé est couvert</span>
                                 </label>
                             @enddroit
                         @endif
-                        <button type="submit" class="w-full rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:opacity-95 cursor-pointer">
+                        <button
+                            type="submit"
+                            class="w-full rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white
+                                hover:opacity-95 cursor-pointer">
                             Encaisser
                         </button>
                     </form>
@@ -288,12 +314,21 @@
 
 @if($banquet->estModifiable())
     @droit('restaurant.banquets.modifier')
-        <x-modal id="banquet-edit" title="Modifier {{ $banquet->reference }}" max-width="max-w-3xl" formAction="{{ route('restaurant.banquets.update', $banquet) }}">
+        <x-modal
+            id="banquet-edit"
+            title="Modifier {{ $banquet->reference }}"
+            max-width="max-w-3xl"
+            formAction="{{ route('restaurant.banquets.update', $banquet) }}">
             @method('PUT')
             @include('restaurant.banquets._champs', ['b' => $banquet, 'restaurantParDefaut' => null])
             <x-slot:footer>
-                <button type="button" onclick="document.getElementById('banquet-edit').classList.add('hidden')" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
-                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Enregistrer</button>
+                <button
+                    type="button"
+                    onclick="document.getElementById('banquet-edit').classList.add('hidden')"
+                    class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                        hover:bg-accent/20">Annuler</button>
+                <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary
+                    text-white">Enregistrer</button>
             </x-slot:footer>
         </x-modal>
         @if($errors->any() && old('title') !== null && request()->route('banquet'))

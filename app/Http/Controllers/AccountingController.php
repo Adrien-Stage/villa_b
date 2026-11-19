@@ -176,7 +176,8 @@ class AccountingController extends Controller
      */
     private function refusSiComptabilisee(Expense $expense, Request $request): ?RedirectResponse
     {
-        if (app(\App\Services\LedgerService::class)->findBySource($expense, \App\Services\LedgerPostingService::SCHEMA_EXPENSE) === null) {
+        if (app(\App\Services\LedgerService::class)->findBySource($expense,
+            \App\Services\LedgerPostingService::SCHEMA_EXPENSE) === null) {
             return null;
         }
 

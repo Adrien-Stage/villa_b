@@ -102,7 +102,8 @@ class DashboardController extends Controller
             'rooms_available'   => Room::where('status', RoomStatus::AVAILABLE)->count(),
             'rooms_occupied'    => Room::where('status', RoomStatus::OCCUPIED)->count(),
             'rooms_cleaning'    => Room::where('status', RoomStatus::CLEANING)->count(),
-            'rooms_maintenance' => Room::whereIn('status', [RoomStatus::MAINTENANCE, RoomStatus::OUT_OF_ORDER])->count(),
+            'rooms_maintenance' => Room::whereIn('status', [RoomStatus::MAINTENANCE, RoomStatus::OUT_OF_ORDER])
+                ->count(),
             'arrivals_today'    => Booking::arrivingToday()->count(),
             'departures_today'  => Booking::departingToday()->count(),
             'in_house'          => Booking::inHouse()->count(),
@@ -177,19 +178,23 @@ class DashboardController extends Controller
             '00h' => 0, '03h' => 0, '06h' => 0, '09h' => 0,
             '12h' => 0, '15h' => 0, '18h' => 0, '21h' => 0,
         ];
-        $intervals = ['00h' => 0, '03h' => 3, '06h' => 6, '09h' => 9, '12h' => 12, '15h' => 15, '18h' => 18, '21h' => 21];
+        $intervals = ['00h' => 0, '03h' => 3, '06h' => 6, '09h' => 9, '12h' => 12, '15h' => 15, '18h' => 18,
+            '21h' => 21];
         foreach ($intervals as $label => $h) {
             $s = $today->copy()->setHour($h)->startOfHour();
             $e = $today->copy()->setHour($h + 2)->endOfHour();
 
             $pSum = Schema::hasTable('payments')
-                ? (int) (\App\Models\Payment::serviceSettlements()->whereBetween('created_at', [$s, $e])->sum('amount') / 100)
+                ? (int) (\App\Models\Payment::serviceSettlements()->whereBetween('created_at', [$s, $e])
+                    ->sum('amount') / 100)
                 : 0;
             $rSum = Schema::hasTable('restaurant_customer_orders')
-                ? (int) (RestaurantCustomerOrder::where('payment_status', 'paid')->whereBetween('created_at', [$s, $e])->sum('total_amount') / 100)
+                ? (int) (RestaurantCustomerOrder::where('payment_status', 'paid')->whereBetween('created_at', [$s, $e])
+                    ->sum('total_amount') / 100)
                 : 0;
             $sSum = Schema::hasTable('shop_orders')
-                ? (int) (\App\Models\ShopOrder::where('payment_status', 'paid')->whereBetween('created_at', [$s, $e])->sum('total_amount') / 100)
+                ? (int) (\App\Models\ShopOrder::where('payment_status', 'paid')->whereBetween('created_at', [$s, $e])
+                    ->sum('total_amount') / 100)
                 : 0;
 
             $hourlyRevenue[$label] = $pSum + $rSum + $sSum;
@@ -434,7 +439,8 @@ class DashboardController extends Controller
                     'icon' => 'package',
                     'href' => route('shop.orders.index'),
                 ];
-                $panels['shop_top_products'] = \App\Models\ShopOrderItem::selectRaw('shop_product_id, SUM(quantity) as total_quantity')
+                $panels['shop_top_products'] = \App\Models\ShopOrderItem::selectRaw(
+                    'shop_product_id, SUM(quantity) as total_quantity')
                     ->whereHas('order', fn($q) => $q->where('payment_status', 'paid'))
                     ->whereMonth('created_at', Carbon::now()->month)
                     ->groupBy('shop_product_id')

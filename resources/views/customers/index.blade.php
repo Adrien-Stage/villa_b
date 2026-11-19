@@ -15,12 +15,21 @@
     <div class="flex items-center gap-3">
         @undroit('customers.export', 'customers.import')
             @droit('customers.export')
-            <a href="{{ route('customers.export') }}" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Exporter les clients en CSV">
+            <a
+                href="{{ route('customers.export') }}"
+                class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm
+                    font-medium rounded-lg hover:bg-accent/30 transition-colors"
+                title="Exporter les clients en CSV">
                 <i data-lucide="download" class="w-4 h-4"></i> Exporter
             </a>
             @enddroit
             @droit('customers.import')
-            <button type="button" onclick="document.getElementById('modal-import-customers').classList.remove('hidden')" class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/30 transition-colors" title="Importer des clients depuis un CSV">
+            <button
+                type="button"
+                onclick="document.getElementById('modal-import-customers').classList.remove('hidden')"
+                class="inline-flex items-center gap-2 px-3 py-2 border border-secondary/30 text-primary text-sm
+                    font-medium rounded-lg hover:bg-accent/30 transition-colors"
+                title="Importer des clients depuis un CSV">
                 <i data-lucide="upload" class="w-4 h-4"></i> Importer
             </button>
             @enddroit
@@ -104,12 +113,17 @@
         <x-table.row :href="route('customers.show', $customer)">
             <x-table.cell>
                 <div class="flex min-w-0 items-center gap-3">
-                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary" aria-hidden="true">
+                    <div
+                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary"
+                        aria-hidden="true">
                         <span class="text-xs font-semibold text-white">{{ mb_strtoupper(mb_substr($customer->first_name, 0, 1) . mb_substr($customer->last_name, 0, 1)) }}</span>
                     </div>
                     <div class="min-w-0">
                         <div class="flex items-center gap-1.5">
-                            <a href="{{ route('customers.show', $customer) }}" class="max-w-56 truncate text-sm font-medium text-primary hover:underline">{{ $customer->full_name }}</a>
+                            <a
+                                href="{{ route('customers.show', $customer) }}"
+                                class="max-w-56 truncate text-sm font-medium text-primary
+                                    hover:underline">{{ $customer->full_name }}</a>
                             @if($customer->is_vip)
                                 <i data-lucide="star" class="h-3 w-3 shrink-0 text-yellow-500" aria-label="Client VIP"></i>
                             @endif

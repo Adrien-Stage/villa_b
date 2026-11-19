@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\RestaurantContext;
 use App\Support\Document\Colonne;
 use App\Support\Document\Document;
+use Illuminate\Support\Collection;
 
 /**
  * Registre de synthèse de l'ensemble des fiches techniques du restaurant :
@@ -59,7 +60,8 @@ class FichesTechniquesRestaurant extends Edition
     public function filtres(): array
     {
         return [
-            Filtre::choix('restaurant', 'Restaurant', fn (User $u) => app(RestaurantContext::class)->accessibles($u)->pluck('name', 'id')
+            Filtre::choix('restaurant', 'Restaurant', fn (User $u) => app(RestaurantContext::class)->accessibles($u)
+                ->pluck('name', 'id')
                 ->mapWithKeys(fn ($nom, $id) => [(string) $id => $nom])->all(), 'Tous les restaurants'),
             Filtre::choix('type', 'Rayon / Type', fn () => [
                 'dishes' => 'Cuisine — Plats du menu',
@@ -76,97 +78,12 @@ class FichesTechniquesRestaurant extends Edition
 
         $lignes = collect();
 
-        // 1. Fiches de cuisine (Plats & Préparations)
         if ($typeFiltre === null || in_array($typeFiltre, ['dishes', 'preps'], true)) {
-            $recipesQuery = RestaurantRecipe::query()
-                ->visiblesPour($user)
-                ->with(['lines.item', 'menuItem', 'producedItem', 'pointOfSale:id,name'])
-                ->orderBy('type')
-                ->orderBy('name');
-
-            if ($restoId) {
-                $recipesQuery->where('point_of_sale_id', $restoId);
-            }
-
-            if ($typeFiltre === 'dishes') {
-                $recipesQuery->where('type', RestaurantRecipe::TYPE_DISH);
-            } elseif ($typeFiltre === 'preps') {
-                $recipesQuery->where('type', RestaurantRecipe::TYPE_PREP);
-            }
-
-            foreach ($recipesQuery->get() as $recipe) {
-                $unitCost = (int) round($recipe->unitCost());
-                $sellingPrice = (int) ($recipe->menuItem?->price ?? 0);
-                $foodCost = $recipe->foodCostPercent();
-                $margin = $recipe->margin() !== null ? (int) round($recipe->margin()) : null;
-
-                $ingredientsResume = $recipe->lines->map(function ($line) {
-                    $nom = $line->item?->name ?? 'Ingrédient';
-                    $qte = (float) $line->quantity;
-                    $unite = $line->item?->unit ?? '';
-                    return "{$nom} ({$qte} {$unite})";
-                })->implode(', ');
-
-                $typeLabel = $recipe->type === RestaurantRecipe::TYPE_DISH ? 'Cuisine — Plat' : 'Cuisine — Préparation';
-                $rendementLabel = $recipe->yield() . ' ' . ($recipe->type === RestaurantRecipe::TYPE_DISH ? 'portion(s)' : ($recipe->producedItem?->unit ?? 'portion(s)'));
-
-                $lignes->push([
-                    'restaurant' => $recipe->pointOfSale?->name ?? 'Général',
-                    'rayon' => $typeLabel,
-                    'nom' => $recipe->name,
-                    'rendement' => $rendementLabel,
-                    'cout_matiere' => $unitCost,
-                    'prix_vente' => $sellingPrice > 0 ? $sellingPrice : null,
-                    'food_cost' => $foodCost !== null ? round($foodCost, 1) . ' %' : '—',
-                    'marge' => $margin,
-                    'composition' => $ingredientsResume ?: '—',
-                ]);
-            }
+            $lignes = $this->fichesCuisine($user, $restoId, $typeFiltre);
         }
 
-        // 2. Boissons & Cocktails du Bar
         if ($typeFiltre === null || $typeFiltre === 'drinks') {
-            $barDrinksQuery = RestaurantMenuItem::query()
-                ->visiblesPour($user)
-                ->where('type', 'drink')
-                ->has('barDrink')
-                ->with(['barDrink', 'pointOfSale:id,name'])
-                ->orderBy('name');
-
-            if ($restoId) {
-                $barDrinksQuery->where('point_of_sale_id', $restoId);
-            }
-
-            $stockItems = StockItem::query()->active()->pluck('name', 'id');
-
-            foreach ($barDrinksQuery->get() as $menuItem) {
-                $barDrink = $menuItem->barDrink;
-                if (!$barDrink) {
-                    continue;
-                }
-
-                $formatLabel = RestaurantBarDrink::FORMATS[$barDrink->format] ?? $barDrink->format;
-                $sellingPrice = (int) $menuItem->price;
-
-                $ingredientsList = collect($barDrink->ingredients ?? [])->map(function ($ing) use ($stockItems) {
-                    $stockName = $stockItems[$ing['stock_item_id'] ?? null] ?? 'Article';
-                    $qte = $ing['quantity'] ?? '';
-                    $unite = ($ing['measure'] ?? '') === 'ml' ? 'mL' : '';
-                    return "{$stockName} ({$qte} {$unite})";
-                })->filter()->implode(', ');
-
-                $lignes->push([
-                    'restaurant' => $menuItem->pointOfSale?->name ?? 'Général',
-                    'rayon' => 'Bar — ' . $formatLabel,
-                    'nom' => $menuItem->name,
-                    'rendement' => '1 verre / unité',
-                    'cout_matiere' => null, // Coût bar variable selon bouteille ouverte
-                    'prix_vente' => $sellingPrice > 0 ? $sellingPrice : null,
-                    'food_cost' => '—',
-                    'marge' => null,
-                    'composition' => $ingredientsList ?: ($barDrink->instructions ?? '—'),
-                ]);
-            }
+            $lignes = $lignes->concat($this->fichesBar($user, $restoId));
         }
 
         return $this->base($valeurs, $user, 'Situation au ' . now()->format('d/m/Y à H:i'))
@@ -183,5 +100,108 @@ class FichesTechniquesRestaurant extends Edition
             ])
             ->lignes($lignes)
             ->note($lignes->count() . ' fiche(s) technique(s) au catalogue.');
+    }
+
+    private function fichesCuisine(User $user, ?int $restoId, ?string $typeFiltre): Collection
+    {
+        $recipesQuery = RestaurantRecipe::query()
+            ->visiblesPour($user)
+            ->with(['lines.item', 'menuItem', 'producedItem', 'pointOfSale:id,name'])
+            ->orderBy('type')
+            ->orderBy('name');
+
+        if ($restoId) {
+            $recipesQuery->where('point_of_sale_id', $restoId);
+        }
+
+        if ($typeFiltre === 'dishes') {
+            $recipesQuery->where('type', RestaurantRecipe::TYPE_DISH);
+        } elseif ($typeFiltre === 'preps') {
+            $recipesQuery->where('type', RestaurantRecipe::TYPE_PREP);
+        }
+
+        return $recipesQuery->get()->toBase()->map($this->ligneCuisine(...));
+    }
+
+    private function ligneCuisine(RestaurantRecipe $recipe): array
+    {
+        $unitCost = (int) round($recipe->unitCost());
+        $sellingPrice = (int) ($recipe->menuItem?->price ?? 0);
+        $foodCost = $recipe->foodCostPercent();
+        $margin = $recipe->margin();
+
+        $ingredientsResume = $recipe->lines->map(function ($line) {
+            $nom = $line->item?->name ?? 'Ingrédient';
+            $qte = (float) $line->quantity;
+            $unite = $line->item?->unit ?? '';
+            return "{$nom} ({$qte} {$unite})";
+        })->implode(', ');
+
+        $plat = $recipe->type === RestaurantRecipe::TYPE_DISH;
+        $typeLabel = $plat ? 'Cuisine — Plat' : 'Cuisine — Préparation';
+        $unite = $plat ? 'portion(s)' : ($recipe->producedItem?->unit ?? 'portion(s)');
+        $rendementLabel = $recipe->yield() . ' ' . $unite;
+
+        return [
+            'restaurant' => $recipe->pointOfSale?->name ?? 'Général',
+            'rayon' => $typeLabel,
+            'nom' => $recipe->name,
+            'rendement' => $rendementLabel,
+            'cout_matiere' => $unitCost,
+            'prix_vente' => $sellingPrice > 0 ? $sellingPrice : null,
+            'food_cost' => $foodCost !== null ? round($foodCost, 1) . ' %' : '—',
+            'marge' => $margin !== null ? (int) round($margin) : null,
+            'composition' => $ingredientsResume ?: '—',
+        ];
+    }
+
+    private function fichesBar(User $user, ?int $restoId): Collection
+    {
+        $barDrinksQuery = RestaurantMenuItem::query()
+            ->visiblesPour($user)
+            ->where('type', 'drink')
+            ->has('barDrink')
+            ->with(['barDrink', 'pointOfSale:id,name'])
+            ->orderBy('name');
+
+        if ($restoId) {
+            $barDrinksQuery->where('point_of_sale_id', $restoId);
+        }
+
+        $stockItems = StockItem::query()->active()->pluck('name', 'id');
+
+        return $barDrinksQuery->get()->toBase()
+            ->map(fn (RestaurantMenuItem $menuItem) => $this->ligneBar($menuItem, $stockItems))
+            ->filter()->values();
+    }
+
+    private function ligneBar(RestaurantMenuItem $menuItem, Collection $stockItems): ?array
+    {
+        $barDrink = $menuItem->barDrink;
+        if (!$barDrink) {
+            return null;
+        }
+
+        $formatLabel = RestaurantBarDrink::FORMATS[$barDrink->format] ?? $barDrink->format;
+        $sellingPrice = (int) $menuItem->price;
+
+        $ingredientsList = collect($barDrink->ingredients ?? [])->map(function ($ing) use ($stockItems) {
+            $stockName = $stockItems[$ing['stock_item_id'] ?? null] ?? 'Article';
+            $qte = $ing['quantity'] ?? '';
+            $unite = ($ing['measure'] ?? '') === 'ml' ? 'mL' : '';
+            return "{$stockName} ({$qte} {$unite})";
+        })->filter()->implode(', ');
+
+        return [
+            'restaurant' => $menuItem->pointOfSale?->name ?? 'Général',
+            'rayon' => 'Bar — ' . $formatLabel,
+            'nom' => $menuItem->name,
+            'rendement' => '1 verre / unité',
+            'cout_matiere' => null, // Coût bar variable selon bouteille ouverte
+            'prix_vente' => $sellingPrice > 0 ? $sellingPrice : null,
+            'food_cost' => '—',
+            'marge' => null,
+            'composition' => $ingredientsList ?: ($barDrink->instructions ?? '—'),
+        ];
     }
 }

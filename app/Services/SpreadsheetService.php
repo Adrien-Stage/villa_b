@@ -141,7 +141,8 @@ class SpreadsheetService
      * @param \App\Models\Tenant|null $tenant Établissement courant pour le branding (logo, palette, métadonnées)
      * @return StreamedResponse
      */
-    public function exportXlsx(string $filename, string $sheetTitle, array $headers, array $rows, ?\App\Models\Tenant $tenant = null): StreamedResponse
+    public function exportXlsx(string $filename, string $sheetTitle, array $headers, array $rows,
+        ?\App\Models\Tenant $tenant = null): StreamedResponse
     {
         $palette = $this->palette($tenant);
 
@@ -184,8 +185,10 @@ class SpreadsheetService
             foreach (array_values($row) as $colIndex => $val) {
                 $colLetter = Coordinate::stringFromColumnIndex($colIndex + 1);
                 if (is_numeric($val) && !is_string($val)) {
-                    $sheet->setCellValueExplicit("{$colLetter}{$rowIndex}", $val, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC);
-                } elseif (is_numeric(str_replace(',', '.', (string) $val)) && !str_starts_with((string) $val, '0') && (string) $val !== '') {
+                    $sheet->setCellValueExplicit("{$colLetter}{$rowIndex}", $val,
+                        \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC);
+                } elseif (is_numeric(str_replace(',', '.', (string) $val)) && !str_starts_with((string) $val, '0')
+                    && (string) $val !== '') {
                     $numericVal = (float) str_replace(',', '.', (string) $val);
                     $sheet->setCellValue("{$colLetter}{$rowIndex}", $numericVal);
                 } else {

@@ -181,7 +181,8 @@ class GroupBookingController extends Controller
             $activeSession,
             Auth::user(),
             CashRegisterActivity::ACTION_BOOKING_CREATE,
-            "Création dossier groupe {$groupCode} ({$group->group_name})" . ($payment ? " (acompte {$payment->reference})" : ''),
+            "Création dossier groupe {$groupCode} ({$group->group_name})"
+                . ($payment ? " (acompte {$payment->reference})" : ''),
             $payment ? $depositAmount : null,
             $payment ? $request->payment_method : null,
             $payment ?? $group,
@@ -236,7 +237,8 @@ class GroupBookingController extends Controller
         $cashRegisterContext = $this->cashRegisterCircuit->receptionContextePour(Auth::user());
         $isCashRegisterOpen = $cashRegisterContext['isOpen'];
 
-        return view('groups.show', compact('groupBooking', 'availableRooms', 'roomTypes', 'customers', 'totals', 'checkOutTime', 'cashRegisterContext', 'isCashRegisterOpen'));
+        return view('groups.show', compact('groupBooking', 'availableRooms', 'roomTypes', 'customers', 'totals',
+            'checkOutTime', 'cashRegisterContext', 'isCashRegisterOpen'));
     }
 
     // ===== AJOUTER UNE CHAMBRE AU GROUPE =====
@@ -296,7 +298,8 @@ class GroupBookingController extends Controller
             ?? Tenant::current()?->id;
         // Le groupe prend le tarif moyen de la grille sur ses dates.
         $pricePerNight = app(\App\Services\TarifSejour::class)->calculer(
-            $room->roomType, $checkIn, $checkOut, (int) $validated['adults_count'], (int) ($validated['children_count'] ?? 0))['par_nuit'];
+            $room->roomType, $checkIn, $checkOut, (int) $validated['adults_count'],
+                (int) ($validated['children_count'] ?? 0))['par_nuit'];
         $totalRoomAmount = $nights * $pricePerNight;
         $totalAmount = $totalRoomAmount;
         // TVA extraite du total TTC, jamais ajoutée par dessus.
@@ -556,7 +559,8 @@ class GroupBookingController extends Controller
                 // Calcul du montant selon le mode de répartition
                 $linePrice = match ($validated['split_mode']) {
                     // Par chambre : même prix pour chaque chambre
-                    'per_room' => $isComplimentary ? 0 : (int) round($validated['quantity'] * $validated['unit_price'] * 100),
+                    'per_room' => $isComplimentary ? 0 : (int) round(
+                        $validated['quantity'] * $validated['unit_price'] * 100),
 
                     // Par personne : multiplié par le nb d'occupants de la chambre
                     'per_person' => $isComplimentary ? 0 : (int) round(
@@ -614,7 +618,8 @@ class GroupBookingController extends Controller
                         ? (int) $discountItems->sum(fn ($item) => abs((int) $item->total_price))
                         : (int) $booking->discount_amount;
 
-                    $subtotal = (int) $booking->total_room_amount + $extrasAmount + $uninvoicedPackage - $discountAmount;
+                    $subtotal = (int) $booking
+                        ->total_room_amount + $extrasAmount + $uninvoicedPackage - $discountAmount;
 
                     if ($isAdditiveTax) {
                         $taxAmount = (int) $booking->tax_amount;
@@ -662,7 +667,8 @@ class GroupBookingController extends Controller
         $activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user());
 
         if (!$activeSession) {
-            return back()->withErrors(['payment' => 'Veuillez ouvrir la caisse de réception pour enregistrer un paiement.']);
+            return back()->withErrors(
+                ['payment' => 'Veuillez ouvrir la caisse de réception pour enregistrer un paiement.']);
         }
 
         $validated = $request->validate([
@@ -793,7 +799,8 @@ class GroupBookingController extends Controller
             // Après avoir réparti le paiement, on vérifie si certaines chambres ont réglé leur solde consommé
             foreach ($bookings as $booking) {
                 $booking->refresh();
-                if ($booking->getConsumedBalance($checkOutTime) <= 0 && $booking->status === BookingStatus::CHECKED_IN) {
+                if ($booking->getConsumedBalance($checkOutTime) <= 0 && $booking
+                    ->status === BookingStatus::CHECKED_IN) {
                     // Le client a réglé l'intégralité du temps consommé -> on arrête le minuteur
                     if (!$booking->actual_check_out || $booking->hasOverstayedCheckout($checkOutTime)) {
                         $booking->update(['actual_check_out' => now()]);
@@ -812,7 +819,8 @@ class GroupBookingController extends Controller
         \App\Models\AuditLog::record(
             Auth::id(),
             'sensitive_action',
-            "Paiement de " . number_format($totalCentimes / 100, 0, ',', ' ') . " FCFA enregistré pour le groupe #{$groupBooking->group_code}",
+            "Paiement de " . number_format($totalCentimes / 100, 0, ',', ' ')
+                . " FCFA enregistré pour le groupe #{$groupBooking->group_code}",
             'bookings',
             ['group_booking_id' => $groupBooking->id, 'amount' => $totalCentimes, 'method' => $validated['method']]
         );
@@ -853,7 +861,8 @@ class GroupBookingController extends Controller
         $totals = [
             'rooms' => $groupBooking->bookings->count(),
             'nights' => $groupBooking->bookings->sum('total_nights'),
-            'subtotal' => $groupBooking->bookings->sum('total_room_amount') + $groupBooking->bookings->sum('extras_amount'),
+            'subtotal' => $groupBooking->bookings->sum('total_room_amount') + $groupBooking->bookings
+                ->sum('extras_amount'),
             'tax' => $groupBooking->bookings->sum('tax_amount'),
             'total' => $groupBooking->bookings->sum('total_amount'),
             'paid' => $groupBooking->bookings->sum('paid_amount'),

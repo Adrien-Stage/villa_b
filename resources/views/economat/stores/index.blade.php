@@ -10,7 +10,11 @@
             <p class="text-sm text-primary/60 mt-0.5">Stocks détenus par les services hors du magasin central : étages, mini-bar, bar, pâtisserie…</p>
         </div>
         @if($canManage)
-            <button type="button" @click="openCreate()" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+            <button
+                type="button"
+                @click="openCreate()"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                    hover:bg-surface-dark transition-colors">
                 <i data-lucide="plus" class="w-4 h-4"></i> Nouveau dépôt
             </button>
         @endif
@@ -26,7 +30,11 @@
         </p>
     </div>
 
-    <x-table :rows="$stores" empty="Aucun dépôt. Créez-en un par service qui détient du stock." empty-icon="warehouse" caption="Dépôts de service">
+    <x-table
+        :rows="$stores"
+        empty="Aucun dépôt. Créez-en un par service qui détient du stock."
+        empty-icon="warehouse"
+        caption="Dépôts de service">
         <x-slot:head>
             <x-table.col>Dépôt</x-table.col>
             <x-table.col hide="lg">Service</x-table.col>
@@ -45,10 +53,13 @@
             <x-table.row :muted="! $store->is_active">
                 <x-table.cell>
                     <div class="flex items-center gap-1.5 flex-wrap">
-                        <a href="{{ route('economat.stores.show', $store) }}" class="font-medium text-primary hover:underline">{{ $store->name }}</a>
+                        <a
+                            href="{{ route('economat.stores.show', $store) }}"
+                            class="font-medium text-primary hover:underline">{{ $store->name }}</a>
                         @unless($store->is_active)<span class="text-[10px] text-primary/50">(inactif)</span>@endunless
                         @if($store->pointOfSale)
-                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200/60">
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium
+                                bg-amber-50 text-amber-800 border border-amber-200/60">
                                 <i data-lucide="utensils" class="w-2.5 h-2.5"></i>
                                 {{ $store->pointOfSale->name }}
                             </span>
@@ -76,10 +87,23 @@
     <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);"
          @keydown.escape.window="open = false">
         <div class="absolute inset-0" @click="open = false"></div>
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10" role="dialog" aria-modal="true" aria-labelledby="titre-depot">
+        <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titre-depot">
             <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20">
-                <h3 id="titre-depot" class="font-heading font-semibold text-primary" x-text="editing ? 'Modifier le dépôt' : 'Nouveau dépôt'"></h3>
-                <button type="button" @click="open = false" class="text-primary/30 hover:text-primary" aria-label="Fermer"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <h3
+                    id="titre-depot"
+                    class="font-heading font-semibold text-primary"
+                    x-text="editing ? 'Modifier le dépôt' : 'Nouveau dépôt'"></h3>
+                <button
+                    type="button"
+                    @click="open = false"
+                    class="text-primary/30 hover:text-primary"
+                    aria-label="Fermer"><i
+                    data-lucide="x"
+                    class="w-5 h-5"></i></button>
             </div>
             <form method="POST" :action="formAction">
                 @csrf
@@ -88,13 +112,15 @@
                     <div>
                         <label for="depot-nom" class="block text-xs font-medium text-primary/70 mb-1.5">Nom <span class="text-red-500">*</span></label>
                         <input id="depot-nom" type="text" name="name" x-model="form.name" required maxlength="80" placeholder="Mini-bar, Bar piscine, Pâtisserie…"
-                               class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                               class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                   text-primary outline-none focus:border-secondary">
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div class="sm:col-span-2">
                             <label for="depot-service" class="block text-xs font-medium text-primary/70 mb-1.5">Service <span class="text-red-500">*</span></label>
                             <select id="depot-service" name="department" x-model="form.department" required
-                                    class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                                    class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                        text-primary outline-none focus:border-secondary">
                                 @foreach($departments as $cle => $libelle)
                                     <option value="{{ $cle }}">{{ $libelle }}</option>
                                 @endforeach
@@ -104,18 +130,31 @@
                         <div>
                             <label for="depot-ordre" class="block text-xs font-medium text-primary/70 mb-1.5">Ordre</label>
                             <input id="depot-ordre" type="number" min="0" max="9999" name="sort_order" x-model="form.sort_order"
-                                   class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                                   class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white
+                                       text-primary outline-none focus:border-secondary">
                         </div>
                     </div>
-                    <label x-show="editing" class="flex items-center gap-2.5 px-3 py-2.5 border border-secondary/30 rounded-lg cursor-pointer">
+                    <label
+                        x-show="editing"
+                        class="flex items-center gap-2.5 px-3 py-2.5 border border-secondary/30 rounded-lg
+                            cursor-pointer">
                         <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
-                        <input type="checkbox" x-model="form.is_active" class="w-4 h-4 rounded border-secondary/40 text-primary">
+                        <input
+                            type="checkbox"
+                            x-model="form.is_active"
+                            class="w-4 h-4 rounded border-secondary/40 text-primary">
                         <span class="text-xs text-primary/80">Dépôt actif (proposé dans les demandes)</span>
                     </label>
                 </div>
                 <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
-                    <button type="button" @click="open = false" class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark"><span x-text="editing ? 'Enregistrer' : 'Créer'"></span></button>
+                    <button
+                        type="button"
+                        @click="open = false"
+                        class="px-4 py-2 text-sm text-primary/60 hover:text-primary">Annuler</button>
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                            hover:bg-surface-dark"><span x-text="editing ? 'Enregistrer' : 'Créer'"></span></button>
                 </div>
             </form>
         </div>

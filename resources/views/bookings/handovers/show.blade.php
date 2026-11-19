@@ -10,7 +10,9 @@
 <div class="max-w-6xl mx-auto space-y-5">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print:hidden">
         <div>
-            <a href="{{ route('bookings.handovers.index') }}" class="text-xs text-primary/50 hover:text-primary inline-flex items-center gap-1 mb-1">
+            <a
+                href="{{ route('bookings.handovers.index') }}"
+                class="text-xs text-primary/50 hover:text-primary inline-flex items-center gap-1 mb-1">
                 <i data-lucide="arrow-left" class="w-3 h-3"></i> Passations de service
             </a>
             <h1 class="text-2xl font-heading font-semibold text-primary">Passation du {{ $passation->handed_at->format('d/m/Y à H:i') }}</h1>
@@ -19,13 +21,15 @@
             @if($passation->isPending())
                 @droit('bookings.handovers.take')
                     <a href="{{ route('bookings.handovers.take', $passation) }}"
-                       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">
+                       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-primary
+                           text-white hover:bg-surface-dark transition-colors">
                         <i data-lucide="hand-coins" class="w-4 h-4"></i> Prendre le service
                     </a>
                 @enddroit
             @endif
             <button type="button" onclick="window.print()"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold border border-secondary/30 bg-white text-primary hover:bg-gray-50">
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold border
+                        border-secondary/30 bg-white text-primary hover:bg-gray-50">
                 <i data-lucide="printer" class="w-4 h-4"></i> Imprimer
             </button>
         </div>

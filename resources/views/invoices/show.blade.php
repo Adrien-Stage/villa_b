@@ -26,7 +26,8 @@
     {{-- Actions --}}
     <div class="flex items-center gap-2">
         <button onclick="window.print()"
-            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+            class="flex items-center gap-2 px-4 py-2 bg-white border border-secondary/30 text-primary text-sm
+                font-medium rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="printer" class="w-4 h-4"></i>
             Imprimer
         </button>
@@ -34,10 +35,12 @@
 </div>
 
 @if($errors->any())
-<div class="no-print mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg max-w-3xl">{{ $errors->first() }}</div>
+<div class="no-print mb-4 px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg
+    max-w-3xl">{{ $errors->first() }}</div>
 @endif
 @if(session('success'))
-<div class="no-print mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg max-w-3xl">{{ session('success') }}</div>
+<div class="no-print mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg
+    max-w-3xl">{{ session('success') }}</div>
 @endif
 
 @include('partners.wallets.settlement', ['walletInvoice' => $invoice])
@@ -46,16 +49,22 @@
 @if($invoice->isComplementaire() && $invoice->balance_due > 0)
     @droit('invoices.payments.creer')
     <form method="POST" action="{{ route('invoices.payments.store', $invoice) }}"
-          class="no-print mb-6 max-w-3xl bg-white rounded-xl shadow-sm p-5 flex flex-col sm:flex-row sm:items-end gap-3">
+          class="no-print mb-6 max-w-3xl bg-white rounded-xl shadow-sm p-5 flex flex-col sm:flex-row sm:items-end
+              gap-3">
         @csrf
         <label class="block">
             <span class="block text-xs text-primary/50 mb-1.5">Montant encaissé (FCFA)</span>
             <input type="number" name="amount" min="1" step="1" required value="{{ intdiv($invoice->balance_due, 100) }}"
-                   class="w-40 px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+                   class="w-40 px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary
+                       focus:outline-none focus:border-primary">
         </label>
         <label class="block">
             <span class="block text-xs text-primary/50 mb-1.5">Moyen</span>
-            <select name="method" required class="px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none focus:border-primary">
+            <select
+                name="method"
+                required
+                class="px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary focus:outline-none
+                    focus:border-primary">
                 <option value="cash">Espèces</option>
                 <option value="orange_money">Orange Money</option>
                 <option value="mtn_momo">MTN MoMo</option>
@@ -64,7 +73,10 @@
             </select>
         </label>
         @php $ctxInvoice = $cashRegisterContext ?? null; @endphp
-        <button type="submit" class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors">Encaisser</button>
+        <button
+            type="submit"
+            class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark
+                transition-colors">Encaisser</button>
         <p class="text-xs sm:ml-auto {{ ($ctxInvoice['isOpen'] ?? false) ? 'text-emerald-700 font-medium' : 'text-primary/45' }}">
             @if(($ctxInvoice['isOpen'] ?? false) && !($ctxInvoice['estTitulaire'] ?? true) && ($ctxInvoice['titulaire'] ?? null))
                 Caisse ouverte par {{ $ctxInvoice['titulaire']->name }} (session #{{ $ctxInvoice['session']?->id }}).
@@ -160,12 +172,16 @@
         {{-- En-tête tableau --}}
         <div class="grid grid-cols-12 gap-4 py-2 border-b border-secondary/20 mb-1">
             <div class="{{ $invoice->tax_amount > 0 ? 'col-span-6' : 'col-span-7' }} text-xs font-semibold uppercase tracking-widest text-primary/40">Description</div>
-            <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40 text-center">Qté</div>
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">{{ $invoice->tax_amount > 0 ? 'P.U. HT' : 'P.U.' }}</div>
+            <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40
+                text-center">Qté</div>
+            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40
+                text-right">{{ $invoice->tax_amount > 0 ? 'P.U. HT' : 'P.U.' }}</div>
             @if($invoice->tax_amount > 0)
-            <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40 text-center">TVA</div>
+            <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40
+                text-center">TVA</div>
             @endif
-            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40 text-right">{{ $invoice->tax_amount > 0 ? 'Total TTC' : 'Total' }}</div>
+            <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40
+                text-right">{{ $invoice->tax_amount > 0 ? 'Total TTC' : 'Total' }}</div>
         </div>
 
         {{-- Lignes --}}

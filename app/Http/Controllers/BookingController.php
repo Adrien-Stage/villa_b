@@ -70,7 +70,8 @@ class BookingController extends Controller
         $isCashRegisterOpen = $cashRegisterContext['isOpen'];
         $checkOutTime = $this->roomAvailability->checkOutTime();
 
-        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'status', 'isCashRegisterOpen', 'cashRegisterContext', 'checkOutTime'));
+        return view('bookings.index', compact('bookings', 'stats', 'tab', 'statusFilters', 'status',
+            'isCashRegisterOpen', 'cashRegisterContext', 'checkOutTime'));
     }
 
     // ===== PARCOURS DE LA LISTE =====
@@ -121,7 +122,8 @@ class BookingController extends Controller
      * ordre. Sans départage, « suivant » puis « précédent » pouvaient ne pas
      * revenir sur la même fiche. L'`id` tranche.
      */
-    private function orderedForBrowsing(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    private function orderedForBrowsing(
+        \Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
         return $query->orderBy('check_in', 'desc')->orderBy('id', 'desc');
     }
@@ -326,7 +328,8 @@ class BookingController extends Controller
         $activeSession = $cashRegisterContext['session'];
 
         if (!$activeSession) {
-            return redirect()->route('bookings.cash_register.open')->with('warning', 'Vous devez ouvrir votre caisse avant de pouvoir enregistrer une réservation.');
+            return redirect()->route('bookings.cash_register.open')->with('warning',
+                'Vous devez ouvrir votre caisse avant de pouvoir enregistrer une réservation.');
         }
 
         $customer = null;
@@ -363,7 +366,8 @@ class BookingController extends Controller
 
         $ageBrackets = app(\App\Services\BreakfastPricingService::class)->getAgeBrackets($tenantId);
 
-        return view('bookings.create', compact('customer', 'booker', 'customers', 'partnerOrganizations', 'activeDraftsCount', 'latestDraft', 'ageBrackets', 'cashRegisterContext'));
+        return view('bookings.create', compact('customer', 'booker', 'customers', 'partnerOrganizations',
+            'activeDraftsCount', 'latestDraft', 'ageBrackets', 'cashRegisterContext'));
     }
 
 
@@ -416,7 +420,8 @@ class BookingController extends Controller
                 'nationality'        => ['nullable', 'string', 'max:100'],
                 // Le pays de résidence est obligatoire : c'est le marché
                 // émetteur, base de l'analyse géographique de la clientèle.
-                'country'            => ['required', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::all()))],
+                'country'            => ['required',
+                    \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::all()))],
                 // Appartenance déclarée à la création : mémorisée sur la fiche
                 // pour être reproposée aux séjours suivants.
                 'partner_organization_id' => ['nullable', 'exists:partner_organizations,id'],
@@ -443,7 +448,8 @@ class BookingController extends Controller
                     'booker_email'              => ['nullable', 'email'],
                     'booker_phone'              => ['nullable', 'string', 'max:30'],
                     'booker_nationality'        => ['nullable', 'string', 'max:100'],
-                    'booker_country'            => ['nullable', \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::all()))],
+                    'booker_country'            => ['nullable',
+                        \Illuminate\Validation\Rule::in(array_keys(\App\Support\Countries::all()))],
                 ]);
                 
                 // Mappage des champs préfixés 'booker_' vers les colonnes normales
@@ -503,7 +509,8 @@ class BookingController extends Controller
         $message = match (true) {
             $envoye                     => "Code de check-in envoyé au {$envoi['label']} ({$envoi['email']}).",
             $envoi['email'] === null    => $envoi['error'] ?: "Aucune adresse courriel pour le {$envoi['label']}.",
-            default                     => "Envoi refusé pour le {$envoi['label']} ({$envoi['email']}) : " . ($envoi['error'] ?: 'raison inconnue'),
+            default                     => "Envoi refusé pour le {$envoi['label']} ({$envoi['email']}) : "
+                . ($envoi['error'] ?: 'raison inconnue'),
         };
 
         if ($request->wantsJson()) {
@@ -554,11 +561,13 @@ class BookingController extends Controller
         $extraBedCount = $hasExtraBed ? max(1, (int) ($request->extra_bed_count ?? 1)) : 0;
         $extraBedAmount = $hasExtraBed ? ((int) ($request->extra_bed_amount ?? 0)) * 100 : 0;
         $prepaidBreakfastChildren = $request->boolean('prepaid_breakfast_children');
-        $prepaidBreakfastAmount = $prepaidBreakfastChildren ? ((int) ($request->prepaid_breakfast_amount ?? 0)) * 100 : 0;
+        $prepaidBreakfastAmount = $prepaidBreakfastChildren ? ((int) ($request->prepaid_breakfast_amount
+            ?? 0)) * 100 : 0;
 
         $childrenAges = (array) ($request->children_ages ?? []);
         if ($children > 0 && count($childrenAges) < $children) {
-            $defaultBracket = app(\App\Services\BreakfastPricingService::class)->getAgeBrackets($tenantId)[1]['id'] ?? '2_10';
+            $defaultBracket = app(\App\Services\BreakfastPricingService::class)->getAgeBrackets($tenantId)[1]['id']
+                ?? '2_10';
             while (count($childrenAges) < $children) {
                 $childrenAges[] = $defaultBracket;
             }
@@ -634,7 +643,8 @@ class BookingController extends Controller
 
             // 2. Occupation actuelle (en temps réel)
             $currBooking = $currentBookings->get($room->id);
-            $room->is_currently_occupied = ($room->status === \App\Enums\RoomStatus::OCCUPIED) || ($currBooking !== null);
+            $room->is_currently_occupied = ($room->status === \App\Enums\RoomStatus::OCCUPIED)
+                || ($currBooking !== null);
             $room->current_checkout_date = $currBooking?->check_out?->format('Y-m-d');
             $room->current_checkout_formatted = $currBooking?->check_out?->locale('fr')->isoFormat('D MMM YYYY');
             $room->current_checkout_time = $standardCheckOutTime;
@@ -649,7 +659,8 @@ class BookingController extends Controller
             $hasCleaningConflict = false;
             if ($isArrivalToday && $isBeingCleaned && $cleaningAvailableAt) {
                 $requestedArrivalToday = today()->setTimeFromTimeString($checkInTime);
-                $hasCleaningConflict = $cleaningAvailableAt->greaterThan($requestedArrivalToday) || ($checkInTime < $cleaningReadyTime);
+                $hasCleaningConflict = $cleaningAvailableAt->greaterThan($requestedArrivalToday)
+                    || ($checkInTime < $cleaningReadyTime);
             }
 
             // Conflit B : Rotation le jour même (départ précédent) et heure d'arrivée avant fin du ménage
@@ -744,7 +755,8 @@ class BookingController extends Controller
         // tarifaire (TarifSejour), surcharge de capacité comprise. En FCFA
         // pour l'affichage ; la base le garde en centimes.
         $tarifSejour = app(\App\Services\TarifSejour::class)->calculer(
-            $room->roomType, $checkIn, $checkOut, (int) $validated['adults_count'], (int) ($validated['children_count'] ?? 0));
+            $room->roomType, $checkIn, $checkOut, (int) $validated['adults_count'],
+                (int) ($validated['children_count'] ?? 0));
         $pricePerNight = $tarifSejour['par_nuit'] / 100;
         $totalRoomAmount = $tarifSejour['total'] / 100;
         $resumeTarif = $tarifSejour['ajuste'] ? app(\App\Services\TarifSejour::class)->resume($tarifSejour) : null;
@@ -759,7 +771,8 @@ class BookingController extends Controller
         $childrenCount = (int) ($validated['children_count'] ?? 0);
         $childrenAges = (array) ($validated['children_ages'] ?? $request->children_ages ?? []);
         if ($childrenCount > 0 && count($childrenAges) < $childrenCount) {
-            $defaultBracket = app(\App\Services\BreakfastPricingService::class)->getAgeBrackets($tenantId)[1]['id'] ?? '2_10';
+            $defaultBracket = app(\App\Services\BreakfastPricingService::class)->getAgeBrackets($tenantId)[1]['id']
+                ?? '2_10';
             while (count($childrenAges) < $childrenCount) {
                 $childrenAges[] = $defaultBracket;
             }
@@ -863,12 +876,15 @@ class BookingController extends Controller
             'resumeTarif' => $resumeTarif,
             'minDepositPercentage' => $minDepositPercentage,
             'maxDiscountPercentage' => $maxDiscountPercentage,
-            'draftToken' => $this->upsertDraftStep3($request, $validated, $hasExtraBed, $extraBedCount, $extraBedAmount * 100, $prepaidBreakfastChildren, $prepaidBreakfastAmount * 100),
+            'draftToken' => $this->upsertDraftStep3($request, $validated, $hasExtraBed, $extraBedCount,
+                $extraBedAmount * 100, $prepaidBreakfastChildren, $prepaidBreakfastAmount * 100),
         ]);
     }
 
     /** Sauvegarde le brouillon à l'étape 3 (chambre sélectionnée). */
-    private function upsertDraftStep3(Request $request, array $validated, bool $hasExtraBed = false, int $extraBedCount = 0, int $extraBedAmountCentimes = 0, bool $prepaidBreakfastChildren = false, int $prepaidBreakfastAmountCentimes = 0): string
+    private function upsertDraftStep3(Request $request, array $validated, bool $hasExtraBed = false,
+        int $extraBedCount = 0, int $extraBedAmountCentimes = 0, bool $prepaidBreakfastChildren = false,
+        int $prepaidBreakfastAmountCentimes = 0): string
     {
         $draft = \App\Models\BookingDraft::upsertDraft($request->draft_token, Auth::id(), [
             'current_step'  => 4,
@@ -902,7 +918,8 @@ class BookingController extends Controller
         $activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user());
 
         if (!$activeSession) {
-            return redirect()->route('bookings.cash_register.open')->with('warning', 'Veuillez ouvrir la caisse de réception avant d\'enregistrer une réservation.');
+            return redirect()->route('bookings.cash_register.open')->with('warning',
+                'Veuillez ouvrir la caisse de réception avant d\'enregistrer une réservation.');
         }
 
         $priceRule = $request->boolean('is_offerte') ? 'min:0' : 'min:1';
@@ -957,7 +974,8 @@ class BookingController extends Controller
         // Validations spécifiques pour le prix négocié et l'acompte (avec surcharge éventuelle)
         // Le même tarif de référence que l'écran de confirmation : la grille.
         $tarifSejour = app(\App\Services\TarifSejour::class)->calculer(
-            $room->roomType, $checkIn, $checkOut, (int) $validated['adults_count'], (int) ($validated['children_count'] ?? 0));
+            $room->roomType, $checkIn, $checkOut, (int) $validated['adults_count'],
+                (int) ($validated['children_count'] ?? 0));
         $basePricePerNight = $tarifSejour['par_nuit'] / 100;
         $baseTotalRoomAmount = $tarifSejour['total'] / 100;
         $tenantSettings = \App\Models\Tenant::where('id', $tenantId)->value('settings') ?? [];
@@ -968,7 +986,8 @@ class BookingController extends Controller
         $childrenCount = (int) ($validated['children_count'] ?? 0);
         $childrenAges  = (array) ($validated['children_ages'] ?? $request->children_ages ?? []);
         if ($childrenCount > 0 && count($childrenAges) < $childrenCount) {
-            $defaultBracket = app(\App\Services\BreakfastPricingService::class)->getAgeBrackets($tenantId)[1]['id'] ?? '2_10';
+            $defaultBracket = app(\App\Services\BreakfastPricingService::class)->getAgeBrackets($tenantId)[1]['id']
+                ?? '2_10';
             while (count($childrenAges) < $childrenCount) {
                 $childrenAges[] = $defaultBracket;
             }
@@ -992,7 +1011,8 @@ class BookingController extends Controller
 
         // Petits-déjeuners enfants prépayés
         $prepaidBreakfastChildren = $request->boolean('prepaid_breakfast_children') && ($childrenCount > 0);
-        $prepaidBreakfastAmountCentimes = $prepaidBreakfastChildren ? ((int) ($breakfastCalculation['children_stay_total'] * 100)) : 0;
+        $prepaidBreakfastAmountCentimes = $prepaidBreakfastChildren ? (
+            (int) ($breakfastCalculation['children_stay_total'] * 100)) : 0;
 
         $breakfastAmount = 0; // centimes
         if ($request->boolean('include_breakfast') && !$request->boolean('is_offerte')) {
@@ -1123,7 +1143,8 @@ class BookingController extends Controller
 
         $notes = $validated['notes'] ?? null;
         if ($isComplimentary) {
-            $notes = trim("Offerte - Motif : " . ($validated['offerte_reason'] ?? 'Non spécifié') . ($notes ? "\n" . $notes : ''));
+            $notes = trim("Offerte - Motif : " . ($validated['offerte_reason'] ?? 'Non spécifié')
+                . ($notes ? "\n" . $notes : ''));
         }
 
         // Manque à gagner : le séjour étant facturé zéro, sa valeur au tarif
@@ -1211,7 +1232,8 @@ class BookingController extends Controller
                 'method' => $validated['payment_method'],
                 'status' => 'completed',
                 'reference' => 'PAY-' . now()->year . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT),
-                'external_reference' => $validated['payment_reference'] ?? ($validated['payment_method'] === 'cash' ? 'Espèces' : null),
+                'external_reference' => $validated['payment_reference']
+                    ?? ($validated['payment_method'] === 'cash' ? 'Espèces' : null),
                 'paid_at' => now(),
                 'processed_by' => Auth::id(),
                 'notes' => 'Acompte versé à la réservation',
@@ -1239,7 +1261,8 @@ class BookingController extends Controller
                 'booking_id'   => $booking->id,
                 'customer_id'  => $booking->customer_id,
                 'type'         => FolioItem::TYPE_OTHER,
-                'description'  => "Lit d'appoint ({$extraBedCount} lit" . ($extraBedCount > 1 ? 's' : '') . " × {$nights} nuit" . ($nights > 1 ? 's' : '') . ")",
+                'description'  => "Lit d'appoint ({$extraBedCount} lit" . ($extraBedCount > 1 ? 's' : '')
+                    . " × {$nights} nuit" . ($nights > 1 ? 's' : '') . ")",
                 'quantity'     => $extraBedCount * $nights,
                 'unit_price'   => $extraBedPriceCentimes,
                 'total_price'  => $extraBedFinalAmount,
@@ -1298,7 +1321,8 @@ class BookingController extends Controller
                     'booking_id'   => $booking->id,
                     'customer_id'  => $booking->customer_id,
                     'type'         => FolioItem::TYPE_RESTAURANT,
-                    'description'  => "Petits-déjeuners enfants prépayés ({$nights} nuit" . ($nights > 1 ? 's' : '') . ")",
+                    'description'  => "Petits-déjeuners enfants prépayés ({$nights} nuit" . ($nights > 1 ? 's' : '')
+                        . ")",
                     'quantity'     => 1,
                     'unit_price'   => $prepaidBreakfastAmountCentimes,
                     'total_price'  => $prepaidBreakfastAmountCentimes,
@@ -1376,7 +1400,8 @@ class BookingController extends Controller
             $activeSession,
             Auth::user(),
             CashRegisterActivity::ACTION_BOOKING_CREATE,
-            "Création réservation {$booking->booking_number} — Chambre {$room->number}" . ($payment ? " (acompte {$payment->reference})" : ''),
+            "Création réservation {$booking->booking_number} — Chambre {$room->number}"
+                . ($payment ? " (acompte {$payment->reference})" : ''),
             $payment ? $paymentAmount : null,
             $payment ? $validated['payment_method'] : null,
             $payment ?? $booking,
@@ -1471,7 +1496,8 @@ class BookingController extends Controller
         $effectiveBalanceDue = $booking->effectiveBalanceDue($defaultCheckOutTime);
         $consumedBalance = $booking->getConsumedBalance($defaultCheckOutTime);
         $hasPackageFolio = $booking->folioItems
-            ->contains(fn ($item) => $item->type === FolioItem::TYPE_OTHER && str_starts_with((string) $item->description, 'Formule —'));
+            ->contains(fn ($item) => $item->type === FolioItem::TYPE_OTHER && str_starts_with((string) $item
+                ->description, 'Formule —'));
         $uninvoicedPackage = $hasPackageFolio ? 0 : (int) $booking->package_amount;
 
         $stayTimer = $booking->shouldDisplayStayTimer($defaultCheckOutTime)
@@ -1482,7 +1508,8 @@ class BookingController extends Controller
                 'checkInTime'                  => $effectiveCheckInAt->format('H:i:s'),
                 'checkOutDate'                 => $scheduledCheckOutAt->toDateString(),
                 'checkOutTime'                 => $scheduledCheckOutAt->format('H:i:s'),
-                'initialOverstay'              => $overstayNights > 0 || $booking->hasOverstayedCheckout($defaultCheckOutTime),
+                'initialOverstay'              => $overstayNights > 0 || $booking
+                    ->hasOverstayedCheckout($defaultCheckOutTime),
                 'initialOverstayNights'        => $overstayNights,
                 'plannedNights'                => (int) $booking->total_nights,
                 'nightlyRateCentimes'          => $effectiveNightlyRate,
@@ -1658,13 +1685,15 @@ class BookingController extends Controller
                 if ($remaining <= 0) {
                     $msg = 'Nombre maximum de tentatives atteint. Veuillez contacter le manager pour débloquer.';
                     return $isAjax
-                        ? response()->json(['success' => false, 'message' => $msg, 'locked' => true, 'remaining' => 0], 422)
+                        ? response()->json(['success' => false, 'message' => $msg, 'locked' => true,
+                            'remaining' => 0], 422)
                         : back()->withErrors(['checkin_code' => $msg]);
                 }
 
                 $msg = "Code de sécurité invalide. Il vous reste {$remaining} tentative(s).";
                 return $isAjax
-                    ? response()->json(['success' => false, 'message' => $msg, 'locked' => false, 'remaining' => $remaining], 422)
+                    ? response()->json(['success' => false, 'message' => $msg, 'locked' => false,
+                        'remaining' => $remaining], 422)
                     : back()->withErrors(['checkin_code' => $msg]);
             }
         }
@@ -1757,7 +1786,8 @@ class BookingController extends Controller
         $validated = $request->validate([
             'reason_code'        => ['nullable', 'string'],
             'reason_description' => ['nullable', 'string', 'max:1000'],
-            'refund_method'      => ['nullable', 'string', 'in:cash,orange_money,mtn_momo,bank_transfer,credit_note,none'],
+            'refund_method'      => ['nullable', 'string',
+                'in:cash,orange_money,mtn_momo,bank_transfer,credit_note,none'],
             'waive_penalty'      => ['nullable', 'boolean'],
             'waive_reason'       => ['nullable', 'string', 'max:255'],
         ]);
@@ -2030,13 +2060,15 @@ class BookingController extends Controller
     public function addPayment(Request $request, Booking $booking)
     {
         if ($booking->status !== BookingStatus::CHECKED_IN) {
-            return back()->withErrors(['payment' => "L'encaissement d'un paiement n'est possible que lorsque le client est en séjour."]);
+            return back()->withErrors(
+                ['payment' => "L'encaissement d'un paiement n'est possible que lorsque le client est en séjour."]);
         }
 
         $validated = $request->validate([
             'amount'          => ['required', 'integer', 'min:1'],
             'method'          => ['required', 'string', 'in:cash,stripe,orange_money,mtn_momo,bank_transfer'],
-            'payment_context' => ['nullable', 'string', Rule::in([Payment::ORIGIN_SEJOUR_NUITEES, Payment::ORIGIN_CHECK_IN, Payment::ORIGIN_CHECK_OUT])],
+            'payment_context' => ['nullable', 'string', Rule::in([Payment::ORIGIN_SEJOUR_NUITEES,
+                Payment::ORIGIN_CHECK_IN, Payment::ORIGIN_CHECK_OUT])],
             'notes'           => ['nullable', 'string'],
         ]);
 
@@ -2046,7 +2078,8 @@ class BookingController extends Controller
         $activeSession = $this->cashRegisterCircuit->receptionActivePour(Auth::user());
 
         if (!$activeSession) {
-            return back()->withErrors(['payment' => 'Veuillez ouvrir la caisse de réception pour enregistrer un paiement.']);
+            return back()->withErrors(
+                ['payment' => 'Veuillez ouvrir la caisse de réception pour enregistrer un paiement.']);
         }
 
         // Montant saisi en FCFA → on stocke en centimes
@@ -2080,9 +2113,11 @@ class BookingController extends Controller
         $reference = sprintf('PAY-%d-%06d', now()->year, $seq);
 
         $paymentOrigin = $validated['payment_context'] ?? (
-            ($booking->actual_check_in && $booking->actual_check_in->diffInMinutes(now(), true) <= 30 && $booking->payments()->doesntExist())
+            ($booking->actual_check_in && $booking->actual_check_in->diffInMinutes(now(), true) <= 30 && $booking
+                ->payments()->doesntExist())
                 ? Payment::ORIGIN_CHECK_IN
-                : ($booking->getConsumedBalance($checkOutTime) <= $amountCentimes && $booking->check_out->lessThanOrEqualTo(today())
+                : ($booking->getConsumedBalance($checkOutTime) <= $amountCentimes && $booking->check_out
+                    ->lessThanOrEqualTo(today())
                     ? Payment::ORIGIN_CHECK_OUT
                     : Payment::ORIGIN_SEJOUR_NUITEES)
         );
@@ -2108,7 +2143,8 @@ class BookingController extends Controller
         \App\Models\AuditLog::record(
             Auth::id(),
             'sensitive_action',
-            "Paiement de " . number_format($amountCentimes / 100, 0, ',', ' ') . " FCFA enregistré pour la réservation #{$booking->booking_number}",
+            "Paiement de " . number_format($amountCentimes / 100, 0, ',', ' ')
+                . " FCFA enregistré pour la réservation #{$booking->booking_number}",
             'bookings',
             ['booking_id' => $booking->id, 'amount' => $amountCentimes, 'reference' => $reference]
         );
@@ -2198,7 +2234,8 @@ class BookingController extends Controller
         }
 
         $pricePerNight    = app(\App\Services\TarifSejour::class)->calculer(
-            $room->roomType, $checkIn, $checkOut, (int) $validated['adults_count'], (int) ($validated['children_count'] ?? 0))['par_nuit'];
+            $room->roomType, $checkIn, $checkOut, (int) $validated['adults_count'],
+                (int) ($validated['children_count'] ?? 0))['par_nuit'];
         $totalRoomAmount  = $nights * $pricePerNight;
         $totalAmount      = $totalRoomAmount;
         // TVA extraite du total TTC, jamais ajoutée par dessus.

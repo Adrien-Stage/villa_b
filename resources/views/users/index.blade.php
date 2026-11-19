@@ -15,7 +15,8 @@
     @droit('users.creer')
         <button type="button"
             onclick="openCreateModal()"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-95 transition-opacity">
+            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                hover:opacity-95 transition-opacity">
             <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
             Ajouter un membre
         </button>
@@ -81,12 +82,17 @@
     </div>
 
     {{-- Les filtres passent à la ligne plutôt que de faire défiler la page. --}}
-    <form id="users-filter-form" method="GET" action="{{ route('users.index') }}" class="flex min-w-0 flex-wrap items-center gap-2">
+    <form
+        id="users-filter-form"
+        method="GET"
+        action="{{ route('users.index') }}"
+        class="flex min-w-0 flex-wrap items-center gap-2">
         <input type="hidden" name="status" id="filter-status-input" value="{{ request('status') }}">
         <input type="hidden" name="view" id="filter-view-input" value="{{ $viewMode }}">
 
         <select name="department_id" id="filter-department-select" aria-label="Filtrer par département"
-            class="max-w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+            class="max-w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                outline-none focus:border-secondary">
             <option value="">Tous les départements</option>
             @foreach($departments as $d)
                 <option value="{{ $d->id }}" @selected(request('department_id') == $d->id)>{{ $d->name }}</option>
@@ -94,7 +100,8 @@
         </select>
 
         <select name="role" id="filter-role-select" aria-label="Filtrer par rôle"
-            class="max-w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+            class="max-w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                outline-none focus:border-secondary">
             <option value="">Tous les rôles</option>
             @foreach($roles as $role)
                 <option value="{{ $role->slug }}" @selected(request('role') === $role->slug)>{{ $role->name }}</option>
@@ -108,8 +115,12 @@
                 value="{{ request('search') }}"
                 placeholder="Nom, email, téléphone..."
                 autocomplete="off"
-                class="pl-9 pr-8 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary placeholder-primary/30 outline-none focus:border-secondary w-full sm:w-64 transition-all">
-            <i data-lucide="search" id="search-icon" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30 pointer-events-none"></i>
+                class="pl-9 pr-8 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                    placeholder-primary/30 outline-none focus:border-secondary w-full sm:w-64 transition-all">
+            <i
+                data-lucide="search"
+                id="search-icon"
+                class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-primary/30 pointer-events-none"></i>
             <span id="search-spinner" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
                 <svg class="animate-spin h-3.5 w-3.5 text-primary/50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -141,7 +152,12 @@
 
 <div id="users-table-container" class="transition-opacity duration-150">
 @if($viewMode === 'list')
-<x-table :rows="$staffUsers" inline="never" empty="Aucun membre du personnel trouvé." empty-icon="user-x" caption="Membres du personnel">
+<x-table
+    :rows="$staffUsers"
+    inline="never"
+    empty="Aucun membre du personnel trouvé."
+    empty-icon="user-x"
+    caption="Membres du personnel">
     <x-slot:head>
         <x-table.col>Collaborateur</x-table.col>
         <x-table.col hide="2xl">Contact</x-table.col>
@@ -155,7 +171,9 @@
         <x-table.row :muted="! $staff->is_active">
             <x-table.cell>
                 <div class="flex min-w-0 items-center gap-3">
-                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary" aria-hidden="true">
+                    <div
+                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary"
+                        aria-hidden="true">
                         <span class="text-xs font-semibold text-white">{{ mb_strtoupper(mb_substr($staff->name, 0, 2)) }}</span>
                     </div>
                     <div class="min-w-0">
@@ -170,8 +188,12 @@
             </x-table.cell>
             <x-table.cell hide="3xl">
                 @if($staff->department)
-                    <span class="inline-flex max-w-52 items-center gap-1.5 rounded-lg border border-secondary/20 bg-primary/5 px-2 py-0.5 text-xs font-semibold text-primary">
-                        <i data-lucide="{{ $staff->department->icon ?? 'briefcase' }}" class="h-3.5 w-3.5 shrink-0 text-secondary" aria-hidden="true"></i>
+                    <span class="inline-flex max-w-52 items-center gap-1.5 rounded-lg border border-secondary/20
+                        bg-primary/5 px-2 py-0.5 text-xs font-semibold text-primary">
+                        <i
+                            data-lucide="{{ $staff->department->icon ?? 'briefcase' }}"
+                            class="h-3.5 w-3.5 shrink-0 text-secondary"
+                            aria-hidden="true"></i>
                         <span class="truncate">{{ $staff->department->name }}</span>
                     </span>
                 @else
@@ -181,7 +203,8 @@
             <x-table.cell>
                 <div class="flex max-w-64 flex-wrap gap-1">
                     @forelse($staff->roles as $r)
-                        <span class="inline-flex items-center gap-1 rounded-full border border-secondary/20 bg-secondary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                        <span class="inline-flex items-center gap-1 rounded-full border border-secondary/20
+                            bg-secondary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
                             {{ $r->name }}
                             @if(($r->pivot->level ?: 'write') === 'read')
                                 <i data-lucide="eye" class="h-2.5 w-2.5 text-primary/40" aria-label="Lecture seule"></i>
@@ -194,11 +217,13 @@
             </x-table.cell>
             <x-table.cell nowrap>
                 @if($staff->is_active)
-                    <span class="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2
+                        py-0.5 text-xs font-medium text-green-700">
                         <span class="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true"></span> Actif
                     </span>
                 @else
-                    <span class="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2
+                        py-0.5 text-xs font-medium text-red-700">
                         <span class="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden="true"></span> Inactif
                     </span>
                 @endif
@@ -231,8 +256,11 @@
                         <p class="text-xs text-primary/50 truncate">{{ $staff->email }}</p>
                         @if($staff->department)
                             <div class="mt-1">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-primary/5 text-primary border border-secondary/20">
-                                    <i data-lucide="{{ $staff->department->icon ?? 'briefcase' }}" class="w-3 h-3 text-secondary"></i>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px]
+                                    font-semibold bg-primary/5 text-primary border border-secondary/20">
+                                    <i
+                                        data-lucide="{{ $staff->department->icon ?? 'briefcase' }}"
+                                        class="w-3 h-3 text-secondary"></i>
                                     <span>{{ $staff->department->name }}</span>
                                 </span>
                             </div>
@@ -240,16 +268,19 @@
                     </div>
                 </div>
                 @if($staff->is_active)
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-green-50 text-green-700 border-green-200">Actif</span>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border
+                        bg-green-50 text-green-700 border-green-200">Actif</span>
                 @else
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-red-50 text-red-700 border-red-200">Inactif</span>
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border
+                        bg-red-50 text-red-700 border-red-200">Inactif</span>
                 @endif
             </div>
 
             <div class="space-y-2 mb-4">
                 <div class="flex flex-wrap gap-1">
                     @forelse($staff->roles as $r)
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-secondary/10 text-primary border-secondary/20">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium
+                            border bg-secondary/10 text-primary border-secondary/20">
                             {{ $r->name }}
                             @if(($r->pivot->level ?: 'write') === 'read')
                                 <i data-lucide="eye" class="w-2.5 h-2.5 text-primary/40" title="Lecture seule"></i>
@@ -264,7 +295,8 @@
 
             <div class="flex items-center gap-2">
                 <a href="{{ route('users.show', $staff) }}"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium border border-secondary/20 text-primary hover:bg-accent/20 transition-colors">
+                    class="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs
+                        font-medium border border-secondary/20 text-primary hover:bg-accent/20 transition-colors">
                     <i data-lucide="id-card" class="w-3.5 h-3.5"></i> Fiche
                 </a>
                 <x-menu-actions :label="'Actions pour '.$staff->name">
@@ -300,7 +332,12 @@
 </div>
 
 {{-- Modal create --}}
-<x-modal id="create-user-modal" title="Nouveau membre du staff" max-width="max-w-2xl" formAction="{{ route('users.store') }}" closeAction="closeCreateModal()">
+<x-modal
+    id="create-user-modal"
+    title="Nouveau membre du staff"
+    max-width="max-w-2xl"
+    formAction="{{ route('users.store') }}"
+    closeAction="closeCreateModal()">
     <input type="hidden" name="form_type" value="create">
     <input type="hidden" name="view" value="{{ $viewMode }}">
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -383,7 +420,8 @@
         <label class="text-xs font-medium text-primary/70">Rôles & niveau d'accès <span class="text-red-500">*</span></label>
         <p class="text-[11px] text-primary/40 mb-2">Cochez un ou plusieurs rôles. Chaque rôle donne accès à son module ; choisissez le niveau (lecture ou lecture / écriture).</p>
         @error('roles')
-            <div class="mb-2 p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+            <div class="mb-2 p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-center
+                gap-2">
                 <svg class="w-4 h-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 <span>{{ $message }}</span>
             </div>
@@ -395,7 +433,8 @@
     @include('users.partials.derogation')
 
 
-    <div class="rounded-xl border border-secondary/30 bg-accent/10 p-3.5 text-xs text-primary/80 flex items-start gap-3">
+    <div class="rounded-xl border border-secondary/30 bg-accent/10 p-3.5 text-xs text-primary/80 flex items-start
+        gap-3">
         <svg class="w-5 h-5 text-secondary shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
@@ -411,7 +450,11 @@
     </label>
 
     <x-slot:footer>
-        <button type="button" onclick="closeCreateModal()" class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary hover:bg-accent/20">Annuler</button>
+        <button
+            type="button"
+            onclick="closeCreateModal()"
+            class="px-4 py-2 text-xs font-medium rounded-lg border border-secondary/20 text-primary
+                hover:bg-accent/20">Annuler</button>
         <button type="submit" class="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-white">Créer</button>
     </x-slot:footer>
 </x-modal>

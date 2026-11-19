@@ -78,7 +78,8 @@ class EditionController extends Controller
         $valeurs = $edition->valeurs($request->query(), $user);
         $document = $edition->document($valeurs, $user);
 
-        AuditLog::record($user->id, 'export', "Édition « {$edition->titre()} » ({$format}) — {$document->lesLignes()->count()} ligne(s)", 'editions', [
+        AuditLog::record($user->id, 'export',
+            "Édition « {$edition->titre()} » ({$format}) — {$document->lesLignes()->count()} ligne(s)", 'editions', [
             'edition' => $edition->cle(),
             'format' => $format,
             'filtres' => $edition->filtresImprimes($valeurs, $user),

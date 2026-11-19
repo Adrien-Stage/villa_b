@@ -18,7 +18,9 @@
      ])->values()) }})">
 
     <div class="flex items-center justify-between gap-4 mb-4">
-        <a href="{{ route('economat.requisitions.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
+        <a
+            href="{{ route('economat.requisitions.index') }}"
+            class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i>
             <span>Retour à la liste des bons</span>
         </a>
@@ -49,13 +51,17 @@
                         Service émetteur <span class="text-red-500">*</span>
                     </label>
                     <select id="requisition-service" name="department" required x-model="service" @change="depot = ''"
-                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                            outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                         @foreach($departments as $key => $label)
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
                     <p class="text-[10px] text-primary/50 mt-1" x-show="!avecVisa.includes(service)">Sélectionnez le service rattaché à ce besoin.</p>
-                    <p class="text-[11px] text-amber-800 mt-1 flex items-start gap-1" x-show="avecVisa.includes(service)" x-cloak>
+                    <p
+                        class="text-[11px] text-amber-800 mt-1 flex items-start gap-1"
+                        x-show="avecVisa.includes(service)"
+                        x-cloak>
                         <i data-lucide="stamp" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i>
                         <span>Votre chef de service visera d'abord la demande ; elle partira ensuite à l'économat.</span>
                     </p>
@@ -64,7 +70,8 @@
                 <div x-show="depots.some(d => d.department === service)" x-cloak>
                     <label for="requisition-depot" class="block text-xs font-semibold text-primary/70 mb-1.5">Dépôt destinataire</label>
                     <select id="requisition-depot" name="service_store_id" x-model="depot"
-                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                            outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                         <option value="">Aucun dépôt</option>
                         <template x-for="d in depots.filter(d => d.department === service)" :key="d.id">
                             <option :value="d.id" x-text="d.name" :selected="String(d.id) === String(depot)"></option>
@@ -78,7 +85,8 @@
                     <div x-show="service === 'restaurant' && !depot" x-cloak>
                         <label for="requisition-restaurant" class="block text-xs font-semibold text-primary/70 mb-1.5">Restaurant destinataire</label>
                         <select id="requisition-restaurant" name="point_of_sale_id"
-                            class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                            class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                                outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                             @foreach($restaurants as $restaurant)
                                 <option value="{{ $restaurant->id }}" @selected((int) old('point_of_sale_id', $restaurantParDefaut?->id) === $restaurant->id)>{{ $restaurant->name }}</option>
                             @endforeach
@@ -94,7 +102,8 @@
                     <label class="block text-xs font-semibold text-primary/70 mb-1.5">Motif / Justification du besoin</label>
                     <input type="text" name="purpose" maxlength="500"
                         placeholder="Ex : Réassort fournitures bureau compta, réassort accueil chambres..."
-                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                        class="w-full px-3 py-2 text-xs border border-secondary/30 rounded-lg bg-white text-primary
+                            outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                     <p class="text-[10px] text-primary/50 mt-1">Précisez la destination ou l'opération concernée.</p>
                 </div>
             </div>
@@ -102,13 +111,15 @@
 
         {{-- Cadre Sélection des Articles --}}
         <div class="bg-white border border-secondary/20 rounded-xl overflow-hidden mb-5 shadow-sm flex flex-col">
-            <div class="px-5 py-3 border-b border-secondary/20 bg-surface-light flex items-center justify-between shrink-0">
+            <div class="px-5 py-3 border-b border-secondary/20 bg-surface-light flex items-center justify-between
+                shrink-0">
                 <div class="flex items-center gap-2">
                     <h2 class="text-xs font-bold uppercase tracking-wider text-primary">Articles sollicités</h2>
                     <span class="text-xs text-primary/50" x-text="`(${lines.length} ligne(s))`"></span>
                 </div>
                 <button type="button" @click="addLine()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold
+                        rounded-lg hover:bg-surface-dark transition-colors">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     <span>Ajouter une ligne</span>
                 </button>
@@ -121,7 +132,8 @@
 
                 <div class="space-y-3">
                     <template x-for="(line, idx) in lines" :key="line.key">
-                        <div class="grid grid-cols-12 gap-3 items-center p-3 rounded-lg border border-secondary/15 bg-surface-light/30">
+                        <div class="grid grid-cols-12 gap-3 items-center p-3 rounded-lg border border-secondary/15
+                            bg-surface-light/30">
                             {{-- Sélection de l'article --}}
                             <div class="col-span-12 sm:col-span-7 md:col-span-7">
                                 <label class="block text-[10px] font-semibold uppercase text-primary/50 mb-1">Désignation de l'article</label>
@@ -136,26 +148,39 @@
                                 <div class="inline-flex items-center w-full">
                                     <input type="number" step="0.001" min="0.001" :name="`lines[${idx}][quantity]`"
                                         x-model.number="line.qty" placeholder="Quantité" required
-                                        class="w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary font-mono font-bold text-right outline-none focus:border-primary">
+                                        class="w-full px-2.5 py-1.5 text-xs border border-secondary/30 rounded-lg
+                                            bg-white text-primary font-mono font-bold text-right outline-none
+                                            focus:border-primary">
                                     {{-- Un article conditionné se demande en pièces, en paquets ou en cartons. --}}
                                     <template x-if="getUnites(line.itemId).length > 1">
                                         <select :name="`lines[${idx}][packaging]`" x-model="line.packaging" :aria-label="'Unité de la ligne ' + (idx + 1)"
-                                            class="ml-2 px-1.5 py-1.5 text-xs border border-secondary/30 rounded-lg bg-white text-primary">
+                                            class="ml-2 px-1.5 py-1.5 text-xs border border-secondary/30 rounded-lg
+                                                bg-white text-primary">
                                             <template x-for="u in getUnites(line.itemId)" :key="u.nom">
-                                                <option :value="u.nom" x-text="u.nom" :selected="u.nom === line.packaging"></option>
+                                                <option
+                                                    :value="u.nom"
+                                                    x-text="u.nom"
+                                                    :selected="u.nom === line.packaging"></option>
                                             </template>
                                         </select>
                                     </template>
-                                    <span x-show="getUnites(line.itemId).length <= 1" class="ml-2 text-xs text-primary/60 font-medium" x-text="getItemUnit(line.itemId)"></span>
+                                    <span
+                                        x-show="getUnites(line.itemId).length <= 1"
+                                        class="ml-2 text-xs text-primary/60 font-medium"
+                                        x-text="getItemUnit(line.itemId)"></span>
                                 </div>
-                                <p x-show="getFactor(line) > 1" class="mt-1 text-[10px] text-primary/50" x-text="`= ${formatStock(line.qty * getFactor(line))} ${accorde(getItemUnit(line.itemId), line.qty * getFactor(line))}`"></p>
+                                <p
+                                    x-show="getFactor(line) > 1"
+                                    class="mt-1 text-[10px] text-primary/50"
+                                    x-text="`= ${formatStock(line.qty * getFactor(line))} ${accorde(getItemUnit(line.itemId), line.qty * getFactor(line))}`"></p>
                             </div>
 
                             {{-- Suppression --}}
                             <div class="col-span-2 sm:col-span-1 md:col-span-1 text-right">
                                 <label class="block text-[10px] text-transparent mb-1">Action</label>
                                 <button type="button" @click="removeLine(idx)"
-                                    class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                    class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg
+                                        transition-colors"
                                     title="Supprimer la ligne">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
@@ -166,9 +191,11 @@
             </div>
 
             {{-- Pied du tableau --}}
-            <div class="px-5 py-3 border-t border-secondary/20 bg-surface-light flex items-center justify-between text-xs shrink-0">
+            <div class="px-5 py-3 border-t border-secondary/20 bg-surface-light flex items-center justify-between
+                text-xs shrink-0">
                 <button type="button" @click="addLine()"
-                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary/70 hover:text-primary transition-colors">
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary/70 hover:text-primary
+                        transition-colors">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                     <span>Ajouter une ligne</span>
                 </button>
@@ -182,7 +209,9 @@
                 Annuler
             </a>
             <button type="submit" :disabled="lines.length === 0"
-                class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-xs font-semibold
+                    rounded-lg hover:bg-surface-dark transition-colors shadow-sm disabled:opacity-50
+                    disabled:cursor-not-allowed">
                 <i data-lucide="send" class="w-4 h-4"></i>
                 <span>Transmettre le bon à l'économat</span>
             </button>

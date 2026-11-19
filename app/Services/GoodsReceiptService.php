@@ -155,7 +155,8 @@ class GoodsReceiptService
             $entete = [
                 'purchase_order_id'    => $order->id,
                 'supplier_id'          => $order->supplier_id,
-                'delivery_note_number' => !empty($data['delivery_note_number']) ? trim((string) $data['delivery_note_number']) : null,
+                'delivery_note_number' => !empty($data['delivery_note_number']) ? trim(
+                    (string) $data['delivery_note_number']) : null,
                 'received_at'          => $receivedAt,
                 'status'               => GoodsReceipt::STATUS_RECEIVED,
                 'notes'                => $data['notes'] ?? null,
@@ -266,13 +267,15 @@ class GoodsReceiptService
             // Partielle ou complète : l'économat le dit ; sans réponse, la
             // livraison est complète quand plus rien n'est dû.
             $resteDu = $order->lines()->get()->contains(fn ($l) => $l->outstanding() > 0);
-            $livraison = $data['livraison'] ?? ($resteDu ? GoodsReceipt::DELIVERY_PARTIAL : GoodsReceipt::DELIVERY_COMPLETE);
+            $livraison = $data['livraison']
+                ?? ($resteDu ? GoodsReceipt::DELIVERY_PARTIAL : GoodsReceipt::DELIVERY_COMPLETE);
             $receipt->update(['total_amount' => $totalAcceptedAmount, 'delivery_type' => $livraison]);
 
             if ($livraison === GoodsReceipt::DELIVERY_COMPLETE && $resteDu) {
                 // Livraison déclarée complète : le bon est soldé, le manquant
                 // n'est plus attendu.
-                $order->update(['status' => PurchaseOrder::STATUS_RECEIVED, 'received_at' => $order->received_at ?? now()]);
+                $order->update(['status' => PurchaseOrder::STATUS_RECEIVED, 'received_at' => $order->received_at
+                    ?? now()]);
             }
 
             // Le reste d'une livraison partielle est attendu sous un nouveau bon.
@@ -328,7 +331,8 @@ class GoodsReceiptService
                 $accepte = round($livre - $refuse, 3);
 
                 if ($accepte <= 0) {
-                    $nom = $ligne['nouvel_article']['name'] ?? StockItem::find($ligne['stock_item_id'] ?? null)?->name ?? 'Un article';
+                    $nom = $ligne['nouvel_article']['name'] ?? StockItem::find($ligne['stock_item_id'] ?? null)
+                        ?->name ?? 'Un article';
                     throw new RuntimeException(
                         "« {$nom} » : rien n'est gardé. Une marchandise refusée en entier repart avec le livreur, sans bon d'entrée."
                     );
@@ -338,7 +342,8 @@ class GoodsReceiptService
 
                 // Reçu en cartons à 25 000 F le carton : le bon de régularisation
                 // compte en unités de l'article, au prix de l'unité.
-                $conditionnement = $this->conditionnementSaisi($item->loadMissing('packagings'), $ligne['packaging'] ?? null);
+                $conditionnement = $this->conditionnementSaisi($item->loadMissing('packagings'), $ligne['packaging']
+                    ?? null);
                 $facteur = $conditionnement !== null ? $item->facteurDe($conditionnement) : 1.0;
 
                 $line = PurchaseOrderLine::create([
@@ -493,7 +498,8 @@ class GoodsReceiptService
                     // Déduire de la ligne de commande
                     if ($line->purchaseOrderLine) {
                         $line->purchaseOrderLine->update([
-                            'quantity_received' => max(0, (float) $line->purchaseOrderLine->quantity_received - (float) $line->quantity_accepted),
+                            'quantity_received' => max(0, (float) $line->purchaseOrderLine
+                                ->quantity_received - (float) $line->quantity_accepted),
                         ]);
                     }
                 }

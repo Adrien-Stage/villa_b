@@ -40,7 +40,8 @@ class ComptesDepotPartenaires extends Edition
 
     public function filtres(): array
     {
-        return [Filtre::periode('mois'), Filtre::choix('partner', 'Partenaire', fn (User $u) => PartnerOrganization::orderBy('name')->pluck('name', 'id')->all(), 'Tous les partenaires')];
+        return [Filtre::periode('mois'), Filtre::choix('partner', 'Partenaire',
+            fn (User $u) => PartnerOrganization::orderBy('name')->pluck('name', 'id')->all(), 'Tous les partenaires')];
     }
 
     public function document(array $valeurs, User $user): Document
@@ -56,22 +57,29 @@ class ComptesDepotPartenaires extends Edition
             'operation' => match ($p->walletEntry->kind) {
                 'credit' => 'Approvisionnement', 'debit' => 'Règlement sur accord', default => 'Contre-opération'
             },
-            'accord' => implode(' · ', array_filter([$p->walletEntry->metadata['authorized_by'] ?? null, $p->walletEntry->metadata['authorization_reference'] ?? null, $p->walletEntry->metadata['reason'] ?? null])),
+            'accord' => implode(' · ', array_filter([$p->walletEntry->metadata['authorized_by'] ?? null, $p->walletEntry
+                ->metadata['authorization_reference'] ?? null, $p->walletEntry->metadata['reason'] ?? null])),
             'credit' => max(0, $p->walletEntry->amount), 'debit' => max(0, -$p->walletEntry->amount),
             'solde' => $p->walletEntry->balance_after, 'par' => $p->walletEntry->createdBy?->name ?? '—',
         ]);
         $note = 'Le solde après mouvement est propre à chaque partenaire. Un débit règle une facture et ne constitue pas un nouvel encaissement.';
         if ($valeurs['partner'] !== '') {
             $wallet = PartnerOrganization::find($valeurs['partner'])?->wallet;
-            $opening = $wallet ? (int) WalletEntry::where('wallet_id', $wallet->id)->where('created_at', '<', $du->startOfDay())->sum('amount') : 0;
+            $opening = $wallet ? (int) WalletEntry::where('wallet_id', $wallet->id)->where('created_at', '<',
+                $du->startOfDay())->sum('amount') : 0;
             $ending = $opening + $rows->sum('credit') - $rows->sum('debit');
-            $note .= ' Solde initial : '.number_format($opening / 100, 0, ',', ' ').' FCFA ; solde final : '.number_format($ending / 100, 0, ',', ' ').' FCFA.';
+            $note .= ' Solde initial : '.number_format($opening / 100, 0, ',', ' ').' FCFA ; solde final : '
+                .number_format($ending / 100, 0, ',', ' ').' FCFA.';
         }
 
         return $this->base($valeurs, $user)->colonnes([
-            Colonne::dateHeure('date', 'Date'), Colonne::texte('partenaire', 'Partenaire'), Colonne::texte('piece', 'Pièce'),
-            Colonne::texte('operation', 'Opération'), Colonne::texte('facture', 'Facture / séjour'), Colonne::texte('accord', 'Accord / motif'),
-            Colonne::montant('credit', 'Crédit'), Colonne::montant('debit', 'Débit'), Colonne::montant('solde', 'Solde après'), Colonne::texte('par', 'Enregistré par'),
-        ])->lignes($rows)->totaux(['credit' => (int) $rows->sum('credit'), 'debit' => (int) $rows->sum('debit')])->note($note);
+            Colonne::dateHeure('date', 'Date'), Colonne::texte('partenaire', 'Partenaire'), Colonne::texte('piece',
+                'Pièce'),
+            Colonne::texte('operation', 'Opération'), Colonne::texte('facture', 'Facture / séjour'),
+                Colonne::texte('accord', 'Accord / motif'),
+            Colonne::montant('credit', 'Crédit'), Colonne::montant('debit', 'Débit'), Colonne::montant('solde',
+                'Solde après'), Colonne::texte('par', 'Enregistré par'),
+        ])->lignes($rows)->totaux(['credit' => (int) $rows->sum('credit'), 'debit' => (int) $rows->sum('debit')])
+            ->note($note);
     }
 }

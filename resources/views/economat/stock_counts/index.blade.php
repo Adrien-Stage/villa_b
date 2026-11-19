@@ -30,7 +30,8 @@
     <div class="flex flex-wrap items-center gap-2 shrink-0">
     @droit('economat.count_sheets.voir')
         <a href="{{ route('economat.count_sheets.index') }}"
-            class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 text-primary text-sm font-medium rounded-lg hover:bg-accent/20 transition-colors">
+            class="inline-flex items-center gap-2 px-4 py-2 border border-secondary/30 text-primary text-sm font-medium
+                rounded-lg hover:bg-accent/20 transition-colors">
             <i data-lucide="printer" class="w-4 h-4"></i>
             Fiches de comptage
         </a>
@@ -38,7 +39,8 @@
     @droit('economat.stock_counts.creer')
         @if(!$openCount)
             <a href="{{ route('economat.stock_counts.create') }}"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm shrink-0">
+                class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                    hover:bg-surface-dark transition-colors shadow-sm shrink-0">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i>
                 Nouvel inventaire
             </a>
@@ -83,7 +85,8 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <span class="font-bold text-amber-950 font-mono text-sm">{{ $openCount->reference }}</span>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900">En cours de comptage</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-200
+                            text-amber-900">En cours de comptage</span>
                     </div>
                     <p class="text-xs text-amber-900/70 mt-1">
                         Périmètre : <strong>{{ $openCount->perimetre('Tout le magasin central') }}</strong> · 
@@ -93,7 +96,8 @@
                 </div>
             </div>
             <a href="{{ route('economat.stock_counts.show', $openCount) }}"
-                class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium rounded-lg transition-colors shrink-0">
+                class="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs
+                    font-medium rounded-lg transition-colors shrink-0">
                 <span>Poursuivre la saisie</span>
                 <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </a>
@@ -103,10 +107,16 @@
 
 {{-- Filtres --}}
 <div class="bg-white border border-secondary/20 rounded-xl p-4 mb-4">
-    <form method="GET" action="{{ route('economat.stock_counts.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+    <form
+        method="GET"
+        action="{{ route('economat.stock_counts.index') }}"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
         <div>
             <label class="block text-xs font-semibold text-primary/60 mb-1">Service / Département</label>
-            <select name="service" class="w-full text-xs border border-secondary/30 rounded-lg px-2.5 py-2 bg-white text-primary outline-none focus:border-primary">
+            <select
+                name="service"
+                class="w-full text-xs border border-secondary/30 rounded-lg px-2.5 py-2 bg-white text-primary
+                    outline-none focus:border-primary">
                 <option value="">Tous les services</option>
                 @foreach($departments as $code => $label)
                     <option value="{{ $code }}" {{ request('service') === $code ? 'selected' : '' }}>{{ $label }}</option>
@@ -115,7 +125,10 @@
         </div>
         <div>
             <label class="block text-xs font-semibold text-primary/60 mb-1">Statut</label>
-            <select name="status" class="w-full text-xs border border-secondary/30 rounded-lg px-2.5 py-2 bg-white text-primary outline-none focus:border-primary">
+            <select
+                name="status"
+                class="w-full text-xs border border-secondary/30 rounded-lg px-2.5 py-2 bg-white text-primary
+                    outline-none focus:border-primary">
                 <option value="">Tous les statuts</option>
                 <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>En cours</option>
                 <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>Clôturé</option>
@@ -124,7 +137,10 @@
         </div>
         <div>
             <label class="block text-xs font-semibold text-primary/60 mb-1">Catégorie</label>
-            <select name="category" class="w-full text-xs border border-secondary/30 rounded-lg px-2.5 py-2 bg-white text-primary outline-none focus:border-primary">
+            <select
+                name="category"
+                class="w-full text-xs border border-secondary/30 rounded-lg px-2.5 py-2 bg-white text-primary
+                    outline-none focus:border-primary">
                 <option value="">Toutes les catégories</option>
                 @foreach($categories as $cat)
                     <option value="{{ $cat->id }}" {{ request('category') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
@@ -133,18 +149,34 @@
         </div>
         <div>
             <label class="block text-xs font-semibold text-primary/60 mb-1">Du</label>
-            <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full text-xs border border-secondary/30 rounded-lg px-2.5 py-1.5 bg-white text-primary outline-none focus:border-primary">
+            <input
+                type="date"
+                name="date_from"
+                value="{{ request('date_from') }}"
+                class="w-full text-xs border border-secondary/30 rounded-lg px-2.5 py-1.5 bg-white text-primary
+                    outline-none focus:border-primary">
         </div>
         <div class="flex gap-2">
             <div class="flex-1">
                 <label class="block text-xs font-semibold text-primary/60 mb-1">Au</label>
-                <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full text-xs border border-secondary/30 rounded-lg px-2.5 py-1.5 bg-white text-primary outline-none focus:border-primary">
+                <input
+                    type="date"
+                    name="date_to"
+                    value="{{ request('date_to') }}"
+                    class="w-full text-xs border border-secondary/30 rounded-lg px-2.5 py-1.5 bg-white text-primary
+                        outline-none focus:border-primary">
             </div>
-            <button type="submit" class="px-3 py-2 bg-primary text-white rounded-lg hover:bg-surface-dark text-xs self-end">
+            <button
+                type="submit"
+                class="px-3 py-2 bg-primary text-white rounded-lg hover:bg-surface-dark text-xs self-end">
                 <i data-lucide="filter" class="w-3.5 h-3.5"></i>
             </button>
             @if(request()->hasAny(['service', 'status', 'category', 'date_from', 'date_to']))
-                <a href="{{ route('economat.stock_counts.index') }}" class="px-2.5 py-2 border border-secondary/30 text-primary/60 hover:text-primary rounded-lg text-xs self-end" title="Effacer les filtres">
+                <a
+                    href="{{ route('economat.stock_counts.index') }}"
+                    class="px-2.5 py-2 border border-secondary/30 text-primary/60 hover:text-primary rounded-lg text-xs
+                        self-end"
+                    title="Effacer les filtres">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
                 </a>
             @endif
@@ -162,7 +194,11 @@
         'cancelled' => 'bg-gray-100 text-gray-600 border-gray-200',
     ];
 @endphp
-<x-table :rows="$counts" empty="Aucun inventaire physique enregistré. Ouvrez une feuille d'inventaire pour lancer le premier comptage contradictoire." empty-icon="clipboard-check" caption="Inventaires physiques">
+<x-table
+    :rows="$counts"
+    empty="Aucun inventaire physique enregistré. Ouvrez une feuille d'inventaire pour lancer le premier comptage contradictoire."
+    empty-icon="clipboard-check"
+    caption="Inventaires physiques">
     <x-slot:head>
         <x-table.col>Réf.</x-table.col>
         <x-table.col hide="md">Service</x-table.col>
@@ -180,7 +216,9 @@
         @php $var = (int) $count->variance_value; @endphp
         <x-table.row :href="route('economat.stock_counts.show', $count)">
             <x-table.cell nowrap>
-                <a href="{{ route('economat.stock_counts.show', $count) }}" class="font-mono font-medium text-primary hover:underline">{{ $count->reference }}</a>
+                <a
+                    href="{{ route('economat.stock_counts.show', $count) }}"
+                    class="font-mono font-medium text-primary hover:underline">{{ $count->reference }}</a>
             </x-table.cell>
             <x-table.cell hide="md" nowrap>
                 <span class="inline-flex items-center gap-1.5 text-xs text-primary/80 font-medium">
@@ -222,7 +260,10 @@
             <x-table.actions :label="'Actions pour l\'inventaire '.$count->reference">
                 <x-table.action :href="route('economat.stock_counts.show', $count)" icon="eye">Consulter la feuille</x-table.action>
                 @if($count->isClosed())
-                    <x-table.action :href="route('economat.stock_counts.report', $count)" icon="printer" target="_blank">Procès-verbal</x-table.action>
+                    <x-table.action
+                        :href="route('economat.stock_counts.report', $count)"
+                        icon="printer"
+                        target="_blank">Procès-verbal</x-table.action>
                 @endif
             </x-table.actions>
         </x-table.row>

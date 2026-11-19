@@ -10,7 +10,8 @@
 
 <div id="wetchah-toast-root"
      x-data="toastNotificationManager()"
-     class="fixed top-4 right-4 sm:top-6 sm:right-6 z-[99999] flex flex-col gap-3 w-full max-w-[calc(100vw-2rem)] sm:max-w-md pointer-events-none"
+     class="fixed top-4 right-4 sm:top-6 sm:right-6 z-[99999] flex flex-col gap-3 w-full max-w-[calc(100vw-2rem)]
+         sm:max-w-md pointer-events-none"
      role="region"
      aria-live="polite"
      aria-label="Notifications du système">
@@ -31,13 +32,15 @@
                  'border-amber-200 bg-white text-amber-900 shadow-amber-500/10': item.type === 'warning',
                  'border-sky-200 bg-white text-sky-900 shadow-sky-500/10': item.type === 'info'
              }"
-             class="pointer-events-auto relative overflow-hidden rounded-2xl border shadow-xl p-4 transition-all select-none">
+             class="pointer-events-auto relative overflow-hidden rounded-2xl border shadow-xl p-4 transition-all
+                 select-none">
 
             <div class="flex items-start gap-3.5">
                 {{-- Icône dynamique selon le type --}}
                 <div class="shrink-0 mt-0.5">
                     <template x-if="item.type === 'success'">
-                        <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center
+                            justify-center">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
@@ -69,11 +72,15 @@
                 {{-- Corps du message --}}
                 <div class="flex-1 min-w-0 pr-6">
                     <h4 class="text-sm font-semibold tracking-tight text-gray-900" x-text="item.title"></h4>
-                    <p class="text-xs leading-relaxed text-gray-600 mt-0.5 break-words" x-show="item.message" x-text="item.message"></p>
+                    <p
+                        class="text-xs leading-relaxed text-gray-600 mt-0.5 break-words"
+                        x-show="item.message"
+                        x-text="item.message"></p>
 
                     {{-- Liste détaillée optionnelle (ex: liste des erreurs de validation) --}}
                     <template x-if="item.list && item.list.length > 0">
-                        <ul class="mt-2 space-y-1 text-xs text-rose-700 bg-rose-50/70 p-2.5 rounded-xl border border-rose-100 list-disc list-inside">
+                        <ul class="mt-2 space-y-1 text-xs text-rose-700 bg-rose-50/70 p-2.5 rounded-xl border
+                            border-rose-100 list-disc list-inside">
                             <template x-for="(sub, idx) in item.list" :key="idx">
                                 <li class="leading-snug" x-text="sub"></li>
                             </template>
@@ -84,7 +91,8 @@
                 {{-- Bouton de fermeture --}}
                 <button type="button"
                         @click="remove(item.id)"
-                        class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                        class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 p-1 rounded-lg
+                            hover:bg-gray-100 transition-colors"
                         aria-label="Fermer cette alerte">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />

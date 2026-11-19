@@ -18,13 +18,19 @@
 @endphp
 
 @if($passationEnAttente)
-    <div class="bg-amber-500 text-white px-4 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-3 flex-shrink-0 print:hidden" role="status">
+    <div
+        class="bg-amber-500 text-white px-4 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-3
+            flex-shrink-0 print:hidden"
+        role="status">
         <p class="text-xs font-semibold flex items-center gap-2">
             <i data-lucide="hand-coins" class="w-4 h-4 shrink-0"></i>
             {{ $passationEnAttente->fromUser?->name }} a remis le tiroir de la réception à {{ $passationEnAttente->handed_at->format('H:i') }}
             @if($passationEnAttente->planned_user_id === auth()->id()) — le planning vous attend @endif
             : prenez connaissance de la passation avant d'ouvrir votre caisse.
         </p>
-        <a href="{{ route('bookings.handovers.take', $passationEnAttente) }}" class="shrink-0 rounded-md bg-white/20 hover:bg-white/30 px-3 py-1 text-xs font-bold transition">Prendre le service</a>
+        <a
+            href="{{ route('bookings.handovers.take', $passationEnAttente) }}"
+            class="shrink-0 rounded-md bg-white/20 hover:bg-white/30 px-3 py-1 text-xs font-bold
+                transition">Prendre le service</a>
     </div>
 @endif

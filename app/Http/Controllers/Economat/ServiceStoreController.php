@@ -56,10 +56,12 @@ class ServiceStoreController extends Controller
         $parTransfert = \App\Services\StockTransferService::peutRecevoir($store);
         $canTransfer = $parTransfert && $droits->allows(auth()->user(), 'economat.transfers.creer');
         $transfers = $droits->allows(auth()->user(), 'economat.transfers.voir')
-            ? $store->transfers()->with('transferredBy')->withCount('lines')->latest('transferred_at')->latest('id')->take(10)->get()
+            ? $store->transfers()->with('transferredBy')->withCount('lines')->latest('transferred_at')->latest('id')
+                ->take(10)->get()
             : collect();
 
-        return view('economat.stores.show', compact('store', 'stocks', 'movements', 'counts', 'canOpenCount', 'parTransfert', 'canTransfer', 'transfers'));
+        return view('economat.stores.show', compact('store', 'stocks', 'movements', 'counts', 'canOpenCount',
+            'parTransfert', 'canTransfer', 'transfers'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -83,7 +85,8 @@ class ServiceStoreController extends Controller
         // Changer de service déplacerait le centre qui porte sa consommation
         // passée : refusé tant que le dépôt a un historique.
         if ($validated['department'] !== $store->department && $store->movements()->exists()) {
-            return back()->with('error', "Le dépôt « {$store->name} » a déjà des mouvements : son service ne change plus.");
+            return back()->with('error',
+                "Le dépôt « {$store->name} » a déjà des mouvements : son service ne change plus.");
         }
 
         $store->update([
@@ -98,7 +101,8 @@ class ServiceStoreController extends Controller
     public function destroy(ServiceStore $store): RedirectResponse
     {
         if ($store->movements()->exists()) {
-            return back()->with('error', "Le dépôt « {$store->name} » a un historique : désactivez-le plutôt que de le supprimer.");
+            return back()->with('error',
+                "Le dépôt « {$store->name} » a un historique : désactivez-le plutôt que de le supprimer.");
         }
 
         $store->delete();
@@ -110,7 +114,8 @@ class ServiceStoreController extends Controller
     private function validated(Request $request, ?ServiceStore $store = null): array
     {
         return $request->validate([
-            'name'       => ['required', 'string', 'max:80', Rule::unique('service_stores', 'name')->ignore($store?->id)],
+            'name'       => ['required', 'string', 'max:80', Rule::unique('service_stores', 'name')
+                ->ignore($store?->id)],
             'department' => ['required', Rule::in(array_keys(ServiceStore::services()))],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
         ]);

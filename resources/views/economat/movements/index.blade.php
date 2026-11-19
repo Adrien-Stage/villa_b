@@ -38,7 +38,8 @@
             @enddroit
             @if($article)
                 <a href="{{ route('economat.movements.index', array_filter(['du' => request('du', $filtres['du']?->toDateString()), 'au' => request('au', $filtres['au']?->toDateString())])) }}"
-                   class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+                   class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/30 text-primary text-xs
+                       font-semibold rounded-lg hover:bg-gray-50 transition-colors">
                     <i data-lucide="list" class="w-4 h-4"></i> Tous les articles
                 </a>
             @endif
@@ -48,7 +49,10 @@
     @include('economat.partials.flash')
 
     {{-- Filtres : en GET, repris tels quels par l'export --}}
-    <form method="GET" action="{{ route('economat.movements.index') }}" class="rounded-xl border border-secondary/20 bg-white px-4 py-3">
+    <form
+        method="GET"
+        action="{{ route('economat.movements.index') }}"
+        class="rounded-xl border border-secondary/20 bg-white px-4 py-3">
         <div class="flex flex-wrap items-end gap-3">
             <div class="min-w-[14rem] flex-1">
                 <label for="article" class="block text-[11px] font-medium text-primary/50">Article</label>
@@ -121,8 +125,13 @@
                     width="w-full"
                 />
             </div>
-            <button type="submit" class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-surface-dark">Filtrer</button>
-            <a href="{{ route('economat.movements.index', ['du' => '', 'au' => '']) }}" class="text-xs text-primary/60 underline hover:text-primary pb-2">Tout l'historique</a>
+            <button
+                type="submit"
+                class="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white
+                    hover:bg-surface-dark">Filtrer</button>
+            <a
+                href="{{ route('economat.movements.index', ['du' => '', 'au' => '']) }}"
+                class="text-xs text-primary/60 underline hover:text-primary pb-2">Tout l'historique</a>
         </div>
     </form>
 
@@ -177,7 +186,11 @@
     @endif
 
     <div id="movements-table-container">
-    <x-table :rows="$mouvements" empty="Aucun mouvement pour ces critères." empty-icon="arrow-left-right" caption="Mouvements de stock">
+    <x-table
+        :rows="$mouvements"
+        empty="Aucun mouvement pour ces critères."
+        empty-icon="arrow-left-right"
+        caption="Mouvements de stock">
         <x-slot:head>
             <x-table.col>Date</x-table.col>
             @unless($article)<x-table.col>Article</x-table.col>@endunless
@@ -222,7 +235,10 @@
                     @if($l['apres_decompose'])<span class="block text-[10px] font-sans font-normal text-primary/45">{{ $l['apres_decompose'] }}</span>@endif
                 </x-table.cell>
                 <x-table.cell align="right" hide="xl" nowrap class="font-mono text-xs text-primary/60">{{ $fcfa($l['cout']) }}</x-table.cell>
-                <x-table.cell align="right" nowrap class="font-mono {{ $l['valeur'] !== null && $l['valeur'] < 0 ? 'text-red-700' : 'text-primary/70' }}">{{ $l['valeur'] !== null ? (($l['valeur'] < 0 ? '−' : '+') . $fcfa($l['valeur'])) : '—' }}</x-table.cell>
+                <x-table.cell
+                    align="right"
+                    nowrap
+                    class="font-mono {{ $l['valeur'] !== null && $l['valeur'] < 0 ? 'text-red-700' : 'text-primary/70' }}">{{ $l['valeur'] !== null ? (($l['valeur'] < 0 ? '−' : '+') . $fcfa($l['valeur'])) : '—' }}</x-table.cell>
                 <x-table.cell hide="2xl" class="max-w-xs text-xs text-primary/60">
                     {{ $l['motif'] }}
                     @if($l['ouvertures'])<span class="block text-amber-700">{{ ucfirst($l['ouvertures']) }}</span>@endif

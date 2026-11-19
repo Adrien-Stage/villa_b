@@ -25,7 +25,8 @@ class GoodsReceiptAttachmentController extends Controller
     {
         return [
             'bordereaux'   => ['nullable', 'array', 'max:' . GoodsReceiptAttachment::NOMBRE_MAX],
-            'bordereaux.*' => ['file', 'mimes:' . implode(',', GoodsReceiptAttachment::TYPES), 'max:' . GoodsReceiptAttachment::TAILLE_MAX],
+            'bordereaux.*' => ['file', 'mimes:' . implode(',', GoodsReceiptAttachment::TYPES),
+                'max:' . GoodsReceiptAttachment::TAILLE_MAX],
         ];
     }
 
@@ -34,7 +35,8 @@ class GoodsReceiptAttachmentController extends Controller
         return [
             'bordereaux.max'     => 'Au plus ' . GoodsReceiptAttachment::NOMBRE_MAX . ' bordereaux à la fois.',
             'bordereaux.*.mimes' => 'Un bordereau est un PDF ou une image (JPG, PNG, WEBP, HEIC).',
-            'bordereaux.*.max'   => 'Un bordereau ne dépasse pas ' . (GoodsReceiptAttachment::TAILLE_MAX / 1024) . ' Mo.',
+            'bordereaux.*.max'   => 'Un bordereau ne dépasse pas ' . (GoodsReceiptAttachment::TAILLE_MAX / 1024)
+                . ' Mo.',
         ];
     }
 
@@ -44,7 +46,8 @@ class GoodsReceiptAttachmentController extends Controller
             return back()->with('error', 'Ce bon de réception est annulé : il ne reçoit plus de bordereau.');
         }
 
-        $request->validate(['bordereaux' => ['required', ...array_slice(self::regles()['bordereaux'], 1)]] + self::regles(), [
+        $request->validate(['bordereaux' => ['required', ...array_slice(self::regles()['bordereaux'],
+            1)]] + self::regles(), [
             'bordereaux.required' => 'Choisissez au moins un fichier.',
         ] + self::messages());
 
@@ -75,6 +78,7 @@ class GoodsReceiptAttachmentController extends Controller
             "Bordereau « {$nom} » retiré du bon {$receipt->number} (mis à la corbeille)", 'economat',
             ['goods_receipt_id' => $receipt->id, 'attachment_id' => $attachment->id]);
 
-        return back()->with('success', "Bordereau « {$nom} » retiré du bon. Il est conservé dans la corbeille de l'établissement.");
+        return back()->with('success',
+            "Bordereau « {$nom} » retiré du bon. Il est conservé dans la corbeille de l'établissement.");
     }
 }

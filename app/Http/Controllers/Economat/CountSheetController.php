@@ -37,7 +37,8 @@ class CountSheetController extends Controller
     public function print(Request $request): View
     {
         $validated = $request->validate([
-            'service'   => ['required', 'string', 'in:' . implode(',', [...array_keys($this->sheets->services()), CountSheetService::ALL])],
+            'service'   => ['required', 'string', 'in:' . implode(',', [...array_keys($this->sheets->services()),
+                CountSheetService::ALL])],
             'categorie' => ['nullable', 'integer'],
             // Comptage à l'aveugle par défaut : le compteur qui voit le
             // théorique a tendance à le recopier plutôt qu'à compter.

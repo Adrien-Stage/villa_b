@@ -33,7 +33,8 @@ class EtatMinibars extends Edition
             ->with(['room', 'article'])
             ->where(fn ($q) => $q->where('standard_quantity', '>', 0)->orWhere('quantity', '>', 0))
             ->get()
-            ->sortBy(fn (RoomMinibarLine $l) => [$l->room?->floor, $l->room?->number, $l->article?->sort_order, $l->article?->name])
+            ->sortBy(fn (RoomMinibarLine $l) => [$l->room?->floor, $l->room?->number, $l->article?->sort_order,
+                $l->article?->name])
             ->map(fn (RoomMinibarLine $l) => [
                 'chambre' => $l->room?->number,
                 'statut' => $l->room?->status?->label() ?? '—',

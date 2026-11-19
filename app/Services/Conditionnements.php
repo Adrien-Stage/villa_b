@@ -100,7 +100,8 @@ class Conditionnements
             }
             $cle = mb_strtolower($nom);
             if ($cle === $unite) {
-                throw new \InvalidArgumentException("« {$nom} » est déjà l'unité de l'article : un conditionnement doit être plus grand.");
+                throw new \InvalidArgumentException(
+                    "« {$nom} » est déjà l'unité de l'article : un conditionnement doit être plus grand.");
             }
             if (isset($vus[$cle])) {
                 throw new \InvalidArgumentException("Le conditionnement « {$nom} » est indiqué deux fois.");
@@ -169,7 +170,8 @@ class Conditionnements
     /** État courant, sans rien modifier. */
     public function etatDe(StockItem $item): ?array
     {
-        $niveaux = $item->relationLoaded('packagings') ? $item->packagings->sortBy('factor')->values() : $item->packagings()->get();
+        $niveaux = $item->relationLoaded('packagings') ? $item->packagings->sortBy('factor')->values() : $item
+            ->packagings()->get();
 
         return $niveaux->isEmpty() ? null : $this->etat($niveaux, (float) $item->current_stock, []);
     }
@@ -209,7 +211,8 @@ class Conditionnements
         // Demandé dans un conditionnement : des unités fermées de celui-ci d'abord.
         $demande = $nom !== null ? $niveaux->first(fn ($n) => $n->name === $nom) : null;
         if ($demande !== null) {
-            $k = min($demande->closed_count, (int) floor(($reste + Conditionnement::EPSILON) / (float) $demande->factor));
+            $k = min($demande->closed_count, (int) floor(($reste + Conditionnement::EPSILON) / (float) $demande
+                ->factor));
             $demande->closed_count -= $k;
             $reste -= $k * (float) $demande->factor;
         }
@@ -274,7 +277,8 @@ class Conditionnements
             if ($exces <= Conditionnement::EPSILON) {
                 return;
             }
-            $retrait = min($niveau->closed_count, (int) ceil(($exces - Conditionnement::EPSILON) / (float) $niveau->factor));
+            $retrait = min($niveau->closed_count, (int) ceil(($exces - Conditionnement::EPSILON) / (float) $niveau
+                ->factor));
             $niveau->closed_count -= $retrait;
         }
     }

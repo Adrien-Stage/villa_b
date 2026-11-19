@@ -46,14 +46,17 @@
                     <button type="button"
                             id="new-group-header-btn"
                             onclick="openNewDiscussionModal(true)"
-                            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30 bg-white text-xs font-semibold text-primary hover:bg-accent/20 transition-colors flex-shrink-0">
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-secondary/30
+                                bg-white text-xs font-semibold text-primary hover:bg-accent/20 transition-colors
+                                flex-shrink-0">
                         <i data-lucide="users" class="w-3.5 h-3.5"></i>
                         Nouveau groupe
                     </button>
                 </div>
 
                 @if(session('success'))
-                    <div class="mx-3 mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 flex items-center justify-between gap-2">
+                    <div class="mx-3 mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs
+                        text-emerald-800 flex items-center justify-between gap-2">
                         <span>{{ session('success') }}</span>
                     </div>
                 @endif
@@ -79,15 +82,21 @@
                         <div data-conversation-item="{{ $conversation->id }}"
                              class="px-4 py-3 border-b border-secondary/10 transition-colors {{ $active ? 'bg-white' : 'hover:bg-white/70' }}">
                             <div class="flex items-start gap-3">
-                                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center flex-shrink-0 text-xs font-semibold">
+                                <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center
+                                    justify-center flex-shrink-0 text-xs font-semibold">
                                     {{ mb_strtoupper(mb_substr($title, 0, 2)) }}
                                 </div>
                                 <div class="min-w-0 flex-1 flex items-start justify-between gap-2">
-                                    <a href="{{ route('discussions.index', ['conversation' => $conversation->id]) }}" class="min-w-0 flex-1">
-                                        <p class="text-sm font-semibold text-primary truncate flex items-center gap-1.5">
+                                    <a
+                                        href="{{ route('discussions.index', ['conversation' => $conversation->id]) }}"
+                                        class="min-w-0 flex-1">
+                                        <p class="text-sm font-semibold text-primary truncate flex items-center
+                                            gap-1.5">
                                             <span class="truncate">{{ $title }}</span>
                                             @if($conversation->is_group)
-                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-secondary/20 text-primary/80 text-[10px] font-medium flex-shrink-0">Groupe</span>
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded
+                                                    bg-secondary/20 text-primary/80 text-[10px] font-medium
+                                                    flex-shrink-0">Groupe</span>
                                             @endif
                                             <span data-unread-badge="{{ $conversation->id }}"
                                                   class="inline-flex h-5 min-w-5 px-1 rounded-full items-center justify-center text-[10px] font-semibold bg-primary text-secondary {{ $unread > 0 ? '' : 'hidden' }}">
@@ -102,24 +111,31 @@
                                     <div class="relative flex flex-col items-end gap-1 ml-2" data-menu-root>
                                         <button type="button"
                                                 data-menu-toggle
-                                                class="inline-flex h-5 w-5 items-center justify-center rounded-full text-primary/50 hover:text-primary hover:bg-accent/20 transition-colors">
+                                                class="inline-flex h-5 w-5 items-center justify-center rounded-full
+                                                    text-primary/50 hover:text-primary hover:bg-accent/20
+                                                    transition-colors">
                                             <i data-lucide="ellipsis-vertical" class="w-3.5 h-3.5"></i>
                                         </button>
                                         <span class="text-[11px] text-primary/40 flex-shrink-0">{{ $last?->created_at?->format('H:i') }}</span>
 
-                                        <div data-menu-panel class="hidden absolute right-0 top-6 z-20 w-44 rounded-lg border border-secondary/20 bg-white shadow-lg py-1">
+                                        <div
+                                            data-menu-panel
+                                            class="hidden absolute right-0 top-6 z-20 w-44 rounded-lg border
+                                                border-secondary/20 bg-white shadow-lg py-1">
                                             <button type="button"
                                                     data-action="archive"
                                                     data-conversation-id="{{ $conversation->id }}"
                                                     data-action-url="{{ route('discussions.conversations.archive', $conversation) }}"
-                                                    class="w-full text-left px-3 py-2 text-xs text-primary hover:bg-accent/20">
+                                                    class="w-full text-left px-3 py-2 text-xs text-primary
+                                                        hover:bg-accent/20">
                                                 Archiver
                                             </button>
                                             <button type="button"
                                                     data-action="delete"
                                                     data-conversation-id="{{ $conversation->id }}"
                                                     data-action-url="{{ route('discussions.conversations.destroy', $conversation) }}"
-                                                    class="w-full text-left px-3 py-2 text-xs text-red-700 hover:bg-red-50">
+                                                    class="w-full text-left px-3 py-2 text-xs text-red-700
+                                                        hover:bg-red-50">
                                                 Supprimer
                                             </button>
                                         </div>
@@ -138,7 +154,8 @@
                         onclick="openNewDiscussionModal(false)"
                         title="Nouvelle discussion"
                         aria-label="Nouvelle discussion"
-                        class="absolute bottom-5 right-5 h-12 w-12 rounded-full bg-primary text-white shadow-lg hover:bg-surface-dark transition-colors flex items-center justify-center">
+                        class="absolute bottom-5 right-5 h-12 w-12 rounded-full bg-primary text-white shadow-lg
+                            hover:bg-surface-dark transition-colors flex items-center justify-center">
                     <i data-lucide="message-square-plus" class="w-5 h-5"></i>
                 </button>
             </aside>
@@ -150,7 +167,8 @@
                         $title = $selectedConversation->title ?: ($other?->name ?? 'Discussion interne');
                     @endphp
                     <header class="px-5 py-4 border-b border-secondary/20 flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">
+                        <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center
+                            text-xs font-semibold">
                             {{ mb_strtoupper(mb_substr($title, 0, 2)) }}
                         </div>
                         <div class="flex-1 flex items-center justify-between">
@@ -160,14 +178,16 @@
                                     <p class="text-xs text-primary/50 mt-0.5">
                                         {{ $selectedConversation->participants->count() }} membres
                                         @if($selectedConversation->participants->where('id', auth()->id())->first()?->pivot?->is_admin)
-                                            <span class="ml-1 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-semibold">Admin</span>
+                                            <span class="ml-1 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5
+                                                rounded uppercase font-semibold">Admin</span>
                                         @endif
                                     </p>
                                 @elseif($other)
                                     <div class="flex items-center gap-1.5 mt-0.5">
                                         <span class="relative flex h-2.5 w-2.5">
                                           @if($other->isOnline())
-                                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full
+                                                  bg-green-400 opacity-75"></span>
                                               <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
                                           @else
                                               <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-gray-300"></span>
@@ -187,7 +207,8 @@
                                 <button type="button"
                                         id="manage-group-btn"
                                         onclick="openManageGroupModal()"
-                                        class="text-xs px-3 py-1.5 bg-secondary/20 hover:bg-secondary/40 text-primary rounded-lg transition-colors font-medium flex items-center gap-1">
+                                        class="text-xs px-3 py-1.5 bg-secondary/20 hover:bg-secondary/40 text-primary
+                                            rounded-lg transition-colors font-medium flex items-center gap-1">
                                     <i data-lucide="{{ $isGroupAdmin ? 'settings' : 'users' }}" class="w-3.5 h-3.5"></i>
                                     {{ $isGroupAdmin ? 'Gérer le groupe' : 'Membres' }}
                                 </button>
@@ -202,7 +223,9 @@
                          class="flex-1 min-h-0 overflow-y-auto p-5 space-y-3 bg-gradient-to-b from-white to-accent/10">
                         @forelse($messages as $message)
                             @php $mine = $message->user_id === auth()->id(); @endphp
-                            <div class="flex items-end gap-1.5 {{ $mine ? 'justify-end' : 'justify-start' }} group" data-message-id="{{ $message->id }}">
+                            <div
+                                class="flex items-end gap-1.5 {{ $mine ? 'justify-end' : 'justify-start' }} group"
+                                data-message-id="{{ $message->id }}">
                                 @if($mine)
                                     <button type="button"
                                             data-action="open-delete-message-modal"
@@ -212,7 +235,10 @@
                                             data-delete-url="{{ route('discussions.messages.destroy', $message) }}"
                                             title="Supprimer ce message"
                                             aria-label="Supprimer ce message"
-                                            class="opacity-70 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 h-7 w-7 rounded-full flex items-center justify-center text-primary/40 hover:text-red-600 hover:bg-red-50 transition-all flex-shrink-0">
+                                            class="opacity-70 md:opacity-0 md:group-hover:opacity-100
+                                                focus-visible:opacity-100 h-7 w-7 rounded-full flex items-center
+                                                justify-center text-primary/40 hover:text-red-600 hover:bg-red-50
+                                                transition-all flex-shrink-0">
                                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                     </button>
                                 @endif
@@ -234,7 +260,10 @@
                                             data-delete-url="{{ route('discussions.messages.destroy', $message) }}"
                                             title="Supprimer ce message"
                                             aria-label="Supprimer ce message"
-                                            class="opacity-70 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 h-7 w-7 rounded-full flex items-center justify-center text-primary/40 hover:text-red-600 hover:bg-red-50 transition-all flex-shrink-0">
+                                            class="opacity-70 md:opacity-0 md:group-hover:opacity-100
+                                                focus-visible:opacity-100 h-7 w-7 rounded-full flex items-center
+                                                justify-center text-primary/40 hover:text-red-600 hover:bg-red-50
+                                                transition-all flex-shrink-0">
                                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                     </button>
                                 @endif
@@ -251,12 +280,20 @@
                             </div>
                         @endif
 
-                        <form id="message-form" method="POST" action="{{ route('discussions.store') }}" class="flex items-end gap-3">
+                        <form
+                            id="message-form"
+                            method="POST"
+                            action="{{ route('discussions.store') }}"
+                            class="flex items-end gap-3">
                             @csrf
                             <input type="hidden" name="conversation_id" value="{{ $selectedConversation->id }}">
                             <textarea id="message-body" name="body" rows="2" maxlength="1000" required placeholder="Ecris un message..."
                                       class="flex-1 resize-none px-4 py-2.5 text-sm border border-secondary/30 rounded-2xl outline-none focus:border-secondary bg-accent/10">{{ old('body') }}</textarea>
-                            <button id="send-button" type="submit" class="h-11 w-11 rounded-full bg-primary text-white hover:bg-surface-dark transition-colors flex items-center justify-center">
+                            <button
+                                id="send-button"
+                                type="submit"
+                                class="h-11 w-11 rounded-full bg-primary text-white hover:bg-surface-dark
+                                    transition-colors flex items-center justify-center">
                                 <i data-lucide="send" class="w-4 h-4"></i>
                             </button>
                         </form>
@@ -270,13 +307,16 @@
                             <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
                                 <button type="button"
                                         onclick="openNewDiscussionModal(false)"
-                                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-surface-dark transition-colors">
+                                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary
+                                            text-white text-xs font-semibold hover:bg-surface-dark transition-colors">
                                     <i data-lucide="message-square-plus" class="w-3.5 h-3.5"></i>
                                     Nouvelle discussion
                                 </button>
                                 <button type="button"
                                         onclick="openNewDiscussionModal(true)"
-                                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-secondary/30 bg-white text-primary text-xs font-semibold hover:bg-accent/20 transition-colors">
+                                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border
+                                            border-secondary/30 bg-white text-primary text-xs font-semibold
+                                            hover:bg-accent/20 transition-colors">
                                     <i data-lucide="users" class="w-3.5 h-3.5"></i>
                                     Créer un groupe
                                 </button>
@@ -287,12 +327,20 @@
             </section>
         </div>
 
-        <x-modal id="new-discussion-modal" title="Nouvelle discussion" formAction="{{ route('discussions.conversations.store') }}" closeAction="closeNewDiscussionModal()">
+        <x-modal
+            id="new-discussion-modal"
+            title="Nouvelle discussion"
+            formAction="{{ route('discussions.conversations.store') }}"
+            closeAction="closeNewDiscussionModal()">
             <div x-data="{
                     isGroup: {{ old('is_group') ? 'true' : 'false' }}
                  }"
                  x-on:set-discussion-group-mode.window="isGroup = Boolean($event.detail)">
-                <input type="hidden" name="is_group" value="{{ old('is_group') ? '1' : '0' }}" :value="isGroup ? '1' : '0'">
+                <input
+                    type="hidden"
+                    name="is_group"
+                    value="{{ old('is_group') ? '1' : '0' }}"
+                    :value="isGroup ? '1' : '0'">
 
                 @if($errors->hasAny(['title', 'participant_ids', 'participant_ids.*', 'participant_id', 'conversation']))
                     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
@@ -305,7 +353,8 @@
                             id="tab-direct-discussion"
                             x-on:click="isGroup = false; $dispatch('set-discussion-group-mode', false)"
                             :class="!isGroup ? 'bg-primary text-white shadow-sm' : 'text-primary/70 hover:text-primary'"
-                            class="py-2 px-3 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5">
+                            class="py-2 px-3 rounded-lg text-xs font-semibold transition-colors flex items-center
+                                justify-center gap-1.5">
                         <i data-lucide="user" class="w-3.5 h-3.5"></i>
                         Discussion privée
                     </button>
@@ -313,7 +362,8 @@
                             id="tab-group-discussion"
                             x-on:click="isGroup = true; $dispatch('set-discussion-group-mode', true)"
                             :class="isGroup ? 'bg-primary text-white shadow-sm' : 'text-primary/70 hover:text-primary'"
-                            class="py-2 px-3 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5">
+                            class="py-2 px-3 rounded-lg text-xs font-semibold transition-colors flex items-center
+                                justify-center gap-1.5">
                         <i data-lucide="users" class="w-3.5 h-3.5"></i>
                         Groupe de discussion
                     </button>
@@ -321,7 +371,10 @@
 
                 <div x-show="isGroup" x-transition class="space-y-3">
                     <div>
-                        <label for="group-title-input" class="block text-xs font-semibold text-primary/60 uppercase tracking-widest mb-1.5">Nom du groupe *</label>
+                        <label
+                            for="group-title-input"
+                            class="block text-xs font-semibold text-primary/60 uppercase tracking-widest
+                                mb-1.5">Nom du groupe *</label>
                         <input id="group-title-input"
                                type="text"
                                name="title"
@@ -329,7 +382,8 @@
                                maxlength="160"
                                :required="isGroup"
                                :disabled="!isGroup"
-                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary"
+                               class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                                   text-primary outline-none focus:border-secondary"
                                placeholder="Ex: Équipe Réception">
                     </div>
                     <div x-data="groupMemberPicker(@js($memberPickerUsers), @js($initialGroupMemberIds), {{ old('is_group') ? 'true' : 'false' }}, true)"
@@ -337,14 +391,18 @@
                          x-on:discussion-group-members-error.window="clientError = $event.detail"
                          x-on:click.outside="showDropdown = false">
                         <div class="flex items-center justify-between mb-1.5">
-                            <label for="group-member-search-input" class="block text-xs font-semibold text-primary/60 uppercase tracking-widest">Membres du groupe *</label>
+                            <label
+                                for="group-member-search-input"
+                                class="block text-xs font-semibold text-primary/60 uppercase
+                                    tracking-widest">Membres du groupe *</label>
                             <span class="text-[11px] text-primary/50"
                                   x-text="selectedMembers.length > 0 ? (selectedMembers.length + ' sélectionné(s)') : '{{ $availableUsers->count() }} disponible(s)'">
                                 {{ $availableUsers->count() }} disponible(s)
                             </span>
                         </div>
                         @if($availableUsers->isEmpty())
-                            <div class="rounded-lg border border-secondary/20 bg-accent/10 px-3 py-3 text-xs text-primary/60">
+                            <div class="rounded-lg border border-secondary/20 bg-accent/10 px-3 py-3 text-xs
+                                text-primary/60">
                                 Aucun autre collaborateur actif disponible pour créer un groupe.
                             </div>
                         @else
@@ -362,33 +420,45 @@
                                            x-on:keydown="onKeydown($event)"
                                            autocomplete="off"
                                            placeholder="Rechercher un membre par nom..."
-                                           class="w-full pl-10 pr-8 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:ring-2 focus:ring-primary/15 focus:border-secondary">
+                                           class="w-full pl-10 pr-8 py-2 text-sm border border-secondary/30 rounded-lg
+                                               bg-white text-primary outline-none focus:ring-2 focus:ring-primary/15
+                                               focus:border-secondary">
                                     <button type="button"
                                             x-show="search.length > 0"
                                             x-on:click="clearSearch()"
                                             style="display: none;"
                                             title="Effacer la recherche"
                                             aria-label="Effacer la recherche"
-                                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-primary/40 hover:text-primary transition-colors">
+                                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-primary/40
+                                                hover:text-primary transition-colors">
                                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                                     </button>
                                 </div>
 
                                 <div x-show="showDropdown && search.trim().length > 0"
                                      style="display: none;"
-                                     class="w-full bg-white rounded-lg shadow-md border border-secondary/25 overflow-hidden">
+                                     class="w-full bg-white rounded-lg shadow-md border border-secondary/25
+                                         overflow-hidden">
                                     <ul class="max-h-48 overflow-y-auto py-1 divide-y divide-secondary/10">
                                         <template x-for="(member, index) in filteredUsers" :key="member.id">
                                             <li>
                                                 <button type="button"
                                                         x-on:mousedown.prevent="addMember(member)"
                                                         :class="index === activeIndex ? 'bg-accent/25' : 'hover:bg-accent/15'"
-                                                        class="w-full text-left flex items-center gap-2.5 px-3 py-2 transition-colors">
-                                                    <div class="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center flex-shrink-0 text-[10px] font-semibold"
+                                                        class="w-full text-left flex items-center gap-2.5 px-3 py-2
+                                                            transition-colors">
+                                                    <div class="w-7 h-7 rounded-full bg-primary text-white flex
+                                                        items-center justify-center flex-shrink-0 text-[10px]
+                                                        font-semibold"
                                                          x-text="member.initials"></div>
                                                     <div class="min-w-0 flex-1">
-                                                        <span class="block truncate text-sm font-medium text-primary" x-text="member.name"></span>
-                                                        <span class="block truncate text-[10px] text-primary/50 uppercase tracking-wide" x-text="member.role_label"></span>
+                                                        <span
+                                                            class="block truncate text-sm font-medium text-primary"
+                                                            x-text="member.name"></span>
+                                                        <span
+                                                            class="block truncate text-[10px] text-primary/50 uppercase
+                                                                tracking-wide"
+                                                            x-text="member.role_label"></span>
                                                     </div>
                                                     <span class="text-primary/45 flex-shrink-0">
                                                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
@@ -407,17 +477,23 @@
                                    style="display: none;"
                                    class="text-xs text-red-600"></p>
 
-                                <div x-show="selectedMembers.length > 0" style="display: none;" class="flex flex-wrap gap-1.5 pt-0.5">
+                                <div
+                                    x-show="selectedMembers.length > 0"
+                                    style="display: none;"
+                                    class="flex flex-wrap gap-1.5 pt-0.5">
                                     <template x-for="member in selectedMembers" :key="member.id">
-                                        <span class="inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full bg-accent/25 border border-secondary/30 text-xs text-primary">
-                                            <span class="w-5 h-5 rounded-full bg-primary text-white text-[9px] font-semibold flex items-center justify-center flex-shrink-0"
+                                        <span class="inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full
+                                            bg-accent/25 border border-secondary/30 text-xs text-primary">
+                                            <span class="w-5 h-5 rounded-full bg-primary text-white text-[9px]
+                                                font-semibold flex items-center justify-center flex-shrink-0"
                                                   x-text="member.initials"></span>
                                             <span class="font-medium truncate max-w-[160px]" x-text="member.name"></span>
                                             <button type="button"
                                                     x-on:click="removeMember(member.id)"
                                                     title="Retirer ce membre"
                                                     aria-label="Retirer ce membre"
-                                                    class="text-primary/45 hover:text-red-600 transition-colors focus:outline-none">
+                                                    class="text-primary/45 hover:text-red-600 transition-colors
+                                                        focus:outline-none">
                                                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                                             </button>
                                         </span>
@@ -425,7 +501,11 @@
                                 </div>
 
                                 <template x-for="member in selectedMembers" :key="'input-' + member.id">
-                                    <input type="hidden" name="participant_ids[]" :value="member.id" :disabled="!pickerActive">
+                                    <input
+                                        type="hidden"
+                                        name="participant_ids[]"
+                                        :value="member.id"
+                                        :disabled="!pickerActive">
                                 </template>
 
                                 <p x-show="selectedMembers.length === 0 && (!showDropdown || search.trim().length === 0)"
@@ -438,15 +518,21 @@
                 </div>
 
                 <div x-show="!isGroup" x-transition>
-                    <label for="direct-participant-select" class="block text-xs font-semibold text-primary/60 uppercase tracking-widest mb-1.5">Démarrer avec *</label>
+                    <label
+                        for="direct-participant-select"
+                        class="block text-xs font-semibold text-primary/60 uppercase tracking-widest
+                            mb-1.5">Démarrer avec *</label>
                     <select id="direct-participant-select"
                             name="participant_id"
                             :required="!isGroup"
                             :disabled="isGroup"
-                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
+                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary
+                                outline-none focus:border-secondary">
                         <option value="">Choisir un collaborateur</option>
                         @foreach($availableUsers as $participant)
-                            <option value="{{ $participant->id }}" {{ (string) old('participant_id') === (string) $participant->id ? 'selected' : '' }}>
+                            <option
+                                value="{{ $participant->id }}"
+                                {{ (string) old('participant_id') === (string) $participant->id ? 'selected' : '' }}>
                                 {{ $participant->name }} - {{ str_replace('_', ' ', $participant->role ?? 'staff') }}
                             </option>
                         @endforeach
@@ -458,7 +544,8 @@
                 <button type="submit"
                         x-data="{ isGroupSubmit: {{ old('is_group') ? 'true' : 'false' }} }"
                         x-on:set-discussion-group-mode.window="isGroupSubmit = Boolean($event.detail)"
-                        class="w-full py-2.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-surface-dark transition-colors">
+                        class="w-full py-2.5 rounded-lg bg-primary text-white text-sm font-semibold
+                            hover:bg-surface-dark transition-colors">
                     <span x-text="isGroupSubmit ? 'Créer le groupe' : 'Démarrer la discussion'">Démarrer la discussion</span>
                 </button>
             </x-slot:footer>
@@ -474,13 +561,22 @@
                     fn ($u) => !in_array((int) $u['id'], $existingMemberIds, true)
                 ));
             @endphp
-            <x-modal id="manage-group-modal" title="{{ $isGroupAdmin ? 'Gérer le groupe' : 'Membres du groupe' }}" closeAction="closeManageGroupModal()">
+            <x-modal
+                id="manage-group-modal"
+                title="{{ $isGroupAdmin ? 'Gérer le groupe' : 'Membres du groupe' }}"
+                closeAction="closeManageGroupModal()">
                 <div class="space-y-5">
                     @if($isGroupAdmin)
-                        <form method="POST" action="{{ route('discussions.conversations.update', $selectedConversation) }}" class="space-y-2">
+                        <form
+                            method="POST"
+                            action="{{ route('discussions.conversations.update', $selectedConversation) }}"
+                            class="space-y-2">
                             @csrf
                             @method('PATCH')
-                            <label for="manage-group-title" class="block text-xs font-semibold text-primary/60 uppercase tracking-widest">Nom du groupe</label>
+                            <label
+                                for="manage-group-title"
+                                class="block text-xs font-semibold text-primary/60 uppercase
+                                    tracking-widest">Nom du groupe</label>
                             <div class="flex items-center gap-2">
                                 <input id="manage-group-title"
                                        type="text"
@@ -488,8 +584,12 @@
                                        value="{{ $selectedConversation->title }}"
                                        required
                                        maxlength="160"
-                                       class="flex-1 px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary">
-                                <button type="submit" class="px-3.5 py-2 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-surface-dark transition-colors">
+                                       class="flex-1 px-3 py-2 text-sm border border-secondary/30 rounded-lg bg-white
+                                           text-primary outline-none focus:border-secondary">
+                                <button
+                                    type="submit"
+                                    class="px-3.5 py-2 rounded-lg bg-primary text-white text-xs font-semibold
+                                        hover:bg-surface-dark transition-colors">
                                     Renommer
                                 </button>
                             </div>
@@ -500,7 +600,8 @@
                         <p class="text-xs font-semibold text-primary/60 uppercase tracking-widest mb-2">
                             Membres ({{ $selectedConversation->participants->count() }})
                         </p>
-                        <div class="max-h-48 overflow-y-auto border border-secondary/20 rounded-lg divide-y divide-secondary/10 bg-white">
+                        <div class="max-h-48 overflow-y-auto border border-secondary/20 rounded-lg divide-y
+                            divide-secondary/10 bg-white">
                             @foreach($selectedConversation->participants as $member)
                                 <div class="flex items-center justify-between gap-2 px-3 py-2">
                                     <div class="min-w-0">
@@ -514,13 +615,19 @@
                                     </div>
                                     <div class="flex items-center gap-2 flex-shrink-0">
                                         @if($member->pivot?->is_admin)
-                                            <span class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-semibold">Admin</span>
+                                            <span class="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded
+                                                uppercase font-semibold">Admin</span>
                                         @endif
                                         @if($isGroupAdmin && (int) $member->id !== (int) auth()->id())
-                                            <form method="POST" action="{{ route('discussions.conversations.members.destroy', [$selectedConversation, $member]) }}">
+                                            <form
+                                                method="POST"
+                                                action="{{ route('discussions.conversations.members.destroy', [$selectedConversation, $member]) }}">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-xs text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50 transition-colors">
+                                                <button
+                                                    type="submit"
+                                                    class="text-xs text-red-600 hover:text-red-800 px-2 py-1 rounded
+                                                        hover:bg-red-50 transition-colors">
                                                     Retirer
                                                 </button>
                                             </form>
@@ -540,7 +647,10 @@
                                   x-on:click.outside="showDropdown = false">
                                 @csrf
                                 <div class="flex items-center justify-between">
-                                    <label for="manage-group-member-search-input" class="block text-xs font-semibold text-primary/60 uppercase tracking-widest">Ajouter des membres</label>
+                                    <label
+                                        for="manage-group-member-search-input"
+                                        class="block text-xs font-semibold text-primary/60 uppercase
+                                            tracking-widest">Ajouter des membres</label>
                                     <span class="text-[11px] text-primary/50"
                                           x-show="selectedMembers.length > 0"
                                           style="display: none;"
@@ -560,33 +670,45 @@
                                            x-on:keydown="onKeydown($event)"
                                            autocomplete="off"
                                            placeholder="Rechercher un membre à ajouter..."
-                                           class="w-full pl-10 pr-8 py-2 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:ring-2 focus:ring-primary/15 focus:border-secondary">
+                                           class="w-full pl-10 pr-8 py-2 text-sm border border-secondary/30 rounded-lg
+                                               bg-white text-primary outline-none focus:ring-2 focus:ring-primary/15
+                                               focus:border-secondary">
                                     <button type="button"
                                             x-show="search.length > 0"
                                             x-on:click="clearSearch()"
                                             style="display: none;"
                                             title="Effacer la recherche"
                                             aria-label="Effacer la recherche"
-                                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-primary/40 hover:text-primary transition-colors">
+                                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-primary/40
+                                                hover:text-primary transition-colors">
                                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                                     </button>
                                 </div>
 
                                 <div x-show="showDropdown && search.trim().length > 0"
                                      style="display: none;"
-                                     class="w-full bg-white rounded-lg shadow-md border border-secondary/25 overflow-hidden">
+                                     class="w-full bg-white rounded-lg shadow-md border border-secondary/25
+                                         overflow-hidden">
                                     <ul class="max-h-40 overflow-y-auto py-1 divide-y divide-secondary/10">
                                         <template x-for="(member, index) in filteredUsers" :key="member.id">
                                             <li>
                                                 <button type="button"
                                                         x-on:mousedown.prevent="addMember(member)"
                                                         :class="index === activeIndex ? 'bg-accent/25' : 'hover:bg-accent/15'"
-                                                        class="w-full text-left flex items-center gap-2.5 px-3 py-2 transition-colors">
-                                                    <div class="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center flex-shrink-0 text-[10px] font-semibold"
+                                                        class="w-full text-left flex items-center gap-2.5 px-3 py-2
+                                                            transition-colors">
+                                                    <div class="w-7 h-7 rounded-full bg-primary text-white flex
+                                                        items-center justify-center flex-shrink-0 text-[10px]
+                                                        font-semibold"
                                                          x-text="member.initials"></div>
                                                     <div class="min-w-0 flex-1">
-                                                        <span class="block truncate text-sm font-medium text-primary" x-text="member.name"></span>
-                                                        <span class="block truncate text-[10px] text-primary/50 uppercase tracking-wide" x-text="member.role_label"></span>
+                                                        <span
+                                                            class="block truncate text-sm font-medium text-primary"
+                                                            x-text="member.name"></span>
+                                                        <span
+                                                            class="block truncate text-[10px] text-primary/50 uppercase
+                                                                tracking-wide"
+                                                            x-text="member.role_label"></span>
                                                     </div>
                                                     <span class="text-primary/45 flex-shrink-0">
                                                         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
@@ -600,17 +722,23 @@
                                     </ul>
                                 </div>
 
-                                <div x-show="selectedMembers.length > 0" style="display: none;" class="flex flex-wrap gap-1.5">
+                                <div
+                                    x-show="selectedMembers.length > 0"
+                                    style="display: none;"
+                                    class="flex flex-wrap gap-1.5">
                                     <template x-for="member in selectedMembers" :key="member.id">
-                                        <span class="inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full bg-accent/25 border border-secondary/30 text-xs text-primary">
-                                            <span class="w-5 h-5 rounded-full bg-primary text-white text-[9px] font-semibold flex items-center justify-center flex-shrink-0"
+                                        <span class="inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full
+                                            bg-accent/25 border border-secondary/30 text-xs text-primary">
+                                            <span class="w-5 h-5 rounded-full bg-primary text-white text-[9px]
+                                                font-semibold flex items-center justify-center flex-shrink-0"
                                                   x-text="member.initials"></span>
                                             <span class="font-medium truncate max-w-[160px]" x-text="member.name"></span>
                                             <button type="button"
                                                     x-on:click="removeMember(member.id)"
                                                     title="Retirer ce membre"
                                                     aria-label="Retirer ce membre"
-                                                    class="text-primary/45 hover:text-red-600 transition-colors focus:outline-none">
+                                                    class="text-primary/45 hover:text-red-600 transition-colors
+                                                        focus:outline-none">
                                                 <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                                             </button>
                                         </span>
@@ -623,7 +751,9 @@
 
                                 <button type="submit"
                                         :disabled="selectedMembers.length === 0"
-                                        class="w-full py-2 rounded-lg border border-secondary/30 bg-accent/15 text-primary text-xs font-semibold hover:bg-accent/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                        class="w-full py-2 rounded-lg border border-secondary/30 bg-accent/15
+                                            text-primary text-xs font-semibold hover:bg-accent/30 transition-colors
+                                            disabled:opacity-50 disabled:cursor-not-allowed">
                                     Ajouter au groupe
                                 </button>
                             </form>
@@ -634,9 +764,15 @@
                 </div>
 
                 <x-slot:footer>
-                    <form method="POST" action="{{ route('discussions.conversations.leave', $selectedConversation) }}" class="w-full">
+                    <form
+                        method="POST"
+                        action="{{ route('discussions.conversations.leave', $selectedConversation) }}"
+                        class="w-full">
                         @csrf
-                        <button type="submit" class="w-full py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50 text-xs font-semibold transition-colors">
+                        <button
+                            type="submit"
+                            class="w-full py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50 text-xs
+                                font-semibold transition-colors">
                             Quitter le groupe
                         </button>
                     </form>
@@ -648,12 +784,23 @@
             <p class="text-sm text-primary/70 mb-2">
                 Choisis le mode de suppression de ce message.
             </p>
-            <div id="delete-message-preview" class="hidden text-xs text-primary/60 bg-accent/15 border border-secondary/20 rounded-lg px-3 py-2 mb-4 break-words line-clamp-3"></div>
+            <div
+                id="delete-message-preview"
+                class="hidden text-xs text-primary/60 bg-accent/15 border border-secondary/20 rounded-lg px-3 py-2 mb-4
+                    break-words line-clamp-3"></div>
             <div class="grid grid-cols-1 gap-2">
-                <button type="button" id="delete-message-for-me-btn" class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm font-medium text-primary hover:bg-accent/20 transition-colors">
+                <button
+                    type="button"
+                    id="delete-message-for-me-btn"
+                    class="w-full rounded-lg border border-secondary/30 px-3 py-2 text-sm font-medium text-primary
+                        hover:bg-accent/20 transition-colors">
                     Uniquement pour moi
                 </button>
-                <button type="button" id="delete-message-for-all-btn" class="w-full rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors">
+                <button
+                    type="button"
+                    id="delete-message-for-all-btn"
+                    class="w-full rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700
+                        transition-colors">
                     Pour moi et mon interlocuteur
                 </button>
             </div>

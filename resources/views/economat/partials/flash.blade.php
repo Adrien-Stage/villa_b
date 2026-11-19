@@ -3,7 +3,10 @@
     $inventaireGeneral = !$inventaireEnCours && \App\Support\InventorySchedule::current()->isInventoryDay(now());
 @endphp
 @if($inventaireEnCours)
-    <div class="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-center gap-2" role="status">
+    <div
+        class="mb-4 px-4 py-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-center
+            gap-2"
+        role="status">
         <i data-lucide="lock" class="w-4 h-4 shrink-0"></i>
         <span>
             Inventaire <strong>{{ $inventaireEnCours->reference }}</strong> en cours : réceptions, livraisons, ajustements
@@ -15,7 +18,9 @@
     </div>
 @endif
 @if($inventaireGeneral)
-    <div class="mb-4 px-4 py-3 bg-sky-50 border border-sky-200 text-sky-900 text-sm rounded-lg flex items-center gap-2" role="status">
+    <div
+        class="mb-4 px-4 py-3 bg-sky-50 border border-sky-200 text-sky-900 text-sm rounded-lg flex items-center gap-2"
+        role="status">
         <i data-lucide="calendar-check" class="w-4 h-4 shrink-0"></i>
         <span>
             Inventaire général prévu aujourd'hui.
@@ -26,7 +31,8 @@
     </div>
 @endif
 @if(session('success'))
-    <div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg flex items-center gap-2">
+    <div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg flex items-center
+        gap-2">
         <i data-lucide="check-circle" class="w-4 h-4 shrink-0"></i>
         {{ session('success') }}
     </div>

@@ -35,7 +35,9 @@
                         <ul class="space-y-1 text-sm">
                             @foreach($resteAFaire[$cle] as $b)
                                 <li>
-                                    <a href="{{ route('bookings.show', $b) }}" class="font-medium text-primary hover:underline">ch. {{ $b->room?->number ?? '—' }}</a>
+                                    <a
+                                        href="{{ route('bookings.show', $b) }}"
+                                        class="font-medium text-primary hover:underline">ch. {{ $b->room?->number ?? '—' }}</a>
                                     <span class="text-primary/60">· {{ $b->customer?->full_name ?? $b->booking_number }}</span>
                                     <span class="block text-xs text-primary/45">{{ $detail($b) }}</span>
                                 </li>

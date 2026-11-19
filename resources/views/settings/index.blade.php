@@ -12,36 +12,48 @@
     <div class="flex items-center gap-2 shrink-0">
         @if(in_array($tab, ['general', 'hebergement', 'taxes']))
             <a href="{{ route('settings.export', ['tab' => $tab]) }}"
-               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
+               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary
+                   text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors
+                   shadow-sm"
                title="Exporter les réglages de cet onglet en CSV">
                 <i data-lucide="download" class="w-4 h-4 text-secondary"></i>
                 <span>Exporter CSV</span>
             </a>
             <button type="button" onclick="document.getElementById('modal-import-settings-{{ $tab }}').classList.remove('hidden')"
-                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm"
+                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary
+                        text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors
+                        shadow-sm"
                     title="Importer des réglages depuis un CSV">
                 <i data-lucide="upload" class="w-4 h-4 text-secondary"></i>
                 <span>Importer CSV</span>
             </button>
         @elseif($tab === 'services')
             <a href="{{ route('settings.services.export') }}"
-               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm">
+               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary
+                   text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors
+                   shadow-sm">
                 <i data-lucide="download" class="w-4 h-4 text-secondary"></i>
                 <span>Exporter CSV</span>
             </a>
             <button type="button" onclick="document.getElementById('modal-import-services').classList.remove('hidden')"
-                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm">
+                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary
+                        text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors
+                        shadow-sm">
                 <i data-lucide="upload" class="w-4 h-4 text-secondary"></i>
                 <span>Importer CSV</span>
             </button>
         @elseif($tab === 'partners')
             <a href="{{ route('settings.partners.export') }}"
-               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm">
+               class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary
+                   text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors
+                   shadow-sm">
                 <i data-lucide="download" class="w-4 h-4 text-secondary"></i>
                 <span>Exporter CSV</span>
             </a>
             <button type="button" onclick="document.getElementById('modal-import-partners').classList.remove('hidden')"
-                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors shadow-sm">
+                    class="inline-flex items-center gap-2 px-3.5 py-2 border border-secondary/25 bg-white text-primary
+                        text-xs font-semibold rounded-lg hover:bg-slate-50 hover:border-secondary/50 transition-colors
+                        shadow-sm">
                 <i data-lucide="upload" class="w-4 h-4 text-secondary"></i>
                 <span>Importer CSV</span>
             </button>
@@ -52,13 +64,17 @@
 <x-csv-import-errors />
 
 @if(session('success'))
-    <div class="mb-6 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2">
+    <div class="mb-6 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center
+        gap-2">
         <i data-lucide="check-circle" class="w-4 h-4"></i>
         {{ session('success') }}
     </div>
 @endif
 @if(request()->boolean('enregistre') && ! session('success'))
-    <div class="mb-6 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center gap-2" role="status">
+    <div
+        class="mb-6 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-center
+            gap-2"
+        role="status">
         <i data-lucide="check-circle" class="w-4 h-4"></i>
         Les modifications de l'onglet ont été enregistrées.
     </div>
@@ -176,7 +192,8 @@
                 Partenaires
             </a>
             <a href="{{ route('economat.suppliers.index') }}"
-                class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap border-transparent text-primary/40 hover:text-primary/70">
+                class="flex items-center gap-2 px-4 pb-3 text-sm font-medium border-b-2 transition-colors
+                    whitespace-nowrap border-transparent text-primary/40 hover:text-primary/70">
                 <i data-lucide="truck" class="w-4 h-4"></i>
                 Fournisseurs Économat
             </a>
@@ -195,11 +212,21 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1">Nom de l'établissement</label>
-                        <input type="text" value="{{ $tenant?->name ?? 'Établissement' }}" disabled class="w-full rounded-lg border border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
+                        <input
+                            type="text"
+                            value="{{ $tenant?->name ?? 'Établissement' }}"
+                            disabled
+                            class="w-full rounded-lg border border-secondary/20 bg-gray-50 text-sm p-2.5
+                                text-primary/60">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-primary/70 mb-1">Devise principale</label>
-                        <input type="text" value="{{ $tenant?->currency ?? 'XAF' }}" disabled class="w-full rounded-lg border border-secondary/20 bg-gray-50 text-sm p-2.5 text-primary/60">
+                        <input
+                            type="text"
+                            value="{{ $tenant?->currency ?? 'XAF' }}"
+                            disabled
+                            class="w-full rounded-lg border border-secondary/20 bg-gray-50 text-sm p-2.5
+                                text-primary/60">
                     </div>
                     @if($tenant?->address || $tenant?->phone || $tenant?->email)
                         <div class="md:col-span-2 text-xs text-primary/60">
@@ -237,14 +264,17 @@
                     @enderror
 
                     <div class="mb-3 flex flex-wrap items-center gap-3" x-show="preview" x-cloak>
-                        <img :src="preview" alt="Aperçu du logo" class="w-14 h-14 rounded-full object-cover border border-secondary/20 transition-opacity"
+                        <img :src="preview" alt="Aperçu du logo" class="w-14 h-14 rounded-full object-cover border
+                            border-secondary/20 transition-opacity"
                              :class="retirer && 'opacity-30 grayscale'">
                         <span class="text-xs" :class="retirer ? 'text-red-600 font-medium' : 'text-primary/50'"
                               x-text="retirer ? 'Le logo sera retiré à l\'enregistrement' : (fileName ? 'Nouveau logo (aperçu)' : 'Logo actuel')"></span>
                         {{-- Retirer le logo actuel : pris en compte à l'enregistrement de
                              l'onglet, comme le reste ; l'établissement retrouve son initiale. --}}
                         @if(!empty($tenantSettings['logo'] ?? null))
-                            <label x-show="!fileName" class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors focus-within:ring-2 focus-within:ring-red-300"
+                            <label x-show="!fileName" class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg
+                                border px-2.5 py-1 text-xs font-medium transition-colors focus-within:ring-2
+                                focus-within:ring-red-300"
                                    :class="retirer ? 'border-red-300 bg-red-50 text-red-700' : 'border-secondary/30 text-primary/70 hover:bg-red-50 hover:text-red-700'">
                                 <input type="checkbox" name="remove_logo" value="1" x-model="retirer" class="sr-only">
                                 <i data-lucide="trash-2" class="h-3.5 w-3.5" aria-hidden="true"></i>
@@ -253,7 +283,8 @@
                         @endif
                     </div>
 
-                    <label class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-secondary/20 border-dashed rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+                    <label class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-secondary/20 border-dashed
+                        rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
                         <input type="file" name="logo" accept="image/png,image/jpeg,image/gif" class="hidden"
                                @change="onFileSelected($event)">
                         <div class="space-y-1 text-center">
@@ -266,7 +297,10 @@
                     </label>
 
                     <div class="mt-4 flex justify-end">
-                        <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm cursor-pointer">
+                        <button
+                            type="submit"
+                            class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark
+                                transition-colors shadow-sm cursor-pointer">
                             Enregistrer le logo
                         </button>
                     </div>
@@ -283,7 +317,9 @@
                         retomber sur la configuration du serveur.
                     </p>
 
-                    <form data-reglages method="POST" action="{{ route('settings.update', ['tab' => 'general']) }}" class="mt-5">
+                    <form data-reglages method="POST"
+                        action="{{ route('settings.update', ['tab' => 'general']) }}"
+                        class="mt-5">
                         @csrf
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -349,7 +385,8 @@
                             $apercuReponse    = \App\Support\MailIdentity::replyTo($tenant);
                         @endphp
                         <div class="mt-5 rounded-xl border border-secondary/20 bg-gray-50 p-4">
-                            <p class="text-[11px] font-semibold uppercase tracking-wider text-primary/50">Ce que verra le client</p>
+                            <p class="text-[11px] font-semibold uppercase tracking-wider
+                                text-primary/50">Ce que verra le client</p>
                             <p class="mt-1.5 text-sm text-primary">
                                 <span class="font-medium">{{ $apercuExpediteur->name }}</span>
                                 <span class="text-primary/50">&lt;{{ $apercuExpediteur->address }}&gt;</span>
@@ -364,7 +401,10 @@
                         </div>
 
                         <div class="mt-4 flex justify-end">
-                            <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm cursor-pointer">
+                            <button
+                                type="submit"
+                                class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                                    hover:bg-primary-dark transition-colors shadow-sm cursor-pointer">
                                 Enregistrer l'adresse d'envoi
                             </button>
                         </div>
@@ -395,7 +435,9 @@
              sous la clé « reception », d'où les lisent BookingController,
              RoomType et RoomAvailabilityService. --}}
         @if($tab === 'hebergement' && \App\Support\SettingsTabs::peutRegler($user, 'hebergement'))
-            <form data-reglages method="POST" action="{{ route('settings.update', ['tab' => 'reception']) }}" class="max-w-3xl">
+            <form data-reglages method="POST"
+                action="{{ route('settings.update', ['tab' => 'reception']) }}"
+                class="max-w-3xl">
                 @csrf
 
                 {{-- Deux boutons pour un même formulaire : cette section est
@@ -405,7 +447,10 @@
                      une modification faite en tête. --}}
                 <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <h2 class="text-lg font-semibold text-primary">Horaires et règles de séjour</h2>
-                    <button type="submit" class="shrink-0 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    <button
+                        type="submit"
+                        class="shrink-0 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                            hover:bg-surface-dark transition-colors shadow-sm">
                         Enregistrer
                     </button>
                 </div>
@@ -419,11 +464,19 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Heure limite de sortie (Check-out)</label>
-                                <input type="time" name="settings[check_out_time]" value="{{ $tenantSettings['reception']['check_out_time'] ?? \App\Services\RoomAvailabilityService::DEFAULT_CHECK_OUT_TIME }}" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
+                                <input
+                                    type="time"
+                                    name="settings[check_out_time]"
+                                    value="{{ $tenantSettings['reception']['check_out_time'] ?? \App\Services\RoomAvailabilityService::DEFAULT_CHECK_OUT_TIME }}"
+                                    class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Heure d'arrivée (Check-in)</label>
-                                <input type="time" name="settings[check_in_time]" value="{{ $tenantSettings['reception']['check_in_time'] ?? \App\Services\RoomAvailabilityService::DEFAULT_CHECK_IN_TIME }}" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
+                                <input
+                                    type="time"
+                                    name="settings[check_in_time]"
+                                    value="{{ $tenantSettings['reception']['check_in_time'] ?? \App\Services\RoomAvailabilityService::DEFAULT_CHECK_IN_TIME }}"
+                                    class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
                             </div>
                         </div>
                         @php
@@ -452,16 +505,37 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Pourcentage de réduction max (%)</label>
-                                <input type="number" name="settings[max_discount_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['max_discount_percentage'] ?? '10' }}" class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                <input
+                                    type="number"
+                                    name="settings[max_discount_percentage]"
+                                    min="0"
+                                    max="100"
+                                    value="{{ $tenantSettings['reception']['max_discount_percentage'] ?? '10' }}"
+                                    class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary
+                                        focus:border-primary text-sm p-2.5">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Acompte minimum requis (%)</label>
-                                <input type="number" name="settings[min_deposit_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['min_deposit_percentage'] ?? '30' }}" class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                <input
+                                    type="number"
+                                    name="settings[min_deposit_percentage]"
+                                    min="0"
+                                    max="100"
+                                    value="{{ $tenantSettings['reception']['min_deposit_percentage'] ?? '30' }}"
+                                    class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary
+                                        focus:border-primary text-sm p-2.5">
                                 <p class="text-[10px] text-primary/50 mt-1">Exigé pour confirmer.</p>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Surcharge capacité dépassée (%)</label>
-                                <input type="number" name="settings[capacity_surcharge_percentage]" min="0" max="100" value="{{ $tenantSettings['reception']['capacity_surcharge_percentage'] ?? '10' }}" class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                <input
+                                    type="number"
+                                    name="settings[capacity_surcharge_percentage]"
+                                    min="0"
+                                    max="100"
+                                    value="{{ $tenantSettings['reception']['capacity_surcharge_percentage'] ?? '10' }}"
+                                    class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary
+                                        focus:border-primary text-sm p-2.5">
                                 <p class="text-[10px] text-primary/50 mt-1">Taux si capacité de base dépassée.</p>
                             </div>
                         </div>
@@ -509,14 +583,16 @@
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Début du service PDJ</label>
                                 <input type="time" name="settings[breakfast][service_start_time]"
                                        value="{{ $serviceHours['start'] }}" required
-                                       class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2">
+                                       class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary
+                                           focus:border-primary text-sm p-2">
                                 <p class="text-[10px] text-primary/50 mt-1">Ex: 06:30</p>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Fin du service PDJ</label>
                                 <input type="time" name="settings[breakfast][service_end_time]"
                                        value="{{ $serviceHours['end'] }}" required
-                                       class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2">
+                                       class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary
+                                           focus:border-primary text-sm p-2">
                                 <p class="text-[10px] text-primary/50 mt-1">Ex: 10:30</p>
                             </div>
                             <div>
@@ -524,7 +600,8 @@
                                 <div class="relative">
                                     <input type="number" name="settings[default_extra_bed_price]"
                                            value="{{ $defaultExtraBedPrice }}" min="0" step="500" required
-                                           class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2 pr-14">
+                                           class="w-full rounded-lg border border-secondary/20 bg-white
+                                               focus:ring-primary focus:border-primary text-sm p-2 pr-14">
                                     <span class="absolute right-3 top-2 text-xs text-primary/40 font-medium">FCFA</span>
                                 </div>
                                 <p class="text-[10px] text-primary/50 mt-1">Tarif appliqué par défaut</p>
@@ -539,7 +616,8 @@
                             <div class="relative max-w-xs">
                                 <input type="number" name="settings[breakfast][adult_price]"
                                        value="{{ $adultBreakfastPrice }}" min="0" step="500" required
-                                       class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5 pr-14">
+                                       class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary
+                                           focus:border-primary text-sm p-2.5 pr-14">
                                 <span class="absolute right-3 top-2.5 text-xs text-primary/40 font-medium">FCFA</span>
                             </div>
                         </div>
@@ -551,7 +629,9 @@
                                     Grille tarifaire des enfants selon l'intervalle d'âge
                                 </label>
                                 <button type="button" @click="addBracket()"
-                                        class="px-2.5 py-1 bg-white border border-secondary/30 rounded-lg text-primary text-xs font-medium hover:bg-slate-100 transition flex items-center gap-1 shadow-xs">
+                                        class="px-2.5 py-1 bg-white border border-secondary/30 rounded-lg text-primary
+                                            text-xs font-medium hover:bg-slate-100 transition flex items-center gap-1
+                                            shadow-xs">
                                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                                     Ajouter une tranche
                                 </button>
@@ -559,41 +639,51 @@
 
                             <div class="space-y-2">
                                 <template x-for="(b, index) in brackets" :key="b.id || index">
-                                    <div class="bg-white border border-secondary/20 rounded-lg p-3 flex flex-col sm:flex-row items-start sm:items-center gap-2 shadow-xs">
-                                        <input type="hidden" :name="`settings[breakfast][age_brackets][${index}][id]`" :value="b.id">
+                                    <div class="bg-white border border-secondary/20 rounded-lg p-3 flex flex-col
+                                        sm:flex-row items-start sm:items-center gap-2 shadow-xs">
+                                        <input
+                                            type="hidden"
+                                            :name="`settings[breakfast][age_brackets][${index}][id]`"
+                                            :value="b.id">
 
                                         <div class="flex-1 min-w-[140px]">
                                             <label class="block text-[10px] font-medium text-primary/50 mb-0.5">Libellé de la tranche</label>
                                             <input type="text" :name="`settings[breakfast][age_brackets][${index}][label]`" x-model="b.label"
                                                    required placeholder="Ex: Enfant (2 à 10 ans)"
-                                                   class="w-full rounded-md border border-secondary/20 text-xs p-1.5 focus:border-primary outline-none">
+                                                   class="w-full rounded-md border border-secondary/20 text-xs p-1.5
+                                                       focus:border-primary outline-none">
                                         </div>
 
                                         <div class="w-20">
                                             <label class="block text-[10px] font-medium text-primary/50 mb-0.5">Âge min</label>
                                             <input type="number" :name="`settings[breakfast][age_brackets][${index}][min_age]`" x-model="b.min_age"
                                                    min="0" max="18"
-                                                   class="w-full rounded-md border border-secondary/20 text-xs p-1.5 focus:border-primary outline-none text-center">
+                                                   class="w-full rounded-md border border-secondary/20 text-xs p-1.5
+                                                       focus:border-primary outline-none text-center">
                                         </div>
 
                                         <div class="w-20">
                                             <label class="block text-[10px] font-medium text-primary/50 mb-0.5">Âge max</label>
                                             <input type="number" :name="`settings[breakfast][age_brackets][${index}][max_age]`" x-model="b.max_age"
                                                    min="0" max="18"
-                                                   class="w-full rounded-md border border-secondary/20 text-xs p-1.5 focus:border-primary outline-none text-center">
+                                                   class="w-full rounded-md border border-secondary/20 text-xs p-1.5
+                                                       focus:border-primary outline-none text-center">
                                         </div>
 
                                         <div class="w-32">
                                             <label class="block text-[10px] font-medium text-primary/50 mb-0.5">Prix (FCFA/jour)</label>
                                             <input type="number" :name="`settings[breakfast][age_brackets][${index}][price]`" x-model="b.price"
                                                    min="0" step="100" required
-                                                   class="w-full rounded-md border border-secondary/20 text-xs p-1.5 focus:border-primary outline-none text-right font-medium">
+                                                   class="w-full rounded-md border border-secondary/20 text-xs p-1.5
+                                                       focus:border-primary outline-none text-right font-medium">
                                         </div>
 
                                         <div class="sm:pt-4">
                                             <button type="button" @click="removeBracket(index)"
                                                     :disabled="brackets.length <= 1"
-                                                    class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition disabled:opacity-30 disabled:cursor-not-allowed"
+                                                    class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50
+                                                        rounded transition disabled:opacity-30
+                                                        disabled:cursor-not-allowed"
                                                     title="Supprimer cette tranche">
                                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                                             </button>
@@ -627,7 +717,8 @@
                             </div>
                             @php $defaultPol = $cancellationPolicies->firstWhere('is_default', true) ?? $cancellationPolicies->first(); @endphp
                             @if($defaultPol)
-                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs
+                                    font-semibold bg-amber-100 text-amber-800">
                                     <i data-lucide="star" class="w-3 h-3 text-amber-600"></i>
                                     {{ $defaultPol->name }}
                                 </span>
@@ -644,7 +735,10 @@
                     </div>
                 </div>
                 <div class="mt-8 flex justify-end">
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                            transition-colors shadow-sm">
                         Enregistrer
                     </button>
                 </div>
@@ -663,11 +757,16 @@
                 $exemple       = $fisc->breakdown(5_000_000, $tauxStandard);
             @endphp
 
-            <form data-reglages method="POST" action="{{ route('settings.update', ['tab' => 'taxes']) }}" class="max-w-3xl">
+            <form data-reglages method="POST"
+                action="{{ route('settings.update', ['tab' => 'taxes']) }}"
+                class="max-w-3xl">
                 @csrf
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <h2 class="text-lg font-semibold text-primary">Taxes</h2>
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark
+                            transition-colors shadow-sm">
                         Enregistrer
                     </button>
                 </div>
@@ -688,7 +787,11 @@
                                 <input type="hidden" name="settings[vat_enabled]" value="0">
                                 <input type="checkbox" name="settings[vat_enabled]" value="1" class="sr-only peer"
                                        @checked($taxes['vat_enabled'] ?? false)>
-                                <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer
+                                    peer-checked:after:translate-x-full peer-checked:after:border-white
+                                    after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white
+                                    after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4
+                                    after:transition-all peer-checked:bg-primary"></div>
                             </label>
                         </div>
 
@@ -726,14 +829,20 @@
                                 <input type="hidden" name="settings[tourist_tax_enabled]" value="0">
                                 <input type="checkbox" name="settings[tourist_tax_enabled]" value="1" class="sr-only peer"
                                        @checked($taxes['tourist_tax_enabled'] ?? false)>
-                                <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                <div class="w-9 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer
+                                    peer-checked:after:translate-x-full peer-checked:after:border-white
+                                    after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white
+                                    after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4
+                                    after:transition-all peer-checked:bg-primary"></div>
                             </label>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Classement de l'établissement</label>
-                                <select name="settings[classification]" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
+                                <select
+                                    name="settings[classification]"
+                                    class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
                                     <option value="">— Non renseigné —</option>
                                     @foreach(\App\Models\TouristTaxBracket::CLASSIFICATIONS as $code => $libelle)
                                         <option value="{{ $code }}" @selected((string) $classement === (string) $code)>{{ $libelle }}</option>
@@ -742,7 +851,9 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Base de calcul</label>
-                                <select name="settings[tourist_tax_basis]" class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
+                                <select
+                                    name="settings[tourist_tax_basis]"
+                                    class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
                                     <option value="room" @selected(($taxes['tourist_tax_basis'] ?? 'room') === 'room')>Par nuitée (chambre)</option>
                                     <option value="person" @selected(($taxes['tourist_tax_basis'] ?? '') === 'person')>Par nuitée et par personne</option>
                                 </select>
@@ -773,7 +884,8 @@
                             </table>
                         </div>
 
-                        <p class="mt-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-800">
+                        <p class="mt-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px]
+                            text-amber-800">
                             <strong>Barème à confirmer.</strong> Ces montants sont provisoires et doivent être validés par
                             votre expert-comptable au regard des textes en vigueur, de même que l'assiette retenue
                             (par chambre ou par personne).
@@ -796,7 +908,9 @@
                     <div class="space-y-3 rounded-xl border border-secondary/20 bg-gray-50 p-4 text-sm text-primary/80">
                         <p>Au <strong>check-out</strong>, la chambre passe d'elle-même à « À nettoyer ». Le ménage se suit ensuite dans l'application Hôtel › Housekeeping : affectation, nettoyage, contrôle.</p>
                         @if(\App\Support\SettingsTabs::peutOuvrir($user, 'hebergement'))
-                            <p>Le temps laissé à l'équipe avant que la chambre redevienne vendable se règle dans <a href="{{ route('settings.index', ['tab' => 'hebergement']) }}" class="font-semibold underline">Paramètres › Hébergement</a>, rubrique « Remise en vente après départ ».</p>
+                            <p>Le temps laissé à l'équipe avant que la chambre redevienne vendable se règle dans <a
+                                href="{{ route('settings.index', ['tab' => 'hebergement']) }}"
+                                class="font-semibold underline">Paramètres › Hébergement</a>, rubrique « Remise en vente après départ ».</p>
                         @endif
                     </div>
                 </div>
@@ -804,7 +918,9 @@
                 @if(\App\Support\TenantModules::has('housekeeping'))
                     <h3 class="font-heading text-base font-semibold text-primary pt-2">Mini-bars</h3>
                     @if($errors->any())
-                        <div class="px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg" role="alert">{{ $errors->first() }}</div>
+                        <div
+                            class="px-4 py-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg"
+                            role="alert">{{ $errors->first() }}</div>
                     @endif
                     @include('housekeeping.minibar.partials.reglages')
                 @endif
@@ -834,7 +950,9 @@
                 <p class="mb-4 text-sm text-primary/60">La boutique n'a pas de réglage d'établissement : chaque article porte les siens.</p>
                 <div class="space-y-4 rounded-xl border border-secondary/20 bg-gray-50 p-4 text-sm text-primary/80">
                     <p>Le <strong>niveau de réassort</strong> se règle article par article (Boutique › Articles). Quand une vente fait passer un article sous son niveau, le responsable boutique et le manager sont prévenus.</p>
-                    <p>Les prix sont toutes taxes comprises ; la TVA se règle dans <a href="{{ route('settings.index', ['tab' => 'taxes']) }}" class="font-semibold underline">Paramètres › Taxes &amp; Tarifs</a>.</p>
+                    <p>Les prix sont toutes taxes comprises ; la TVA se règle dans <a
+                        href="{{ route('settings.index', ['tab' => 'taxes']) }}"
+                        class="font-semibold underline">Paramètres › Taxes &amp; Tarifs</a>.</p>
                 </div>
             </div>
         @endif
@@ -883,12 +1001,18 @@
                         <p class="text-xs text-primary/60 mb-3">Un jour coché revient tous les mois. Le 31 ne se reporte pas sur les mois plus courts : utilisez « dernier jour ».</p>
                         <div class="grid grid-cols-7 sm:grid-cols-8 gap-1.5">
                             @for($j = 1; $j <= 31; $j++)
-                                <label class="flex items-center justify-center gap-1 h-9 rounded-lg border border-secondary/20 bg-white text-xs cursor-pointer has-[:checked]:bg-primary has-[:checked]:text-white has-[:checked]:border-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-secondary">
+                                <label class="flex items-center justify-center gap-1 h-9 rounded-lg border
+                                    border-secondary/20 bg-white text-xs cursor-pointer has-[:checked]:bg-primary
+                                    has-[:checked]:text-white has-[:checked]:border-primary has-[:focus-visible]:ring-2
+                                    has-[:focus-visible]:ring-secondary">
                                     <input type="checkbox" name="settings[month_days][]" value="{{ $j }}" class="sr-only" @checked(in_array((string) $j, $joursCoches, true))>
                                     {{ $j }}
                                 </label>
                             @endfor
-                            <label class="col-span-3 flex items-center justify-center h-9 rounded-lg border border-secondary/20 bg-white text-xs cursor-pointer has-[:checked]:bg-primary has-[:checked]:text-white has-[:checked]:border-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-secondary">
+                            <label class="col-span-3 flex items-center justify-center h-9 rounded-lg border
+                                border-secondary/20 bg-white text-xs cursor-pointer has-[:checked]:bg-primary
+                                has-[:checked]:text-white has-[:checked]:border-primary has-[:focus-visible]:ring-2
+                                has-[:focus-visible]:ring-secondary">
                                 <input type="checkbox" name="settings[month_days][]" value="last" class="sr-only" @checked(in_array('last', $joursCoches, true))>
                                 Dernier jour
                             </label>
@@ -902,25 +1026,43 @@
                             <template x-for="(d, i) in dates" :key="i">
                                 <div class="flex items-center gap-2">
                                     <label class="sr-only" :for="`date-jour-${i}`">Jour</label>
-                                    <select :id="`date-jour-${i}`" :name="`settings[fixed_dates][${i}][day]`" x-model.number="d.day" class="rounded-lg border border-secondary/20 bg-white text-sm p-2">
+                                    <select
+                                        :id="`date-jour-${i}`"
+                                        :name="`settings[fixed_dates][${i}][day]`"
+                                        x-model.number="d.day"
+                                        class="rounded-lg border border-secondary/20 bg-white text-sm p-2">
                                         @for($j = 1; $j <= 31; $j++)<option value="{{ $j }}">{{ $j === 1 ? '1er' : $j }}</option>@endfor
                                     </select>
                                     <label class="sr-only" :for="`date-mois-${i}`">Mois</label>
-                                    <select :id="`date-mois-${i}`" :name="`settings[fixed_dates][${i}][month]`" x-model.number="d.month" class="rounded-lg border border-secondary/20 bg-white text-sm p-2">
+                                    <select
+                                        :id="`date-mois-${i}`"
+                                        :name="`settings[fixed_dates][${i}][month]`"
+                                        x-model.number="d.month"
+                                        class="rounded-lg border border-secondary/20 bg-white text-sm p-2">
                                         @foreach($moisNoms as $m => $nom)<option value="{{ $m + 1 }}">{{ $nom }}</option>@endforeach
                                     </select>
-                                    <button type="button" @click="dates.splice(i, 1)" class="h-9 w-9 inline-flex items-center justify-center rounded-lg text-primary/40 hover:text-red-600" aria-label="Retirer cette date">
+                                    <button
+                                        type="button"
+                                        @click="dates.splice(i, 1)"
+                                        class="h-9 w-9 inline-flex items-center justify-center rounded-lg
+                                            text-primary/40 hover:text-red-600"
+                                        aria-label="Retirer cette date">
                                         <i data-lucide="x" class="w-4 h-4"></i>
                                     </button>
                                 </div>
                             </template>
                         </div>
-                        <button type="button" @click="dates.push({ day: 31, month: 12 })" class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 border border-secondary/30 text-primary text-xs font-medium rounded-lg hover:bg-accent/20">
+                        <button
+                            type="button"
+                            @click="dates.push({ day: 31, month: 12 })"
+                            class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 border border-secondary/30
+                                text-primary text-xs font-medium rounded-lg hover:bg-accent/20">
                             <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter une date
                         </button>
                     </fieldset>
 
-                    <label class="flex items-center justify-between gap-4 p-4 bg-gray-50 rounded-xl border border-secondary/20 cursor-pointer">
+                    <label class="flex items-center justify-between gap-4 p-4 bg-gray-50 rounded-xl border
+                        border-secondary/20 cursor-pointer">
                         <span>
                             <span class="block text-sm font-semibold text-primary">Rappel la veille</span>
                             <span class="block text-xs text-primary/60">En plus du rappel le jour même, prévenir les services la veille pour qu'ils s'organisent.</span>
@@ -931,7 +1073,10 @@
                 </div>
 
                 <div class="mt-8 flex justify-end">
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors shadow-sm">
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark
+                            transition-colors shadow-sm">
                         Enregistrer
                     </button>
                 </div>
@@ -951,7 +1096,8 @@
                     </div>
                     <a href="{{ route('partners.wallet.index') }}" class="text-sm font-medium text-primary underline">Comptes dépôt</a>
                     <button type="button" @click="openCreate()"
-                        class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm
+                            font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                         <i data-lucide="plus" class="w-4 h-4"></i>
                         Nouvelle prestation
                     </button>
@@ -970,7 +1116,11 @@
                 <div class="space-y-6">
                     @foreach($serviceCategories as $categoryKey => $categoryLabel)
                         @php $categoryItems = $serviceItems[$categoryKey] ?? collect(); @endphp
-                        <x-table :rows="$categoryItems" empty="Aucune prestation dans cette catégorie." empty-icon="tag" :caption="$categoryLabel">
+                        <x-table
+                            :rows="$categoryItems"
+                            empty="Aucune prestation dans cette catégorie."
+                            empty-icon="tag"
+                            :caption="$categoryLabel">
                             <x-slot:toolbar>
                                 <h3 class="text-sm font-semibold text-primary flex items-center gap-2">
                                     <i data-lucide="{{ [
@@ -986,7 +1136,10 @@
                                 <span class="text-xs text-primary/45">{{ $categoryItems->count() }} prestation(s)</span>
                             </x-slot:toolbar>
                             <x-slot:emptyActions>
-                                <button type="button" x-on:click="openCreate('{{ $categoryKey }}')" class="font-medium text-primary hover:underline">Ajouter la première</button>
+                                <button
+                                    type="button"
+                                    x-on:click="openCreate('{{ $categoryKey }}')"
+                                    class="font-medium text-primary hover:underline">Ajouter la première</button>
                             </x-slot:emptyActions>
                             <x-slot:head>
                                 <x-table.col>Prestation</x-table.col>
@@ -1018,7 +1171,10 @@
                                     </x-table.cell>
                                     <x-table.cell hide="lg" nowrap class="text-xs text-primary/60">
                                         @if($service->duration_minutes)
-                                            <span class="inline-flex items-center gap-1"><i data-lucide="clock" class="h-3 w-3" aria-hidden="true"></i> {{ $service->duration_minutes }} min</span>
+                                            <span class="inline-flex items-center gap-1"><i
+                                                data-lucide="clock"
+                                                class="h-3 w-3"
+                                                aria-hidden="true"></i> {{ $service->duration_minutes }} min</span>
                                         @endif
                                     </x-table.cell>
                                     <x-table.cell align="right" nowrap class="font-semibold">{{ number_format($service->price / 100, 0, ',', ' ') }} FCFA</x-table.cell>
@@ -1026,7 +1182,9 @@
                                         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $service->is_active ? 'border border-green-200 bg-green-50 text-green-700' : 'border border-red-200 bg-red-50 text-red-700' }}">{{ $service->is_active ? 'Actif' : 'Inactif' }}</span>
                                     </x-table.cell>
                                     <x-table.actions :label="'Actions pour '.$service->name">
-                                        <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})">Modifier</x-table.action>
+                                        <x-table.action
+                                            icon="pencil"
+                                            x-on:click="openEdit({{ Js::from($editPayload) }})">Modifier</x-table.action>
                                         <x-table.action :action="route('settings.services.destroy', $service)" method="DELETE" icon="trash-2" tone="danger"
                                             :confirm="'Supprimer « '.$service->name.' » du catalogue ?'">Supprimer</x-table.action>
                                     </x-table.actions>
@@ -1040,16 +1198,24 @@
                 <div x-show="open" class="fixed inset-0 z-50 flex items-center justify-center p-4"
                     style="display: none; background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
                     <div class="absolute inset-0" @click="open = false"></div>
-                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 flex flex-col max-h-[90vh]">
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 flex flex-col
+                        max-h-[90vh]">
                         <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
                             <h3 class="font-heading font-semibold text-primary"
                                 x-text="editing ? 'Modifier la prestation' : 'Nouvelle prestation'"></h3>
-                            <button type="button" @click="open = false" class="text-primary/30 hover:text-primary transition-colors">
+                            <button
+                                type="button"
+                                @click="open = false"
+                                class="text-primary/30 hover:text-primary transition-colors">
                                 <i data-lucide="x" class="w-5 h-5"></i>
                             </button>
                         </div>
 
-                        <form data-reglages-fenetre="Prestation" method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                        <form
+                            data-reglages-fenetre="Prestation"
+                            method="POST"
+                            :action="formAction"
+                            class="flex flex-col flex-1 min-h-0 overflow-hidden">
                             @csrf
                             <template x-if="editing">
                                 <input type="hidden" name="_method" value="PUT">
@@ -1059,7 +1225,8 @@
                                 <div>
                                     <label class="block text-xs font-medium text-primary/70 mb-1">Catégorie *</label>
                                     <select name="category" x-model="form.category" required
-                                        class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                        class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5
+                                            text-primary">
                                         <template x-for="(label, key) in categories" :key="key">
                                             <option :value="key" x-text="label"></option>
                                         </template>
@@ -1070,24 +1237,28 @@
                                     <label class="block text-xs font-medium text-primary/70 mb-1">Nom *</label>
                                     <input type="text" name="name" x-model="form.name" required maxlength="140"
                                         placeholder="Ex : Excursion lac Barombi, Massage relaxant 60 min..."
-                                        class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5 text-primary placeholder-primary/30">
+                                        class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5
+                                            text-primary placeholder-primary/30">
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
                                         <label class="block text-xs font-medium text-primary/70 mb-1">Prix (FCFA) *</label>
                                         <input type="number" name="price" x-model="form.price" min="0" required
-                                            class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                            class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5
+                                                text-primary">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-primary/70 mb-1">Durée (min)</label>
                                         <input type="number" name="duration_minutes" x-model="form.duration_minutes" min="0" max="1440"
-                                            class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                            class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5
+                                                text-primary">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-primary/70 mb-1">Ordre</label>
                                         <input type="number" name="sort_order" x-model="form.sort_order" min="0"
-                                            class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5 text-primary">
+                                            class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5
+                                                text-primary">
                                     </div>
                                 </div>
 
@@ -1102,16 +1273,22 @@
                                          peut soumettre une valeur vide (→ null → inactif). On envoie donc
                                          une valeur déterministe 1/0, la case n'étant qu'un contrôle visuel. --}}
                                     <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
-                                    <input type="checkbox" x-model="form.is_active" class="rounded border-secondary/30 text-primary">
+                                    <input
+                                        type="checkbox"
+                                        x-model="form.is_active"
+                                        class="rounded border-secondary/30 text-primary">
                                     Actif (proposé à la réception)
                                 </label>
                             </div>
 
-                            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+                            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0
+                                bg-gray-50 rounded-b-2xl">
                                 <button type="button" @click="open = false"
-                                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
+                                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary
+                                        transition-colors">Annuler</button>
                                 <button type="submit"
-                                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                                        hover:bg-surface-dark transition-colors">
                                     <span x-text="editing ? 'Appliquer' : 'Ajouter'"></span>
                                 </button>
                             </div>
@@ -1133,7 +1310,9 @@
                 $delayByType   = (array) ($hebergement['cleaning_delay_by_type'] ?? []);
             @endphp
 
-            <form data-reglages method="POST" action="{{ route('settings.update', ['tab' => 'hebergement']) }}" class="max-w-3xl mb-10">
+            <form data-reglages method="POST"
+                action="{{ route('settings.update', ['tab' => 'hebergement']) }}"
+                class="max-w-3xl mb-10">
                 @csrf
                 <h2 class="text-lg font-semibold text-primary mb-1">Remise en vente après départ</h2>
                 <p class="text-sm text-primary/60 mb-5 max-w-2xl">
@@ -1151,7 +1330,8 @@
                                 <label class="block text-xs font-medium text-primary/70 mb-1">Durée (minutes)</label>
                                 <input type="number" name="settings[cleaning_delay_minutes]" min="0" max="1440" step="5"
                                        value="{{ $globalDelay }}"
-                                       class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2.5">
+                                       class="w-full rounded-lg border border-secondary/20 bg-white focus:ring-primary
+                                           focus:border-primary text-sm p-2.5">
                                 <p class="text-[10px] text-primary/50 mt-1">120 minutes = 2 h.</p>
                             </div>
                         </div>
@@ -1169,8 +1349,11 @@
                         @else
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 @foreach($roomTypes as $type)
-                                    <div class="flex items-center gap-3 bg-white rounded-lg border border-secondary/20 p-2.5">
-                                        <span class="flex-1 min-w-0 text-xs font-medium text-primary truncate" title="{{ $type->name }}">
+                                    <div class="flex items-center gap-3 bg-white rounded-lg border border-secondary/20
+                                        p-2.5">
+                                        <span
+                                            class="flex-1 min-w-0 text-xs font-medium text-primary truncate"
+                                            title="{{ $type->name }}">
                                             {{ $type->name }}
                                         </span>
                                         <div class="flex items-center gap-1.5 shrink-0">
@@ -1178,7 +1361,8 @@
                                                    min="0" max="1440" step="5"
                                                    value="{{ $delayByType[$type->id] ?? '' }}"
                                                    placeholder="{{ $globalDelay }}"
-                                                   class="w-20 rounded-lg border border-secondary/20 bg-white focus:ring-primary focus:border-primary text-sm p-2 text-right">
+                                                   class="w-20 rounded-lg border border-secondary/20 bg-white
+                                                       focus:ring-primary focus:border-primary text-sm p-2 text-right">
                                             <span class="text-[10px] text-primary/50">min</span>
                                         </div>
                                     </div>
@@ -1189,7 +1373,10 @@
                 </div>
 
                 <div class="mt-6 flex justify-end">
-                    <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                            transition-colors shadow-sm">
                         Enregistrer les délais
                     </button>
                 </div>
@@ -1242,7 +1429,8 @@
                         </p>
                     </div>
                     <button type="button" @click="openCreate()"
-                        class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm
+                            font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                         <i data-lucide="plus" class="w-4 h-4"></i>
                         Nouveau pack
                     </button>
@@ -1262,7 +1450,10 @@
                     <div class="border border-dashed border-secondary/30 rounded-xl px-6 py-12 text-center">
                         <i data-lucide="bed-double" class="w-8 h-8 mx-auto text-primary/20 mb-3"></i>
                         <p class="text-sm text-primary/50">Aucun pack configuré.</p>
-                        <button type="button" @click="openCreate()" class="mt-2 text-xs font-medium text-primary hover:underline">
+                        <button
+                            type="button"
+                            @click="openCreate()"
+                            class="mt-2 text-xs font-medium text-primary hover:underline">
                             Créer le premier
                         </button>
                     </div>
@@ -1270,7 +1461,8 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         @foreach($roomPackages as $package)
                             <div class="border border-secondary/20 rounded-xl overflow-hidden {{ $package->is_active ? 'bg-white' : 'bg-gray-50/60' }}">
-                                <div class="px-5 py-3 border-b border-secondary/20 flex items-start justify-between gap-3">
+                                <div class="px-5 py-3 border-b border-secondary/20 flex items-start justify-between
+                                    gap-3">
                                     <div class="min-w-0">
                                         <p class="text-sm font-semibold text-primary truncate">
                                             {{ $package->name }}
@@ -1283,7 +1475,9 @@
                                     <div class="text-right shrink-0">
                                         <p class="text-sm font-bold text-primary">{{ number_format($package->price / 100, 0, ',', ' ') }} F</p>
                                         @unless($package->is_active)
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-700 border border-red-200">Inactif</span>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px]
+                                                font-semibold bg-red-50 text-red-700 border
+                                                border-red-200">Inactif</span>
                                         @endunless
                                     </div>
                                 </div>
@@ -1295,7 +1489,9 @@
                                     @else
                                         <div class="flex flex-wrap gap-1">
                                             @foreach($contents as $label)
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent/30 text-primary border border-secondary/20">{{ $label }}</span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full
+                                                    text-[10px] font-medium bg-accent/30 text-primary border
+                                                    border-secondary/20">{{ $label }}</span>
                                             @endforeach
                                         </div>
                                     @endif
@@ -1309,9 +1505,11 @@
                                     </p>
                                 </div>
 
-                                <div class="px-5 py-2.5 bg-gray-50/70 border-t border-secondary/20 flex justify-end gap-2">
+                                <div class="px-5 py-2.5 bg-gray-50/70 border-t border-secondary/20 flex justify-end
+                                    gap-2">
                                     <button type="button" @click="openEdit(@json($packPayloads[$package->id]))"
-                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
+                                        class="h-8 w-8 inline-flex items-center justify-center rounded-lg border
+                                            border-secondary/20 text-primary/60 hover:text-primary hover:bg-accent/20">
                                         <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                                     </button>
                                     <form method="POST" action="{{ route('settings.packages.destroy', $package) }}"
@@ -1319,7 +1517,8 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
-                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-secondary/20 text-red-600 hover:bg-red-50">
+                                            class="h-8 w-8 inline-flex items-center justify-center rounded-lg border
+                                                border-secondary/20 text-red-600 hover:bg-red-50">
                                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                         </button>
                                     </form>
@@ -1333,16 +1532,24 @@
                 <div x-show="open" class="fixed inset-0 z-50 flex items-center justify-center p-4"
                     style="display: none; background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
                     <div class="absolute inset-0" @click="open = false"></div>
-                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 flex flex-col max-h-[90vh]">
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 flex flex-col
+                        max-h-[90vh]">
                         <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
                             <h3 class="font-heading font-semibold text-primary"
                                 x-text="editing ? 'Modifier le pack' : 'Nouveau pack d\'hébergement'"></h3>
-                            <button type="button" @click="open = false" class="text-primary/30 hover:text-primary transition-colors">
+                            <button
+                                type="button"
+                                @click="open = false"
+                                class="text-primary/30 hover:text-primary transition-colors">
                                 <i data-lucide="x" class="w-5 h-5"></i>
                             </button>
                         </div>
 
-                        <form data-reglages-fenetre="Pack" method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                        <form
+                            data-reglages-fenetre="Pack"
+                            method="POST"
+                            :action="formAction"
+                            class="flex flex-col flex-1 min-h-0 overflow-hidden">
                             @csrf
                             <template x-if="editing">
                                 <input type="hidden" name="_method" value="PUT">
@@ -1352,7 +1559,8 @@
 
                                 {{-- Identité --}}
                                 <section class="bg-white border border-secondary/20 rounded-xl p-4">
-                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider
+                                        text-primary/50 mb-3">
                                         <i data-lucide="tag" class="w-3.5 h-3.5"></i>
                                         Identité
                                     </h4>
@@ -1361,12 +1569,16 @@
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom du pack <span class="text-red-500">*</span></label>
                                             <input type="text" name="name" x-model="form.name" @input="applyAutoCode()" required maxlength="140"
                                                 placeholder="Ex : Demi-pension, Pension complète, Séjour affaires"
-                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30">
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                    bg-white text-primary outline-none focus:border-secondary
+                                                    transition-colors placeholder-primary/30">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Code</label>
                                             <input type="text" name="code" x-model="form.code" @input="autoCode = false" maxlength="30" placeholder="DP"
-                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30 font-mono">
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                    bg-white text-primary outline-none focus:border-secondary
+                                                    transition-colors placeholder-primary/30 font-mono">
                                         </div>
                                     </div>
                                     <div class="mt-4">
@@ -1379,7 +1591,8 @@
 
                                 {{-- Composition --}}
                                 <section class="bg-accent/10 border border-secondary/30 rounded-xl p-4">
-                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/60 mb-1">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider
+                                        text-primary/60 mb-1">
                                         <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
                                         Composition du pack
                                     </h4>
@@ -1396,7 +1609,9 @@
                                              au moment de créer le pack. --}}
                                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                             @foreach($mealServices as $mealKey => $mealLabel)
-                                                <label class="flex items-center gap-2.5 border border-secondary/20 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10 transition-colors"
+                                                <label class="flex items-center gap-2.5 border border-secondary/20
+                                                    rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10
+                                                    transition-colors"
                                                     :class="form.meals.includes(@js($mealKey)) ? 'bg-accent/20 border-secondary/40' : ''">
                                                     <input type="checkbox" value="{{ $mealKey }}" x-model="form.meals"
                                                         class="w-4 h-4 rounded border-secondary/40 text-primary">
@@ -1419,14 +1634,19 @@
                                         </div>
 
                                         <template x-if="services.length === 0">
-                                            <p class="text-[11px] text-primary/50 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
+                                            <p class="text-[11px] text-primary/50 bg-amber-50 border border-amber-200
+                                                rounded-lg px-3 py-2.5">
                                                 Aucune prestation au catalogue. Ajoutez-en dans l'onglet Prestations (blanchisserie, spa…).
                                             </p>
                                         </template>
 
-                                        <div x-show="services.length > 0" class="border border-secondary/30 rounded-lg max-h-40 overflow-y-auto divide-y divide-secondary/10">
+                                        <div
+                                            x-show="services.length > 0"
+                                            class="border border-secondary/30 rounded-lg max-h-40 overflow-y-auto
+                                                divide-y divide-secondary/10">
                                             @foreach($serviceItemsFlat as $svc)
-                                                <label class="flex items-center gap-3 px-3 py-2.5 hover:bg-accent/20 cursor-pointer transition-colors"
+                                                <label class="flex items-center gap-3 px-3 py-2.5 hover:bg-accent/20
+                                                    cursor-pointer transition-colors"
                                                     :class="form.service_item_ids.includes({{ (int) $svc->id }}) ? 'bg-accent/20' : ''">
                                                     <input type="checkbox" value="{{ (int) $svc->id }}" x-model.number="form.service_item_ids"
                                                         class="w-4 h-4 rounded border-secondary/40 text-primary shrink-0">
@@ -1448,7 +1668,8 @@
 
                                 {{-- Tarification --}}
                                 <section class="bg-white border border-secondary/20 rounded-xl p-4">
-                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider
+                                        text-primary/50 mb-3">
                                         <i data-lucide="coins" class="w-3.5 h-3.5"></i>
                                         Tarification
                                     </h4>
@@ -1464,7 +1685,9 @@
                                                  « Le champ pricing mode sélectionné n'est pas
                                                  valide », sans que la cause soit visible à l'écran. --}}
                                             <select name="pricing_mode" x-model="form.pricing_mode" required
-                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                    bg-white text-primary outline-none focus:border-secondary
+                                                    transition-colors">
                                                 @foreach($packPricingModes as $key => $label)
                                                     <option value="{{ $key }}">{{ $label }}</option>
                                                 @endforeach
@@ -1474,23 +1697,31 @@
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Prix du pack <span class="text-red-500">*</span></label>
                                             <div class="relative">
                                                 <input type="number" name="price" x-model="form.price" min="0" required
-                                                    class="w-full px-3 py-2.5 pr-14 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                    class="w-full px-3 py-2.5 pr-14 text-sm border border-secondary/30
+                                                        rounded-lg bg-white text-primary outline-none
+                                                        focus:border-secondary transition-colors">
                                                 <span class="absolute right-3 top-2.5 text-xs font-medium text-primary/40">FCFA</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     {{-- Aperçu du coût réel d'un séjour type, pour éviter les erreurs de mode --}}
-                                    <p class="text-[11px] text-primary/50 mt-3 bg-gray-50 border border-secondary/20 rounded-lg px-3 py-2">
+                                    <p class="text-[11px] text-primary/50 mt-3 bg-gray-50 border border-secondary/20
+                                        rounded-lg px-3 py-2">
                                         Pour un séjour de 3 nuits à 2 personnes, ce pack serait facturé
-                                        <strong class="text-primary" x-text="new Intl.NumberFormat('fr-FR').format(previewAmount(3, 2)) + ' FCFA'"></strong>.
+                                        <strong
+                                            class="text-primary"
+                                            x-text="new Intl.NumberFormat('fr-FR').format(previewAmount(3, 2)) + ' FCFA'"></strong>.
                                     </p>
 
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-secondary/20">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t
+                                        border-secondary/20">
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Remise sur l'hébergement</label>
                                             <select name="room_discount_type" x-model="form.room_discount_type"
-                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                    bg-white text-primary outline-none focus:border-secondary
+                                                    transition-colors">
                                                 <option value="none">Aucune</option>
                                                 <option value="percent">Pourcentage</option>
                                                 <option value="amount">Montant par nuitée</option>
@@ -1502,7 +1733,9 @@
                                             <div class="relative">
                                                 <input type="number" name="room_discount_value" x-model="form.room_discount_value" min="0"
                                                     :max="form.room_discount_type === 'percent' ? 100 : 10000000"
-                                                    class="w-full px-3 py-2.5 pr-14 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                    class="w-full px-3 py-2.5 pr-14 text-sm border border-secondary/30
+                                                        rounded-lg bg-white text-primary outline-none
+                                                        focus:border-secondary transition-colors">
                                                 <span class="absolute right-3 top-2.5 text-xs font-medium text-primary/40"
                                                     x-text="form.room_discount_type === 'percent' ? '%' : 'FCFA'"></span>
                                             </div>
@@ -1515,7 +1748,8 @@
 
                                 {{-- Portée --}}
                                 <section class="bg-white border border-secondary/20 rounded-xl p-4">
-                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider
+                                        text-primary/50 mb-3">
                                         <i data-lucide="door-open" class="w-3.5 h-3.5"></i>
                                         Chambres concernées
                                     </h4>
@@ -1526,7 +1760,9 @@
 
                                     <div x-show="roomTypes.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         @foreach($roomTypes as $rt)
-                                            <label class="flex items-center gap-2.5 border border-secondary/20 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10 transition-colors"
+                                            <label class="flex items-center gap-2.5 border border-secondary/20
+                                                rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10
+                                                transition-colors"
                                                 :class="form.room_type_ids.includes({{ (int) $rt->id }}) ? 'bg-accent/20 border-secondary/40' : ''">
                                                 <input type="checkbox" value="{{ (int) $rt->id }}" x-model.number="form.room_type_ids"
                                                     class="w-4 h-4 rounded border-secondary/40 text-primary">
@@ -1548,22 +1784,31 @@
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Ordre d'affichage</label>
                                             <input type="number" name="sort_order" x-model="form.sort_order" min="0"
-                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                    bg-white text-primary outline-none focus:border-secondary
+                                                    transition-colors">
                                         </div>
-                                        <label class="flex items-center gap-2.5 px-3 py-2.5 border border-secondary/30 rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
+                                        <label class="flex items-center gap-2.5 px-3 py-2.5 border border-secondary/30
+                                            rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
                                             <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
-                                            <input type="checkbox" x-model="form.is_active" class="w-4 h-4 rounded border-secondary/40 text-primary">
+                                            <input
+                                                type="checkbox"
+                                                x-model="form.is_active"
+                                                class="w-4 h-4 rounded border-secondary/40 text-primary">
                                             <span class="text-xs text-primary/80">Pack proposé à la réservation</span>
                                         </label>
                                     </div>
                                 </section>
                             </div>
 
-                            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+                            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0
+                                bg-gray-50 rounded-b-2xl">
                                 <button type="button" @click="open = false"
-                                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
+                                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary
+                                        transition-colors">Annuler</button>
                                 <button type="submit"
-                                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                                        hover:bg-surface-dark transition-colors">
                                     <span x-text="editing ? 'Appliquer' : 'Ajouter'"></span>
                                 </button>
                             </div>
@@ -1601,7 +1846,8 @@
                         </p>
                     </div>
                     <button type="button" @click="openCreate()"
-                        class="inline-flex items-center gap-2 px-3.5 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        class="inline-flex items-center gap-2 px-3.5 py-2 bg-primary text-white text-xs font-semibold
+                            rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                         <i data-lucide="plus" class="w-4 h-4"></i>
                         <span>Nouvelle politique</span>
                     </button>
@@ -1617,13 +1863,15 @@
                                         <div class="flex items-center gap-2">
                                             <h3 class="font-heading font-semibold text-primary text-sm">{{ $policy->name }}</h3>
                                             @if($policy->is_default)
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded
+                                                    text-[10px] font-bold bg-amber-100 text-amber-800">
                                                     <i data-lucide="star" class="w-3 h-3 text-amber-600"></i>
                                                     Par défaut
                                                 </span>
                                             @endif
                                             @unless($policy->is_active)
-                                                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-gray-200 text-gray-700">Archivée</span>
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-gray-200
+                                                    text-gray-700">Archivée</span>
                                             @endunless
                                         </div>
                                         <span class="font-mono text-[11px] text-primary/40 uppercase tracking-wider">{{ $policy->code }}</span>
@@ -1640,7 +1888,8 @@
                                     {{ $policy->summaryText() }}
                                 </p>
 
-                                <div class="grid grid-cols-2 gap-2 text-[11px] bg-secondary/5 rounded-lg p-2.5 border border-secondary/15">
+                                <div class="grid grid-cols-2 gap-2 text-[11px] bg-secondary/5 rounded-lg p-2.5 border
+                                    border-secondary/15">
                                     <div>
                                         <span class="text-primary/50 block">Délai sans frais :</span>
                                         <span class="font-semibold text-primary">
@@ -1665,12 +1914,19 @@
                                 </div>
                             </div>
 
-                            <div class="px-5 py-3 bg-gray-50/80 border-t border-secondary/10 flex items-center justify-between gap-2">
+                            <div class="px-5 py-3 bg-gray-50/80 border-t border-secondary/10 flex items-center
+                                justify-between gap-2">
                                 <div>
                                     @if(!$policy->is_default && $policy->is_active)
-                                        <form method="POST" action="{{ route('settings.cancellation_policies.default', $policy) }}" class="inline">
+                                        <form
+                                            method="POST"
+                                            action="{{ route('settings.cancellation_policies.default', $policy) }}"
+                                            class="inline">
                                             @csrf
-                                            <button type="submit" class="text-xs font-semibold text-primary hover:text-surface-dark transition-colors inline-flex items-center gap-1">
+                                            <button
+                                                type="submit"
+                                                class="text-xs font-semibold text-primary hover:text-surface-dark
+                                                    transition-colors inline-flex items-center gap-1">
                                                 <i data-lucide="check" class="w-3.5 h-3.5 text-secondary"></i>
                                                 Définir par défaut
                                             </button>
@@ -1679,14 +1935,18 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <button type="button" @click="openEdit({{ $policy->id }})"
-                                        class="px-2.5 py-1 text-xs text-primary/70 hover:text-primary font-medium transition-colors hover:bg-secondary/10 rounded">
+                                        class="px-2.5 py-1 text-xs text-primary/70 hover:text-primary font-medium
+                                            transition-colors hover:bg-secondary/10 rounded">
                                         Modifier
                                     </button>
                                     @if(!$policy->is_default)
                                         <form method="POST" action="{{ route('settings.cancellation_policies.destroy', $policy) }}"
                                             onsubmit="return confirm('Confirmer la suppression ou l\'archivage de cette politique ?')">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="px-2.5 py-1 text-xs text-red-600 hover:text-red-800 font-medium transition-colors hover:bg-red-50 rounded">
+                                            <button
+                                                type="submit"
+                                                class="px-2.5 py-1 text-xs text-red-600 hover:text-red-800 font-medium
+                                                    transition-colors hover:bg-red-50 rounded">
                                                 Supprimer
                                             </button>
                                         </form>
@@ -1701,19 +1961,30 @@
                 <div x-show="open" x-cloak
                     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/40 backdrop-blur-sm"
                     @keydown.escape.window="open = false">
-                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border border-secondary/20 flex flex-col max-h-[90vh]"
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden border
+                        border-secondary/20 flex flex-col max-h-[90vh]"
                         @click.outside="open = false">
-                        <div class="px-6 py-4 border-b border-secondary/20 flex items-center justify-between bg-primary/5">
+                        <div class="px-6 py-4 border-b border-secondary/20 flex items-center justify-between
+                            bg-primary/5">
                             <div>
-                                <h3 class="font-heading font-semibold text-primary" x-text="editing ? 'Modifier la politique d\'annulation' : 'Nouvelle politique d\'annulation'"></h3>
+                                <h3
+                                    class="font-heading font-semibold text-primary"
+                                    x-text="editing ? 'Modifier la politique d\'annulation' : 'Nouvelle politique d\'annulation'"></h3>
                                 <p class="text-[11px] text-primary/50">Paramètres et calculs conformes aux règles hôtelières.</p>
                             </div>
-                            <button type="button" @click="open = false" class="text-primary/40 hover:text-primary transition-colors">
+                            <button
+                                type="button"
+                                @click="open = false"
+                                class="text-primary/40 hover:text-primary transition-colors">
                                 <i data-lucide="x" class="w-5 h-5"></i>
                             </button>
                         </div>
 
-                        <form data-reglages-fenetre="Politique d'annulation" method="POST" :action="formAction" class="p-6 space-y-4 overflow-y-auto">
+                        <form
+                            data-reglages-fenetre="Politique d'annulation"
+                            method="POST"
+                            :action="formAction"
+                            class="p-6 space-y-4 overflow-y-auto">
                             @csrf
                             <template x-if="editing">
                                 <input type="hidden" name="_method" value="PUT">
@@ -1724,13 +1995,15 @@
                                     <label class="block text-xs font-semibold text-primary/70 mb-1">Code unique *</label>
                                     <input type="text" name="code" x-model="form.code" required maxlength="50"
                                         placeholder="Ex: FLEX_48H"
-                                        class="w-full text-xs font-mono uppercase px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary">
+                                        class="w-full text-xs font-mono uppercase px-3 py-2 border border-secondary/30
+                                            rounded-lg outline-none focus:border-primary">
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="block text-xs font-semibold text-primary/70 mb-1">Libellé de la politique *</label>
                                     <input type="text" name="name" x-model="form.name" required maxlength="255"
                                         placeholder="Ex: Flexible jusqu'à 48h avant l'arrivée"
-                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary">
+                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg
+                                            outline-none focus:border-primary">
                                 </div>
                             </div>
 
@@ -1738,7 +2011,8 @@
                                 <div>
                                     <label class="block text-xs font-semibold text-primary/70 mb-1">Type de pénalité *</label>
                                     <select name="penalty_type" x-model="form.penalty_type" required
-                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary bg-white">
+                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg
+                                            outline-none focus:border-primary bg-white">
                                         <option value="first_night">1ère nuitée facturée</option>
                                         <option value="non_refundable">Non remboursable (100% de frais)</option>
                                         <option value="percentage">Pourcentage du séjour</option>
@@ -1750,29 +2024,34 @@
                                 <div x-show="form.penalty_type === 'percentage'">
                                     <label class="block text-xs font-semibold text-primary/70 mb-1">Pourcentage (%) *</label>
                                     <input type="number" name="penalty_value" x-model="form.penalty_value" min="1" max="100"
-                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary"
+                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg
+                                            outline-none focus:border-primary"
                                         placeholder="Ex: 50">
                                 </div>
 
                                 <div x-show="form.penalty_type === 'fixed_amount'">
                                     <label class="block text-xs font-semibold text-primary/70 mb-1">Montant forfaitaire (FCFA) *</label>
                                     <input type="number" name="penalty_value" x-model="form.penalty_value" min="100" step="100"
-                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary"
+                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg
+                                            outline-none focus:border-primary"
                                         placeholder="Ex: 25000">
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-secondary/5 p-3 rounded-lg border border-secondary/20">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-secondary/5 p-3 rounded-lg border
+                                border-secondary/20">
                                 <div>
                                     <label class="block text-xs font-semibold text-primary/70 mb-1">Délai sans frais (jours avant arrivée)</label>
                                     <input type="number" name="free_cancel_days_before" x-model="form.free_cancel_days_before" min="0" max="365" required
-                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary bg-white">
+                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg
+                                            outline-none focus:border-primary bg-white">
                                     <span class="text-[10px] text-primary/40">0 = Annulable le jour même jusqu'à l'heure limite</span>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-primary/70 mb-1">Heure limite le jour J-N</label>
                                     <input type="time" name="free_cancel_time" x-model="form.free_cancel_time" required
-                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg outline-none focus:border-primary bg-white">
+                                        class="w-full text-xs px-3 py-2 border border-secondary/30 rounded-lg
+                                            outline-none focus:border-primary bg-white">
                                     <span class="text-[10px] text-primary/40">Exemple: 18:00</span>
                                 </div>
                             </div>
@@ -1802,11 +2081,13 @@
 
                             <div class="pt-4 border-t border-secondary/20 flex justify-end gap-3">
                                 <button type="button" @click="open = false"
-                                    class="px-4 py-2 text-xs font-medium text-primary/60 hover:text-primary transition-colors">
+                                    class="px-4 py-2 text-xs font-medium text-primary/60 hover:text-primary
+                                        transition-colors">
                                     Annuler
                                 </button>
                                 <button type="submit"
-                                    class="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                                    class="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg
+                                        hover:bg-surface-dark transition-colors shadow-sm">
                                     <span x-text="editing ? 'Appliquer' : 'Ajouter la politique'"></span>
                                 </button>
                             </div>
@@ -1866,7 +2147,8 @@
                     </div>
                     <a href="{{ route('partners.wallet.index') }}" class="text-sm font-medium text-primary underline">Comptes dépôt</a>
                     <button type="button" @click="openCreate()"
-                        class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                        class="shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm
+                            font-medium rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                         <i data-lucide="plus" class="w-4 h-4"></i>
                         Nouvelle organisation
                     </button>
@@ -1882,9 +2164,16 @@
                     </div>
                 @endif
 
-                <x-table :rows="$partnerOrganizations" empty="Aucune organisation partenaire enregistrée." empty-icon="handshake" caption="Organisations partenaires">
+                <x-table
+                    :rows="$partnerOrganizations"
+                    empty="Aucune organisation partenaire enregistrée."
+                    empty-icon="handshake"
+                    caption="Organisations partenaires">
                     <x-slot:emptyActions>
-                        <button type="button" x-on:click="openCreate()" class="font-medium text-primary hover:underline">Créer la première</button>
+                        <button
+                            type="button"
+                            x-on:click="openCreate()"
+                            class="font-medium text-primary hover:underline">Créer la première</button>
                     </x-slot:emptyActions>
                     <x-slot:head>
                         <x-table.col>Organisation</x-table.col>
@@ -1913,7 +2202,9 @@
                                 @else
                                     <div class="flex max-w-md flex-wrap gap-1">
                                         @foreach($privileges as $privilege)
-                                            <span class="inline-flex items-center rounded-full border border-secondary/20 bg-accent/30 px-2 py-0.5 text-[10px] font-medium text-primary">{{ $privilege }}</span>
+                                            <span class="inline-flex items-center rounded-full border
+                                                border-secondary/20 bg-accent/30 px-2 py-0.5 text-[10px] font-medium
+                                                text-primary">{{ $privilege }}</span>
                                         @endforeach
                                     </div>
                                 @endif
@@ -1932,7 +2223,9 @@
                             </x-table.cell>
                             <x-table.cell align="right" class="text-primary/70">{{ $organization->customers_count }}</x-table.cell>
                             <x-table.actions :label="'Actions pour '.$organization->name">
-                                <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($partnerPayloads[$organization->id]) }})">Modifier</x-table.action>
+                                <x-table.action
+                                    icon="pencil"
+                                    x-on:click="openEdit({{ Js::from($partnerPayloads[$organization->id]) }})">Modifier</x-table.action>
                                 <x-table.action icon="wallet" :href="route('partners.wallet.show', $organization)">Compte dépôt</x-table.action>
                                 <x-table.action :action="route('settings.partners.destroy', $organization)" method="DELETE" icon="trash-2" tone="danger"
                                     :confirm="'Supprimer « '.$organization->name.' » ? Les clients rattachés gardent leur historique, mais perdent les privilèges.'">Supprimer</x-table.action>
@@ -1945,16 +2238,26 @@
                 <div x-show="open" class="fixed inset-0 z-50 flex items-center justify-center p-4"
                     style="display: none; background: rgba(15,2,1,0.5); backdrop-filter: blur(4px);">
                     <div class="absolute inset-0" @click="open = false"></div>
-                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 flex flex-col max-h-[90vh]">
+                    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10 flex flex-col
+                        max-h-[90vh]">
                         <div class="flex items-center justify-between px-6 py-4 border-b border-secondary/20 shrink-0">
                             <h3 class="font-heading font-semibold text-primary"
                                 x-text="editing ? 'Modifier l\'organisation' : 'Nouvelle organisation partenaire'"></h3>
-                            <button type="button" @click="open = false" class="text-primary/30 hover:text-primary transition-colors">
+                            <button
+                                type="button"
+                                @click="open = false"
+                                class="text-primary/30 hover:text-primary transition-colors">
                                 <i data-lucide="x" class="w-5 h-5"></i>
                             </button>
                         </div>
 
-                        <form x-ref="partnerForm" enctype="multipart/form-data" data-reglages-fenetre="Partenaire" method="POST" :action="formAction" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                        <form
+                            x-ref="partnerForm"
+                            enctype="multipart/form-data"
+                            data-reglages-fenetre="Partenaire"
+                            method="POST"
+                            :action="formAction"
+                            class="flex flex-col flex-1 min-h-0 overflow-hidden">
                             @csrf
                             <template x-if="editing">
                                 <input type="hidden" name="_method" value="PUT">
@@ -1968,7 +2271,8 @@
 
                                 {{-- ── Identité ── --}}
                                 <section class="bg-white border border-secondary/20 rounded-xl p-4">
-                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider
+                                        text-primary/50 mb-3">
                                         <i data-lucide="building-2" class="w-3.5 h-3.5"></i>
                                         Identité
                                     </h4>
@@ -1978,19 +2282,25 @@
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom de l'organisation <span class="text-red-500">*</span></label>
                                             <input type="text" name="name" x-model="form.name" @input="applyAutoCode()" required maxlength="160"
                                                 placeholder="Ex : Total Energies Cameroun"
-                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30">
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                    bg-white text-primary outline-none focus:border-secondary
+                                                    transition-colors placeholder-primary/30">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Code</label>
                                             <input type="text" name="code" x-model="form.code" @input="autoCode = false" maxlength="30" placeholder="TEC"
-                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors placeholder-primary/30 font-mono">
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                    bg-white text-primary outline-none focus:border-secondary
+                                                    transition-colors placeholder-primary/30 font-mono">
                                         </div>
                                     </div>
 
                                     <div class="mt-4">
                                         <label class="block text-xs font-medium text-primary/70 mb-1.5">Type <span class="text-red-500">*</span></label>
                                         <select name="type" x-model="form.type" required
-                                            class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                            class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                bg-white text-primary outline-none focus:border-secondary
+                                                transition-colors">
                                             <template x-for="(label, key) in types" :key="key">
                                                 <option :value="key" x-text="label"></option>
                                             </template>
@@ -2000,7 +2310,8 @@
 
                                 {{-- ── Contact ── --}}
                                 <section class="bg-white border border-secondary/20 rounded-xl p-4">
-                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider
+                                        text-primary/50 mb-3">
                                         <i data-lucide="user-round" class="w-3.5 h-3.5"></i>
                                         Interlocuteur
                                     </h4>
@@ -2009,61 +2320,92 @@
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Nom</label>
                                             <input type="text" name="contact_name" x-model="form.contact_name" maxlength="120"
-                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                    bg-white text-primary outline-none focus:border-secondary
+                                                    transition-colors">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Email</label>
                                             <input type="email" name="contact_email" x-model="form.contact_email" maxlength="150"
-                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                    bg-white text-primary outline-none focus:border-secondary
+                                                    transition-colors">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Téléphone</label>
                                             <input type="text" name="contact_phone" x-model="form.contact_phone" maxlength="30"
-                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                    bg-white text-primary outline-none focus:border-secondary
+                                                    transition-colors">
                                         </div>
                                     </div>
                                 </section>
 
                                 {{-- ── Validité ── --}}
                                 <section class="bg-white border border-secondary/20 rounded-xl p-4">
-                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider
+                                        text-primary/50 mb-3">
                                         <i data-lucide="calendar-range" class="w-3.5 h-3.5"></i>
                                         Convention tarifaire
                                     </h4>
 
                                     <input type="hidden" name="has_convention" :value="form.has_convention ? 1 : 0">
-                                    <label class="flex items-center gap-2 mb-4 text-sm"><input type="checkbox" x-model="form.has_convention" class="rounded border-secondary/40 text-primary"> Une convention tarifaire est signée avec cette organisation</label>
+                                    <label class="flex items-center gap-2 mb-4 text-sm"><input
+                                        type="checkbox"
+                                        x-model="form.has_convention"
+                                        class="rounded border-secondary/40 text-primary"> Une convention tarifaire est signée avec cette organisation</label>
                                     <p x-show="!form.has_convention" class="text-sm text-primary/60 mb-3">Les membres sont traités aux tarifs particuliers. Le compte dépôt peut être utilisé sur accord.</p>
                                     <div x-show="form.has_convention">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Du</label>
                                             <input type="date" name="valid_from" x-model="form.valid_from"
-                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                    bg-white text-primary outline-none focus:border-secondary
+                                                    transition-colors">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-primary/70 mb-1.5">Au</label>
                                             <input type="date" name="valid_until" x-model="form.valid_until"
-                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg
+                                                    bg-white text-primary outline-none focus:border-secondary
+                                                    transition-colors">
                                         </div>
                                     </div>
                                     <p class="text-[11px] text-primary/40 mt-2">
                                         Laisser vide pour une convention sans échéance. Hors de cette période, les privilèges cessent de s'appliquer.
                                     </p>
 
-                                    <label class="block mt-4"><span class="block text-sm mb-2">Convention signée, version scannée</span><input type="file" name="conventions[]" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" class="block max-w-full text-sm"><span class="block text-xs text-primary/60 mt-1">Jusqu’à 5 fichiers PDF ou images, 10 Mo par fichier. Les versions précédentes restent conservées.</span></label>
-                                    <ul class="mt-3 space-y-1"><template x-for="attachment in (form.attachments || [])" :key="attachment.url"><li><a :href="attachment.url" x-text="attachment.name" class="text-sm underline text-primary"></a></li></template></ul>
+                                    <label class="block mt-4"><span class="block text-sm mb-2">Convention signée, version scannée</span><input
+                                        type="file"
+                                        name="conventions[]"
+                                        multiple
+                                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                        class="block max-w-full text-sm"><span class="block text-xs text-primary/60 mt-1">Jusqu’à 5 fichiers PDF ou images, 10 Mo par fichier. Les versions précédentes restent conservées.</span></label>
+                                    <ul class="mt-3 space-y-1"><template
+                                        x-for="attachment in (form.attachments || [])"
+                                        :key="attachment.url"><li><a
+                                        :href="attachment.url"
+                                        x-text="attachment.name"
+                                        class="text-sm underline text-primary"></a></li></template></ul>
                                     </div>
-                                    <label class="mt-4 flex items-center gap-2.5 px-3 py-2.5 border border-secondary/30 rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
+                                    <label class="mt-4 flex items-center gap-2.5 px-3 py-2.5 border border-secondary/30
+                                        rounded-lg cursor-pointer hover:bg-accent/10 transition-colors">
                                         <input type="hidden" name="is_active" :value="form.is_active ? 1 : 0">
-                                        <input type="checkbox" x-model="form.is_active" class="w-4 h-4 rounded border-secondary/40 text-primary">
+                                        <input
+                                            type="checkbox"
+                                            x-model="form.is_active"
+                                            class="w-4 h-4 rounded border-secondary/40 text-primary">
                                         <span class="text-xs text-primary/80">Organisation active</span>
                                     </label>
                                 </section>
 
                                 {{-- ── Privilèges ── --}}
-                                <section x-show="form.has_convention" class="bg-accent/10 border border-secondary/30 rounded-xl p-4">
-                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/60 mb-1">
+                                <section
+                                    x-show="form.has_convention"
+                                    class="bg-accent/10 border border-secondary/30 rounded-xl p-4">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider
+                                        text-primary/60 mb-1">
                                         <i data-lucide="gift" class="w-3.5 h-3.5"></i>
                                         Privilèges accordés aux membres
                                     </h4>
@@ -2078,7 +2420,9 @@
                                             <div>
                                                 <label class="block text-xs font-medium text-primary/70 mb-1.5">Type de remise</label>
                                                 <select name="room_discount_type" x-model="form.room_discount_type"
-                                                    class="w-full px-3 py-2.5 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                    class="w-full px-3 py-2.5 text-sm border border-secondary/30
+                                                        rounded-lg bg-white text-primary outline-none
+                                                        focus:border-secondary transition-colors">
                                                     <option value="none">Aucune</option>
                                                     <option value="percent">Pourcentage</option>
                                                     <option value="amount">Montant par nuitée</option>
@@ -2090,7 +2434,9 @@
                                                 <div class="relative">
                                                     <input type="number" name="room_discount_value" x-model="form.room_discount_value" min="0"
                                                         :max="form.room_discount_type === 'percent' ? 100 : 10000000"
-                                                        class="w-full px-3 py-2.5 pr-14 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                        class="w-full px-3 py-2.5 pr-14 text-sm border
+                                                            border-secondary/30 rounded-lg bg-white text-primary
+                                                            outline-none focus:border-secondary transition-colors">
                                                     <span class="absolute right-3 top-2.5 text-xs font-medium text-primary/40"
                                                         x-text="form.room_discount_type === 'percent' ? '%' : 'FCFA'"></span>
                                                 </div>
@@ -2106,7 +2452,9 @@
                                                 <label class="block text-xs font-medium text-primary/70 mb-1.5">Remise restaurant</label>
                                                 <div class="relative">
                                                     <input type="number" name="restaurant_discount_percent" x-model="form.restaurant_discount_percent" min="0" max="100"
-                                                        class="w-full px-3 py-2.5 pr-9 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                        class="w-full px-3 py-2.5 pr-9 text-sm border
+                                                            border-secondary/30 rounded-lg bg-white text-primary
+                                                            outline-none focus:border-secondary transition-colors">
                                                     <span class="absolute right-3 top-2.5 text-xs font-medium text-primary/40">%</span>
                                                 </div>
                                             </div>
@@ -2114,7 +2462,9 @@
                                                 <label class="block text-xs font-medium text-primary/70 mb-1.5">Remise boutique</label>
                                                 <div class="relative">
                                                     <input type="number" name="shop_discount_percent" x-model="form.shop_discount_percent" min="0" max="100"
-                                                        class="w-full px-3 py-2.5 pr-9 text-sm border border-secondary/30 rounded-lg bg-white text-primary outline-none focus:border-secondary transition-colors">
+                                                        class="w-full px-3 py-2.5 pr-9 text-sm border
+                                                            border-secondary/30 rounded-lg bg-white text-primary
+                                                            outline-none focus:border-secondary transition-colors">
                                                     <span class="absolute right-3 top-2.5 text-xs font-medium text-primary/40">%</span>
                                                 </div>
                                             </div>
@@ -2131,15 +2481,20 @@
                                         </div>
 
                                         <template x-if="services.length === 0">
-                                            <p class="text-[11px] text-primary/50 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
+                                            <p class="text-[11px] text-primary/50 bg-amber-50 border border-amber-200
+                                                rounded-lg px-3 py-2.5">
                                                 Aucune prestation au catalogue. Ajoutez-en dans l'onglet Prestations pour pouvoir en offrir.
                                             </p>
                                         </template>
 
-                                        <div x-show="services.length > 0" class="border border-secondary/30 rounded-lg max-h-44 overflow-y-auto divide-y divide-secondary/10">
+                                        <div
+                                            x-show="services.length > 0"
+                                            class="border border-secondary/30 rounded-lg max-h-44 overflow-y-auto
+                                                divide-y divide-secondary/10">
                                             @foreach($serviceItemsFlat as $svc)
                                                 @php $svcId = (int) $svc->id; @endphp
-                                                <label class="flex items-center gap-3 px-3 py-2.5 hover:bg-accent/20 cursor-pointer transition-colors"
+                                                <label class="flex items-center gap-3 px-3 py-2.5 hover:bg-accent/20
+                                                    cursor-pointer transition-colors"
                                                     :class="form.free_service_item_ids.includes({{ $svcId }}) ? 'bg-accent/20' : ''">
                                                     {{-- Valeur littérale, rendue côté serveur : associée à
                                                          x-model, une liaison « :value » est écrasée et la case
@@ -2164,14 +2519,30 @@
 
                                     {{-- Arrangements horaires --}}
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                                        <label class="flex items-center gap-2.5 bg-white border border-secondary/20 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10 transition-colors">
-                                            <input type="hidden" name="late_checkout" :value="form.late_checkout ? 1 : 0">
-                                            <input type="checkbox" x-model="form.late_checkout" class="w-4 h-4 rounded border-secondary/40 text-primary">
+                                        <label class="flex items-center gap-2.5 bg-white border border-secondary/20
+                                            rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10
+                                            transition-colors">
+                                            <input
+                                                type="hidden"
+                                                name="late_checkout"
+                                                :value="form.late_checkout ? 1 : 0">
+                                            <input
+                                                type="checkbox"
+                                                x-model="form.late_checkout"
+                                                class="w-4 h-4 rounded border-secondary/40 text-primary">
                                             <span class="text-xs text-primary/80">Départ tardif sans frais</span>
                                         </label>
-                                        <label class="flex items-center gap-2.5 bg-white border border-secondary/20 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10 transition-colors">
-                                            <input type="hidden" name="early_checkin" :value="form.early_checkin ? 1 : 0">
-                                            <input type="checkbox" x-model="form.early_checkin" class="w-4 h-4 rounded border-secondary/40 text-primary">
+                                        <label class="flex items-center gap-2.5 bg-white border border-secondary/20
+                                            rounded-lg px-3 py-2.5 cursor-pointer hover:bg-accent/10
+                                            transition-colors">
+                                            <input
+                                                type="hidden"
+                                                name="early_checkin"
+                                                :value="form.early_checkin ? 1 : 0">
+                                            <input
+                                                type="checkbox"
+                                                x-model="form.early_checkin"
+                                                class="w-4 h-4 rounded border-secondary/40 text-primary">
                                             <span class="text-xs text-primary/80">Arrivée anticipée sans frais</span>
                                         </label>
                                     </div>
@@ -2179,7 +2550,8 @@
 
                                 {{-- ── Notes ── --}}
                                 <section class="bg-white border border-secondary/20 rounded-xl p-4">
-                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary/50 mb-3">
+                                    <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider
+                                        text-primary/50 mb-3">
                                         <i data-lucide="notebook-pen" class="w-3.5 h-3.5"></i>
                                         Notes internes
                                     </h4>
@@ -2189,11 +2561,14 @@
                                 </section>
                             </div>
 
-                            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0 bg-gray-50 rounded-b-2xl">
+                            <div class="px-6 py-4 border-t border-secondary/20 flex justify-end gap-3 shrink-0
+                                bg-gray-50 rounded-b-2xl">
                                 <button type="button" @click="open = false"
-                                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary transition-colors">Annuler</button>
+                                    class="px-4 py-2 text-sm text-primary/60 hover:text-primary
+                                        transition-colors">Annuler</button>
                                 <button type="submit"
-                                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg
+                                        hover:bg-surface-dark transition-colors">
                                     <span x-text="editing ? 'Appliquer' : 'Ajouter'"></span>
                                 </button>
                             </div>
@@ -2211,8 +2586,12 @@
      page défile d'un bloc : la barre est fixée à l'écran ; sur grand écran,
      main défile seul : elle colle à son bas. --}}
 <div id="barre-reglages" hidden
-     class="fixed inset-x-0 bottom-0 z-30 lg:sticky lg:inset-x-auto lg:mt-4 lg:-mx-8 border-t border-secondary/20 bg-white/95 backdrop-blur px-4 lg:px-8 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] print:hidden">
-    <div id="reglages-en-attente" hidden class="mb-2 mr-20 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+     class="fixed inset-x-0 bottom-0 z-30 lg:sticky lg:inset-x-auto lg:mt-4 lg:-mx-8 border-t border-secondary/20
+         bg-white/95 backdrop-blur px-4 lg:px-8 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] print:hidden">
+    <div
+        id="reglages-en-attente"
+        hidden
+        class="mb-2 mr-20 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
         <p class="font-semibold mb-1">En attente d'enregistrement</p>
         <ul class="space-y-1"></ul>
     </div>
@@ -2221,11 +2600,14 @@
         <p data-etat class="text-sm text-primary/60" aria-live="polite">Aucune modification</p>
         <div class="flex items-center gap-2">
             <button type="button" data-annuler hidden
-                    class="px-4 py-2 rounded-lg text-sm font-medium border border-secondary/30 bg-white text-primary hover:bg-gray-50 transition-colors">
+                    class="px-4 py-2 rounded-lg text-sm font-medium border border-secondary/30 bg-white text-primary
+                        hover:bg-gray-50 transition-colors">
                 Annuler<span class="hidden sm:inline"> les modifications</span>
             </button>
             <button type="button" data-enregistrer disabled
-                    class="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                    class="inline-flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold bg-primary
+                        text-white hover:bg-surface-dark transition-colors shadow-sm disabled:opacity-40
+                        disabled:cursor-not-allowed">
                 <i data-lucide="save" class="w-4 h-4" aria-hidden="true"></i> Enregistrer
             </button>
         </div>
@@ -2233,14 +2615,31 @@
 </div>
 
 {{-- Quitter l'onglet avec des modifications non enregistrées. --}}
-<div id="dialogue-reglages" hidden class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="dialogue-reglages-titre">
+<div
+    id="dialogue-reglages"
+    hidden
+    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="dialogue-reglages-titre">
     <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
         <h2 id="dialogue-reglages-titre" class="font-heading text-lg font-semibold text-primary">Modifications non enregistrées</h2>
         <p class="mt-2 text-sm text-primary/70">Cet onglet a des modifications non enregistrées. Les enregistrer avant de continuer ?</p>
         <div class="mt-5 flex flex-wrap justify-end gap-2">
-            <button type="button" data-choix="rester" class="px-4 py-2 rounded-lg text-sm font-medium text-primary/70 hover:text-primary">Rester</button>
-            <button type="button" data-choix="abandonner" class="px-4 py-2 rounded-lg text-sm font-medium border border-red-200 text-red-700 hover:bg-red-50">Abandonner</button>
-            <button type="button" data-choix="enregistrer" class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-surface-dark">Enregistrer</button>
+            <button
+                type="button"
+                data-choix="rester"
+                class="px-4 py-2 rounded-lg text-sm font-medium text-primary/70 hover:text-primary">Rester</button>
+            <button
+                type="button"
+                data-choix="abandonner"
+                class="px-4 py-2 rounded-lg text-sm font-medium border border-red-200 text-red-700
+                    hover:bg-red-50">Abandonner</button>
+            <button
+                type="button"
+                data-choix="enregistrer"
+                class="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white
+                    hover:bg-surface-dark">Enregistrer</button>
         </div>
     </div>
 </div>

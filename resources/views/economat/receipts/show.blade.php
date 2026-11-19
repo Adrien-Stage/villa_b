@@ -20,15 +20,24 @@
 <div class="max-w-5xl mx-auto space-y-6">
     {{-- Barre de navigation supérieure --}}
     <div class="flex items-center justify-between">
-        <a href="{{ route('economat.receipts.index') }}" class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
+        <a
+            href="{{ route('economat.receipts.index') }}"
+            class="inline-flex items-center gap-1.5 text-sm text-primary/60 hover:text-primary transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4"></i> Retour à la liste des bons d'entrée
         </a>
         <div class="flex items-center gap-2">
-            <a href="{{ route('economat.receipts.print', $receipt) }}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-secondary/30 text-primary text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+            <a
+                href="{{ route('economat.receipts.print', $receipt) }}"
+                target="_blank"
+                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-secondary/30 text-primary
+                    text-xs font-semibold rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
                 <i data-lucide="printer" class="w-4 h-4 text-primary/70"></i> Imprimer le Bon d'Entrée (PDF / Papier)
             </a>
             @if(\Illuminate\Support\Facades\Route::has('accounting.supplier-invoices.create') && ! $receipt->estEnAttente())
-                <a href="{{ route('accounting.supplier-invoices.create', ['bon' => $receipt->purchase_order_id]) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
+                <a
+                    href="{{ route('accounting.supplier-invoices.create', ['bon' => $receipt->purchase_order_id]) }}"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold
+                        rounded-lg hover:bg-surface-dark transition-colors shadow-sm">
                     <i data-lucide="file-text" class="w-4 h-4"></i> Saisir la facture fournisseur
                 </a>
             @endif
@@ -38,14 +47,18 @@
     @include('economat.partials.flash')
 
     @if($receipt->estEnAttente())
-        <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-5 py-4">
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50
+            px-5 py-4">
             <div>
                 <p class="text-sm font-semibold text-amber-900">Livraison attendue</p>
                 <p class="text-xs text-amber-800">À l'arrivée de la marchandise, remplissez ce bon : quantités livrées, acceptées, refusées, et si la livraison est complète ou partielle.</p>
             </div>
             @if($receipt->purchaseOrder)
                 @droit('economat.receipts.creer')
-                    <a href="{{ route('economat.receipts.create', $receipt->purchaseOrder) }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 shadow-sm">
+                    <a
+                        href="{{ route('economat.receipts.create', $receipt->purchaseOrder) }}"
+                        class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold
+                            rounded-lg hover:bg-emerald-700 shadow-sm">
                         <i data-lucide="package-check" class="w-4 h-4"></i> Réceptionner la livraison
                     </a>
                 @enddroit
@@ -59,7 +72,8 @@
             <div>
                 <span class="text-xs font-mono font-semibold text-primary/50 uppercase">Bon d'entrée officiel en magasin</span>
                 <div class="flex items-center gap-3 mt-1">
-                    <h1 class="text-2xl font-heading font-bold text-primary font-mono tracking-tight">{{ $receipt->number }}</h1>
+                    <h1 class="text-2xl font-heading font-bold text-primary font-mono
+                        tracking-tight">{{ $receipt->number }}</h1>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border {{ $receipt->estEnAttente() ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200' }}">
                         {{ $receipt->statusLabel() }}
                     </span>
@@ -96,11 +110,13 @@
                     <h2 class="text-xs font-semibold uppercase tracking-wider text-primary/70">Livraison Fournisseur</h2>
                 </div>
                 @if($receipt->estEnAttente())
-                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-50
+                        border border-amber-200 px-2 py-0.5 rounded-full">
                         <i data-lucide="clock" class="w-3 h-3"></i> Attendue
                     </span>
                 @else
-                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800
+                        bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                         <i data-lucide="check" class="w-3 h-3"></i> Réceptionné
                     </span>
                 @endif
@@ -121,7 +137,9 @@
                     <span class="text-primary/50">Bon de commande d'origine :</span>
                     @if($receipt->purchaseOrder)
                         @droit('economat.orders.voir')
-                            <a href="{{ route('economat.orders.show', $receipt->purchaseOrder) }}" class="font-mono font-bold text-primary hover:underline ml-1">
+                            <a
+                                href="{{ route('economat.orders.show', $receipt->purchaseOrder) }}"
+                                class="font-mono font-bold text-primary hover:underline ml-1">
                                 {{ $receipt->purchaseOrder->number }}
                             </a>
                         @else
@@ -152,7 +170,8 @@
                     <h2 class="text-xs font-semibold uppercase tracking-wider text-primary/70">Signature Économe</h2>
                 </div>
                 @unless($receipt->estEnAttente())
-                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50
+                        border border-indigo-200 px-2 py-0.5 rounded-full">
                         <i data-lucide="shield-check" class="w-3 h-3"></i> Certifiée
                     </span>
                 @endunless
@@ -160,12 +179,14 @@
 
             @if($receipt->estEnAttente())
                 {{-- Pas encore de signature : l'économat signera en réceptionnant. --}}
-                <div class="bg-gray-50/80 border border-dashed border-secondary/30 rounded-lg p-3 text-center my-auto text-xs text-primary/55">
+                <div class="bg-gray-50/80 border border-dashed border-secondary/30 rounded-lg p-3 text-center my-auto
+                    text-xs text-primary/55">
                     Signée par l'économat à la réception de la livraison.
                 </div>
             @else
             <div class="bg-gray-50/80 border border-dashed border-secondary/30 rounded-lg p-3 text-center my-auto">
-                <div class="text-[10px] uppercase font-semibold text-primary/50 tracking-wider mb-1">Entrée en stock certifiée conforme</div>
+                <div class="text-[10px] uppercase font-semibold text-primary/50 tracking-wider
+                    mb-1">Entrée en stock certifiée conforme</div>
                 <div class="font-signature text-4xl text-primary font-normal leading-tight py-1 select-none">
                     {{ $receipt->receiverSignature() ?? ($receipt->receivedBy?->name ?? 'Économe') }}
                 </div>
@@ -190,12 +211,21 @@
             <h2 id="titre-bordereaux" class="text-xs font-semibold uppercase tracking-wider text-primary/70">Bordereaux de livraison ({{ $receipt->attachments->count() }})</h2>
             @if($receipt->status !== \App\Models\GoodsReceipt::STATUS_CANCELLED)
                 @droit('economat.receipts.attachments.creer')
-                    <form method="POST" action="{{ route('economat.receipts.attachments.store', $receipt) }}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
+                    <form
+                        method="POST"
+                        action="{{ route('economat.receipts.attachments.store', $receipt) }}"
+                        enctype="multipart/form-data"
+                        class="flex flex-wrap items-center gap-2">
                         @csrf
                         <label for="ajout-bordereaux" class="sr-only">Joindre des bordereaux</label>
                         <input id="ajout-bordereaux" type="file" name="bordereaux[]" multiple required accept="application/pdf,image/*"
-                               class="max-w-[16rem] text-xs text-primary file:mr-2 file:rounded-md file:border-0 file:bg-secondary/15 file:px-2.5 file:py-1.5 file:text-xs file:font-semibold file:text-primary">
-                        <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-surface-dark">
+                               class="max-w-[16rem] text-xs text-primary file:mr-2 file:rounded-md file:border-0
+                                   file:bg-secondary/15 file:px-2.5 file:py-1.5 file:text-xs file:font-semibold
+                                   file:text-primary">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs
+                                font-semibold rounded-lg hover:bg-surface-dark">
                             <i data-lucide="paperclip" class="w-3.5 h-3.5" aria-hidden="true"></i> Joindre
                         </button>
                     </form>
@@ -208,10 +238,18 @@
         @forelse($receipt->attachments as $bordereau)
             <div class="flex flex-wrap items-center justify-between gap-3 py-2.5 {{ $loop->first ? 'mt-1' : 'border-t border-secondary/10' }}">
                 <div class="flex min-w-0 items-center gap-2.5">
-                    <i data-lucide="{{ $bordereau->estUneImage() ? 'image' : 'file-text' }}" class="h-4 w-4 shrink-0 text-primary/50" aria-hidden="true"></i>
+                    <i
+                        data-lucide="{{ $bordereau->estUneImage() ? 'image' : 'file-text' }}"
+                        class="h-4 w-4 shrink-0 text-primary/50"
+                        aria-hidden="true"></i>
                     <div class="min-w-0">
                         @droit('economat.receipts.attachments.voir')
-                            <a href="{{ route('economat.receipts.attachments.show', [$receipt, $bordereau]) }}" target="_blank" rel="noopener" class="block truncate text-sm font-medium text-primary hover:underline">{{ $bordereau->original_name }}</a>
+                            <a
+                                href="{{ route('economat.receipts.attachments.show', [$receipt, $bordereau]) }}"
+                                target="_blank"
+                                rel="noopener"
+                                class="block truncate text-sm font-medium text-primary
+                                    hover:underline">{{ $bordereau->original_name }}</a>
                         @else
                             <span class="block truncate text-sm font-medium text-primary">{{ $bordereau->original_name }}</span>
                         @enddroit
@@ -223,14 +261,18 @@
                           onsubmit="return confirm('Retirer ce bordereau du bon ? Il sera conservé dans la corbeille de l\'établissement.');">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-red-600
+                                hover:bg-red-50">
                             <i data-lucide="trash-2" class="h-3.5 w-3.5" aria-hidden="true"></i> Supprimer
                         </button>
                     </form>
                 @enddroit
             </div>
         @empty
-            <p class="mt-3 rounded-lg border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs text-amber-900">
+            <p class="mt-3 rounded-lg border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs
+                text-amber-900">
                 {{ $receipt->estEnAttente() ? 'Le bordereau se joint à la réception de la livraison.' : 'Aucun bordereau joint : ajoutez le bordereau de livraison signé dès que vous l\'avez.' }}
             </p>
         @endforelse
@@ -262,7 +304,8 @@
 
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
-                <thead class="bg-gray-50/40 text-[11px] font-semibold uppercase text-primary/50 border-b border-secondary/10">
+                <thead class="bg-gray-50/40 text-[11px] font-semibold uppercase text-primary/50 border-b
+                    border-secondary/10">
                     <tr>
                         <th class="px-5 py-3 text-left">Article</th>
                         <th class="px-3 py-3 text-center">Unité</th>
@@ -301,7 +344,8 @@
                                     </div>
                                 @endif
                             </td>
-                            <td class="px-3 py-3 text-center font-mono font-bold text-xs text-primary/70">{{ $line->item?->shortUnit() ?? $line->item?->unit }}</td>
+                            <td class="px-3 py-3 text-center font-mono font-bold text-xs
+                                text-primary/70">{{ $line->item?->shortUnit() ?? $line->item?->unit }}</td>
                             <td class="px-3 py-3 text-right font-mono text-primary/60">
                                 {{ rtrim(rtrim(number_format($line->quantity_ordered, 3, ',', ' '), '0'), ',') }}
                             </td>

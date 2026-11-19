@@ -110,9 +110,12 @@ class BusinessReportingService
         $shop = [];
 
         if ($period === 'year') {
-            $mHotel = $this->monthlySum(Payment::serviceSettlements()->where('status', 'completed'), 'paid_at', 'amount', $start, $end);
-            $mResto = $this->monthlySum(RestaurantCustomerOrder::where('payment_status', 'paid'), 'paid_at', 'amount_paid', $start, $end);
-            $mShop  = $this->monthlySum(ShopOrder::where('payment_status', 'paid'), 'paid_at', 'total_amount', $start, $end);
+            $mHotel = $this->monthlySum(Payment::serviceSettlements()->where('status', 'completed'), 'paid_at',
+                'amount', $start, $end);
+            $mResto = $this->monthlySum(RestaurantCustomerOrder::where('payment_status', 'paid'), 'paid_at',
+                'amount_paid', $start, $end);
+            $mShop  = $this->monthlySum(ShopOrder::where('payment_status', 'paid'), 'paid_at', 'total_amount', $start,
+                $end);
 
             for ($m = 1; $m <= Carbon::now()->month; $m++) {
                 $labels[] = Carbon::create()->month($m)->locale('fr')->shortMonthName;
@@ -121,9 +124,12 @@ class BusinessReportingService
                 $shop[]       = ($mShop[$m] ?? 0) / 100;
             }
         } else {
-            $dHotel = $this->dailySum(Payment::serviceSettlements()->where('status', 'completed'), 'paid_at', 'amount', $start, $end);
-            $dResto = $this->dailySum(RestaurantCustomerOrder::where('payment_status', 'paid'), 'paid_at', 'amount_paid', $start, $end);
-            $dShop  = $this->dailySum(ShopOrder::where('payment_status', 'paid'), 'paid_at', 'total_amount', $start, $end);
+            $dHotel = $this->dailySum(Payment::serviceSettlements()->where('status', 'completed'), 'paid_at', 'amount',
+                $start, $end);
+            $dResto = $this->dailySum(RestaurantCustomerOrder::where('payment_status', 'paid'), 'paid_at',
+                'amount_paid', $start, $end);
+            $dShop  = $this->dailySum(ShopOrder::where('payment_status', 'paid'), 'paid_at', 'total_amount', $start,
+                $end);
 
             $cursor = $start->copy();
             while ($cursor <= $end) {
@@ -498,7 +504,9 @@ class BusinessReportingService
                     'type'     => 'cash_discrepancy',
                     'severity' => abs($gap) >= self::CASH_DISCREPANCY_ALERT * 5 ? 'high' : 'medium',
                     'title'    => 'Écart de caisse',
-                    'message'  => "Caisse {$s->module} de " . ($s->user?->name ?? 'un employé') . " : écart de " . number_format(abs($gap) / 100, 0, ',', ' ') . ' FCFA ' . ($gap < 0 ? '(manquant)' : '(excédent)') . '.',
+                    'message'  => "Caisse {$s->module} de " . ($s->user?->name ?? 'un employé') . " : écart de "
+                        . number_format(abs($gap) / 100, 0, ',', ' ') . ' FCFA '
+                        . ($gap < 0 ? '(manquant)' : '(excédent)') . '.',
                     'at'       => $s->closed_at?->format('d/m/Y H:i'),
                 ];
             });
@@ -513,7 +521,8 @@ class BusinessReportingService
                     'type'     => 'large_disbursement',
                     'severity' => 'medium',
                     'title'    => 'Décaissement important',
-                    'message'  => number_format((int) $d->amount / 100, 0, ',', ' ') . ' FCFA sortis par ' . ($d->user?->name ?? 'un employé') . " — motif : {$d->reason}.",
+                    'message'  => number_format((int) $d->amount / 100, 0, ',', ' ') . ' FCFA sortis par ' . ($d->user
+                        ?->name ?? 'un employé') . " — motif : {$d->reason}.",
                     'at'       => $d->created_at?->format('d/m/Y H:i'),
                 ];
             });

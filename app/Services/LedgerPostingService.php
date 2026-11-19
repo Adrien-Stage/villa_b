@@ -100,7 +100,8 @@ class LedgerPostingService
         // Consommations du mini-bar portées au folio, ou facturées à part après
         // le départ : la créance naît au relevé.
         \App\Models\MinibarCheck::query()
-            ->whereIn('billing', [\App\Models\MinibarCheck::BILLING_FOLIO, \App\Models\MinibarCheck::BILLING_A_FACTURER])
+            ->whereIn('billing', [\App\Models\MinibarCheck::BILLING_FOLIO,
+                \App\Models\MinibarCheck::BILLING_A_FACTURER])
             ->whereBetween('checked_at', [$start, $end])
             ->with('booking.customer')
             ->get()
@@ -321,7 +322,8 @@ class LedgerPostingService
         ]];
 
         return $this->ledger->post(
-            journalCode: $walletSettlement ? Journal::MISC : ($tresorerie === Account::CASH ? Journal::CASH : Journal::BANK),
+            journalCode: $walletSettlement ? Journal::MISC : (
+                $tresorerie === Account::CASH ? Journal::CASH : Journal::BANK),
             date: Carbon::parse($payment->paid_at ?? $payment->created_at),
             label: ($remboursement ? 'Remboursement' : 'Encaissement')
                 . ($payment->booking?->booking_number ? ' — séjour ' . $payment->booking->booking_number : ''),
@@ -472,7 +474,8 @@ class LedgerPostingService
             date: $start,
             label: 'Coût matière du ' . $start->format('d/m/Y'),
             lines: [
-                ['account' => '603200', 'label' => 'Consommation cuisine', 'debit' => $cout, 'center' => JournalEntryLine::CENTER_RESTAURANT],
+                ['account' => '603200', 'label' => 'Consommation cuisine', 'debit' => $cout,
+                    'center' => JournalEntryLine::CENTER_RESTAURANT],
                 ['account' => '321000', 'label' => 'Sortie de stock', 'credit' => $cout],
             ],
             schema: $schema,
@@ -568,7 +571,8 @@ class LedgerPostingService
             // dépôt, qui révèle ce qui a été consommé. Un classeur importé
             // pour un dépôt y livre de même ce qu'il fait entrer.
             if ($requisition?->service_store_id !== null
-                || ($mouvement->source_type === StockMovement::SOURCE_IMPORT && !empty($mouvement->details['vers_depot']))) {
+                || ($mouvement->source_type === StockMovement::SOURCE_IMPORT && !empty($mouvement
+                    ->details['vers_depot']))) {
                 continue;
             }
 
@@ -709,7 +713,8 @@ class LedgerPostingService
      */
     public function postMinibarSale(\App\Models\MinibarCheck $check): ?JournalEntry
     {
-        if (!in_array($check->billing, [\App\Models\MinibarCheck::BILLING_FOLIO, \App\Models\MinibarCheck::BILLING_A_FACTURER], true)) {
+        if (!in_array($check->billing, [\App\Models\MinibarCheck::BILLING_FOLIO,
+            \App\Models\MinibarCheck::BILLING_A_FACTURER], true)) {
             return null;
         }
 
@@ -759,7 +764,8 @@ class LedgerPostingService
 
                 $stock = $mouvement->stock_account ?: $mouvement->item?->stockAccount() ?? Account::STOCK_STORE;
                 $libelle = 'Consommations des mini-bars';
-                $this->imputer($imputations, Account::variationFor($stock), $libelle, $valeur, 0, JournalEntryLine::CENTER_ACCOMMODATION);
+                $this->imputer($imputations, Account::variationFor($stock), $libelle, $valeur, 0,
+                    JournalEntryLine::CENTER_ACCOMMODATION);
                 $this->imputer($imputations, $stock, $libelle, 0, $valeur);
             });
 
@@ -813,7 +819,8 @@ class LedgerPostingService
             ->get();
 
         $demandes = \App\Models\MaintenanceRequest::query()
-            ->whereKey($mouvements->where('source_type', \App\Models\ServiceStoreMovement::SOURCE_INTERVENTION)->pluck('source_id')->filter()->unique())
+            ->whereKey($mouvements->where('source_type', \App\Models\ServiceStoreMovement::SOURCE_INTERVENTION)
+                ->pluck('source_id')->filter()->unique())
             ->pluck('department', 'id');
 
         $imputations = [];
@@ -907,7 +914,8 @@ class LedgerPostingService
      * Passé immédiatement et non au night audit, car les mouvements suivants
      * sont déjà comptabilisés sur le nouveau compte.
      */
-    public function postStockReclassification(string $from, string $to, int $amount, string $label, CarbonInterface $date): ?JournalEntry
+    public function postStockReclassification(string $from, string $to, int $amount, string $label,
+        CarbonInterface $date): ?JournalEntry
     {
         if ($amount <= 0 || $from === $to) {
             return null;
@@ -994,11 +1002,13 @@ class LedgerPostingService
      *
      * @param  array<string, array<string, mixed>>  $imputations
      */
-    private function imputer(array &$imputations, string $compte, string $libelle, int $debit, int $credit, ?string $centre = null): void
+    private function imputer(array &$imputations, string $compte, string $libelle, int $debit, int $credit,
+        ?string $centre = null): void
     {
         $cle = implode('|', [$compte, $debit > 0 ? 'D' : 'C', $libelle, $centre]);
 
-        $imputations[$cle] ??= ['account' => $compte, 'label' => $libelle, 'debit' => 0, 'credit' => 0, 'center' => $centre];
+        $imputations[$cle] ??= ['account' => $compte, 'label' => $libelle, 'debit' => 0, 'credit' => 0,
+            'center' => $centre];
         $imputations[$cle]['debit'] += $debit;
         $imputations[$cle]['credit'] += $credit;
     }

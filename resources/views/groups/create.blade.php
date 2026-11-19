@@ -48,14 +48,26 @@
 
             <div class="mb-6 pt-4 border-t border-secondary/20" x-data="{ isBooker: 'self' }">
                 <label class="block text-sm font-semibold text-primary mb-2">Qui effectue cette réservation ?</label>
-                <select name="is_booker" x-model="isBooker" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary mb-4">
+                <select
+                    name="is_booker"
+                    x-model="isBooker"
+                    class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none
+                        focus:border-secondary mb-4">
                     <option value="self">Le contact du groupe lui-même</option>
                     <option value="other">Une tierce personne (Mandataire)</option>
                 </select>
 
-                <div x-show="isBooker === 'other'" style="display: none;" class="p-4 bg-gray-50 border border-secondary/20 rounded-xl">
+                <div
+                    x-show="isBooker === 'other'"
+                    style="display: none;"
+                    class="p-4 bg-gray-50 border border-secondary/20 rounded-xl">
                     <h3 class="text-sm font-semibold text-primary mb-3">Le mandataire (Celui qui réserve)</h3>
-                    <x-customer-search :customers="$customers" name="booker_id" :value="old('booker_id')" :allow-creation="false" placeholder="Rechercher le mandataire...">
+                    <x-customer-search
+                        :customers="$customers"
+                        name="booker_id"
+                        :value="old('booker_id')"
+                        :allow-creation="false"
+                        placeholder="Rechercher le mandataire...">
                     </x-customer-search>
                 </div>
             </div>
@@ -69,7 +81,8 @@
                            value="{{ old('group_name') }}"
                            placeholder="Ex: Famille Nkomo, Séminaire UNESCO..."
                            required
-                           class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary placeholder-primary/30">
+                           class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                               outline-none focus:border-secondary placeholder-primary/30">
                     @error('group_name')
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                     @enderror
@@ -79,7 +92,8 @@
                         Type d'événement *
                     </label>
                     <select name="event_type" required
-                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                outline-none focus:border-secondary">
                         <option value="">Sélectionner...</option>
                         <option value="family"     {{ old('event_type') === 'family'     ? 'selected' : '' }}>Famille</option>
                         <option value="corporate"  {{ old('event_type') === 'corporate'  ? 'selected' : '' }}>Corporate / Séminaire</option>
@@ -98,7 +112,8 @@
                            value="{{ old('start_date') }}"
                            min="{{ now()->format('Y-m-d') }}"
                            required
-                           class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                           class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                               outline-none focus:border-secondary">
                     @error('start_date')
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                     @enderror
@@ -110,7 +125,8 @@
                     <input type="date" name="end_date"
                            value="{{ old('end_date') }}"
                            required
-                           class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                           class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                               outline-none focus:border-secondary">
                     @error('end_date')
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                     @enderror
@@ -126,13 +142,22 @@
                     <div>
                         <label class="block text-xs font-semibold text-primary/70 mb-1">Montant versé</label>
                         <div class="relative">
-                            <input type="number" name="deposit_amount" value="{{ old('deposit_amount') }}" min="0" class="w-full px-3 py-2 text-sm font-bold border border-secondary/30 rounded-lg text-primary outline-none focus:border-primary pr-12">
+                            <input
+                                type="number"
+                                name="deposit_amount"
+                                value="{{ old('deposit_amount') }}"
+                                min="0"
+                                class="w-full px-3 py-2 text-sm font-bold border border-secondary/30 rounded-lg
+                                    text-primary outline-none focus:border-primary pr-12">
                             <span class="absolute right-3 top-2.5 text-xs text-primary/50 font-medium">FCFA</span>
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-primary/70 mb-1">Moyen de paiement</label>
-                        <select name="payment_method" class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        <select
+                            name="payment_method"
+                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                outline-none focus:border-secondary">
                             <option value="">Sélectionner...</option>
                             <option value="orange_money">Orange Money</option>
                             <option value="mtn_momo">MTN Mobile Money</option>
@@ -143,7 +168,13 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-primary/70 mb-1">Référence transaction</label>
-                        <input type="text" name="payment_reference" value="{{ old('payment_reference') }}" placeholder="N° transaction..." class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary outline-none focus:border-secondary">
+                        <input
+                            type="text"
+                            name="payment_reference"
+                            value="{{ old('payment_reference') }}"
+                            placeholder="N° transaction..."
+                            class="w-full px-3 py-2 text-sm border border-secondary/30 rounded-lg text-primary
+                                outline-none focus:border-secondary">
                     </div>
                 </div>
             </div>
@@ -163,7 +194,8 @@
                     Annuler
                 </a>
                 <button type="submit" id="submit-btn"
-                        class="px-5 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark transition-colors">
+                        class="px-5 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-surface-dark
+                            transition-colors">
                     Créer le dossier groupe
                 </button>
             </div>

@@ -79,7 +79,8 @@ class StockControlService
 
             $pCatName = 'Restaurant — ' . ($pItem->category?->name ?? 'Garde-manger');
             if (!isset($categoriesBreakdown[$pCatName])) {
-                $categoriesBreakdown[$pCatName] = ['name' => $pCatName, 'value' => 0, 'count' => 0, 'type' => 'restaurant'];
+                $categoriesBreakdown[$pCatName] = ['name' => $pCatName, 'value' => 0, 'count' => 0,
+                    'type' => 'restaurant'];
             }
             $categoriesBreakdown[$pCatName]['value'] += $pVal;
             $categoriesBreakdown[$pCatName]['count']++;
@@ -222,7 +223,8 @@ class StockControlService
                     'quantity_requested'     => $qty,
                     'estimated_unit_price'   => $unitPrice,
                     'estimated_total_amount' => $lineTotal,
-                    'notes'                  => $entry['notes'] ?? 'Généré automatiquement par le contrôle des seuils de stock',
+                    'notes'                  => $entry['notes']
+                        ?? 'Généré automatiquement par le contrôle des seuils de stock',
                 ];
             }
 

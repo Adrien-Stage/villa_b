@@ -13,10 +13,19 @@
     @droit('restaurant.bar.count_bottle')
         <details class="mt-4 border-t border-secondary/20 pt-3">
             <summary class="cursor-pointer text-sm font-medium">Enregistrer un comptage ou une perte</summary>
-            <form method="POST" action="{{ route('restaurant.bar.count_bottle', $bottle) }}" class="mt-3 flex flex-wrap items-end gap-3">
+            <form
+                method="POST"
+                action="{{ route('restaurant.bar.count_bottle', $bottle) }}"
+                class="mt-3 flex flex-wrap items-end gap-3">
                 @csrf
                 <label class="grid gap-1 text-sm">Volume mesuré (mL)
-                    <input type="number" name="volume_ml" min="0" max="{{ $bottle->capacity_ml }}" required class="w-40 rounded-lg border-secondary/30">
+                    <input
+                        type="number"
+                        name="volume_ml"
+                        min="0"
+                        max="{{ $bottle->capacity_ml }}"
+                        required
+                        class="w-40 rounded-lg border-secondary/30">
                 </label>
                 <label class="grid grow gap-1 text-sm">Motif
                     <input name="reason" maxlength="255" required class="rounded-lg border-secondary/30">
@@ -29,7 +38,10 @@
         @if($shortages->isNotEmpty() && $bottle->remaining_ml > 0)
             <details class="mt-4 border-t border-secondary/20 pt-3">
                 <summary class="cursor-pointer text-sm font-medium">Attribuer un prélèvement à cette bouteille</summary>
-                <form method="POST" action="{{ route('restaurant.bar.allocate_volume', $bottle) }}" class="mt-3 flex flex-wrap items-end gap-3">
+                <form
+                    method="POST"
+                    action="{{ route('restaurant.bar.allocate_volume', $bottle) }}"
+                    class="mt-3 flex flex-wrap items-end gap-3">
                     @csrf
                     <input type="hidden" name="allocation_key" value="{{ \Illuminate\Support\Str::uuid() }}">
                     <label class="grid gap-1 text-sm">Prélèvement
@@ -41,7 +53,13 @@
                         </select>
                     </label>
                     <label class="grid gap-1 text-sm">Volume prélevé (mL)
-                        <input type="number" name="volume_ml" min="1" max="{{ $bottle->remaining_ml }}" required class="w-40 rounded-lg border-secondary/30">
+                        <input
+                            type="number"
+                            name="volume_ml"
+                            min="1"
+                            max="{{ $bottle->remaining_ml }}"
+                            required
+                            class="w-40 rounded-lg border-secondary/30">
                     </label>
                     <button class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white">Attribuer</button>
                 </form>
@@ -66,7 +84,9 @@
                         @if(isset($details['order_line_id']))
                             <p class="text-primary/70">
                                 @if(app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'restaurant.orders.voir'))
-                                    <a class="underline" href="{{ route('restaurant.orders.show', $movement->source_id) }}">Commande nº {{ $movement->source_id }}</a>
+                                    <a
+                                        class="underline"
+                                        href="{{ route('restaurant.orders.show', $movement->source_id) }}">Commande nº {{ $movement->source_id }}</a>
                                 @else
                                     Commande nº {{ $movement->source_id }}
                                 @endif
@@ -74,7 +94,9 @@
                                 @if(isset($details['recipe_id']))
                                     ·
                                     @if(isset($details['menu_item_id']) && app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'restaurant.bar.menu.voir'))
-                                        <a class="underline" href="{{ route('restaurant.bar.menu.index', ['item' => $details['menu_item_id']]) }}">Fiche technique nº {{ $details['recipe_id'] }}</a>
+                                        <a
+                                            class="underline"
+                                            href="{{ route('restaurant.bar.menu.index', ['item' => $details['menu_item_id']]) }}">Fiche technique nº {{ $details['recipe_id'] }}</a>
                                     @else
                                         Fiche technique nº {{ $details['recipe_id'] }}
                                     @endif

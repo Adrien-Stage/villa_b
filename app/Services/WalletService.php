@@ -23,14 +23,16 @@ class WalletService
         ]);
     }
 
-    public function credit(Wallet $wallet, int $amount, string $key, array $metadata = [], ?int $actorId = null): WalletEntry
+    public function credit(Wallet $wallet, int $amount, string $key, array $metadata = [],
+        ?int $actorId = null): WalletEntry
     {
         $this->positive($amount);
 
         return $this->post($wallet, $amount, 'credit', $key, $metadata, $actorId);
     }
 
-    public function debit(Wallet $wallet, int $amount, string $key, array $metadata = [], ?int $actorId = null): WalletEntry
+    public function debit(Wallet $wallet, int $amount, string $key, array $metadata = [],
+        ?int $actorId = null): WalletEntry
     {
         $this->positive($amount);
 
@@ -54,7 +56,8 @@ class WalletService
         }
     }
 
-    private function post(Wallet $wallet, int $amount, string $kind, string $key, array $metadata, ?int $actorId, ?int $reverses = null): WalletEntry
+    private function post(Wallet $wallet, int $amount, string $kind, string $key, array $metadata, ?int $actorId,
+        ?int $reverses = null): WalletEntry
     {
         if (! Str::isUuid($key)) {
             throw new \DomainException('Identifiant de requête invalide.');
@@ -69,10 +72,12 @@ class WalletService
 
             return $values;
         };
-        $fingerprint = hash('sha256', json_encode([$wallet->id, $amount, $kind, $actorId, $reverses, $canonical($metadata)], JSON_THROW_ON_ERROR));
+        $fingerprint = hash('sha256', json_encode([$wallet->id, $amount, $kind, $actorId, $reverses,
+            $canonical($metadata)], JSON_THROW_ON_ERROR));
 
         try {
-            return DB::transaction(function () use ($wallet, $amount, $kind, $key, $metadata, $actorId, $reverses, $fingerprint) {
+            return DB::transaction(function () use ($wallet, $amount, $kind, $key, $metadata, $actorId, $reverses,
+                $fingerprint) {
                 $locked = Wallet::query()->lockForUpdate()->findOrFail($wallet->id);
                 if ($previous = WalletEntry::where('request_key', $key)->first()) {
                     if (! hash_equals($previous->fingerprint, $fingerprint)) {

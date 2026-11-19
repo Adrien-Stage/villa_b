@@ -61,7 +61,8 @@ class RestaurantStockService
         ?int $restaurantWasteLogId = null,
     ): RestaurantPantryMovement {
         return DB::transaction(function () use (
-            $item, $type, $quantity, $reason, $unitCost, $notes, $order, $recipe, $occurredAt, $stockRequisitionId, $restaurantWasteLogId
+            $item, $type, $quantity, $reason, $unitCost, $notes, $order, $recipe, $occurredAt, $stockRequisitionId,
+                $restaurantWasteLogId
         ) {
             // Verrou : deux ventes simultanées ne doivent pas lire le même stock.
             $item = RestaurantPantryItem::query()->lockForUpdate()->findOrFail($item->id);
@@ -406,13 +407,15 @@ class RestaurantStockService
             // Chaque restaurant compte son garde-manger.
             $count = RestaurantStockCount::create([
                 'point_of_sale_id' => $restaurant?->id,
-                'reference' => 'INV-' . now()->format('Ymd-His') . ($restaurant ? '-' . mb_substr($restaurant->code, 0, 10) : ''),
+                'reference' => 'INV-' . now()->format('Ymd-His') . ($restaurant ? '-' . mb_substr($restaurant->code, 0,
+                    10) : ''),
                 'status' => RestaurantStockCount::STATUS_DRAFT,
                 'notes' => $notes,
                 'opened_by' => Auth::id(),
             ]);
 
-            $items = RestaurantPantryItem::query()->duRestaurant($count->point_of_sale_id)->active()->orderBy('name')->get();
+            $items = RestaurantPantryItem::query()->duRestaurant($count->point_of_sale_id)->active()->orderBy('name')
+                ->get();
 
             foreach ($items as $item) {
                 RestaurantStockCountLine::create([
@@ -456,7 +459,8 @@ class RestaurantStockService
     /**
      * Rejette la soumission d'inventaire par le RAF avec un motif obligatoire.
      */
-    public function rejectStockCount(RestaurantStockCount $count, string $reason, ?User $user = null): RestaurantStockCount
+    public function rejectStockCount(RestaurantStockCount $count, string $reason,
+        ?User $user = null): RestaurantStockCount
     {
         if (empty(trim($reason))) {
             throw new RuntimeException("Un motif de rejet est obligatoire.");
@@ -585,7 +589,8 @@ class RestaurantStockService
                             quantity: max(0, (float) $item->current_stock - $variance),
                             reason: RestaurantPantryMovement::REASON_COUNT,
                             unitCost: (float) $line->unit_cost,
-                            notes: "Contre-passation annulation inventaire {$count->reference} par RAF" . ($reason ? " ({$reason})" : ''),
+                            notes: "Contre-passation annulation inventaire {$count->reference} par RAF"
+                                . ($reason ? " ({$reason})" : ''),
                         );
                     }
                 }
@@ -692,7 +697,8 @@ class RestaurantStockService
 
         // Restreint, s'il le faut, aux restaurants demandés.
         $movements = RestaurantPantryMovement::query()
-            ->when($restaurants !== null, fn ($q) => $q->whereHas('item', fn ($i) => $i->whereIn('point_of_sale_id', $restaurants)))
+            ->when($restaurants !== null, fn ($q) => $q->whereHas('item', fn ($i) => $i->whereIn('point_of_sale_id',
+                $restaurants)))
             ->with(['item.category', 'wasteLog', 'order'])
             ->whereBetween('occurred_at', [$start, $end])
             ->get();

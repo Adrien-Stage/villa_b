@@ -80,7 +80,8 @@ class MailNotificationService
 
             return true;
         } catch (Throwable $e) {
-            Log::error("Échec de transmission du bon de commande #{$order->number} à {$targetEmail} : " . $e->getMessage(), [
+            Log::error("Échec de transmission du bon de commande #{$order->number} à {$targetEmail} : " . $e
+                ->getMessage(), [
                 'order_id' => $order->id,
                 'exception' => $e,
             ]);
@@ -98,7 +99,8 @@ class MailNotificationService
             $appName = config('app.name', 'Wetchah PMS');
             $fromAddress = \App\Support\MailIdentity::from();
 
-            Mail::raw("Ceci est un e-mail de diagnostic envoyé depuis {$appName} via le transport " . config('mail.default') . ".", function ($message) use ($recipientEmail, $appName, $fromAddress) {
+            Mail::raw("Ceci est un e-mail de diagnostic envoyé depuis {$appName} via le transport "
+                . config('mail.default') . ".", function ($message) use ($recipientEmail, $appName, $fromAddress) {
                 $message->to($recipientEmail)
                     ->from($fromAddress->address, $fromAddress->name)
                     ->subject("Diagnostic Envoi E-mail — {$appName}");
@@ -106,7 +108,8 @@ class MailNotificationService
 
             return [
                 'success' => true,
-                'message' => "E-mail de diagnostic envoyé avec succès à {$recipientEmail} via " . config('mail.default'),
+                'message' => "E-mail de diagnostic envoyé avec succès à {$recipientEmail} via "
+                    . config('mail.default'),
             ];
         } catch (Throwable $e) {
             Log::error("Échec d'envoi de test e-mail à {$recipientEmail} : " . $e->getMessage());
