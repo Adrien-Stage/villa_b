@@ -30,6 +30,7 @@ class Document
     private array $filtres = [];
     private array $totaux = [];
     private ?string $note = null;
+    private ?array $etablissement = null;
 
     private function __construct(public readonly string $titre)
     {
@@ -176,6 +177,10 @@ class Document
      */
     public function enTeteEtablissement(): array
     {
+        if ($this->etablissement !== null) {
+            return $this->etablissement;
+        }
+
         $tenant = auth()->user()?->tenant ?? Tenant::first();
 
         return array_filter([
@@ -188,5 +193,45 @@ class Document
                 ? storage_path('app/public/' . $tenant->settings['logo'])
                 : null,
         ], fn ($v) => $v !== null && $v !== '');
+    }
+
+    /** Les données imprimables uniquement, en conservant les unités et le type des cellules. */
+    public function instantane(): array
+    {
+        return [
+            'titre' => $this->titre,
+            'sous_titre' => $this->sousTitre,
+            'periode' => $this->periode,
+            'filtres' => $this->filtres,
+            'totaux' => $this->totaux,
+            'note' => $this->note,
+            'colonnes' => array_map(fn (Colonne $c) => get_object_vars($c), $this->colonnes),
+            'lignes' => $this->lignes->map(function ($ligne) {
+                $cellules = [];
+                foreach ($this->colonnes as $colonne) {
+                    $valeur = $this->valeur($ligne, $colonne);
+                    data_set($cellules, $colonne->cle, $valeur instanceof \DateTimeInterface
+                        ? $valeur->format(DATE_ATOM) : $valeur);
+                }
+
+                return $cellules;
+            })->values()->all(),
+            'etablissement' => array_diff_key($this->enTeteEtablissement(), ['logo' => true]),
+        ];
+    }
+
+    public static function depuisInstantane(array $donnees): self
+    {
+        $document = self::intitule($donnees['titre'])
+            ->sousTitre($donnees['sous_titre'])
+            ->filtres($donnees['filtres'])
+            ->totaux($donnees['totaux'])
+            ->note($donnees['note'])
+            ->colonnes(array_map(Colonne::depuisInstantane(...), $donnees['colonnes']))
+            ->lignes($donnees['lignes']);
+        $document->periode = $donnees['periode'];
+        $document->etablissement = $donnees['etablissement'];
+
+        return $document;
     }
 }

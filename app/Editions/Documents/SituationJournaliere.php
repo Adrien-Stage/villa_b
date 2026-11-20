@@ -48,8 +48,12 @@ class SituationJournaliere extends Edition
         $ventes = $this->registres->ventes($jour, $jour, $valeurs['service']);
         $encaissements = $this->registres->encaissements($jour, $jour, $valeurs['service']);
 
-        $services = collect($this->registres->services($user))
+        $services = collect($this->registres->services(($valeurs['etablissement'] ?? false) ? null : $user))
             ->filter(fn ($libelle, $cle) => $valeurs['service'] === '' || $valeurs['service'] === $cle);
+
+        if ($valeurs['etablissement'] ?? false) {
+            $services = $services->union($ventes->concat($encaissements)->pluck('service', 'service_cle'));
+        }
 
         $lignes = $services->map(function (string $libelle, string $cle) use ($ventes, $encaissements) {
             $v = $ventes->where('service_cle', $cle);
@@ -85,7 +89,9 @@ class SituationJournaliere extends Edition
             ])
             ->lignes($lignes)
             ->totaux($totaux)
-            ->note($this->constat($jour));
+            ->note(($valeurs['etablissement'] ?? false)
+                ? 'Ventes et encaissements opérationnels. Les écritures comptables se consultent dans le grand livre.'
+                : $this->constat($jour));
     }
 
     private function constat(\Carbon\CarbonImmutable $jour): string

@@ -40,26 +40,36 @@ class SessionsCaisse extends Edition
     {
         [$du, $au] = $valeurs['periode'];
         $points = PointOfSale::query()->pluck('name', 'id');
+        $journee = $valeurs['etablissement'] ?? false;
+        $fin = $au->endOfDay();
 
         $sessions = CashRegisterSession::query()
             ->with(['user:id,name', 'witness:id,name'])
-            ->whereBetween('opened_at', [$du->startOfDay(), $au->endOfDay()])
+            ->when($journee,
+                fn ($q) => $q->where('opened_at', '<=', $fin)
+                    ->where(fn ($q) => $q->whereNull('closed_at')->orWhere('closed_at', '>=', $du->startOfDay())),
+                fn ($q) => $q->whereBetween('opened_at', [$du->startOfDay(), $fin]),
+            )
             ->when($valeurs['caisse'] !== '', fn ($q) => $q->where('module', $valeurs['caisse']))
             ->orderBy('opened_at')
             ->get()
-            ->map(fn (CashRegisterSession $s) => [
-                'caisse' => (self::MODULES[$s->module] ?? ucfirst((string) $s->module))
-                    . ($s->module === 'restaurant' && $s->point_of_sale_id ? ' — ' . ($points[$s->point_of_sale_id]
-                        ?? '') : ''),
-                'caissier' => $s->user?->name ?? '—',
-                'ouverture' => $s->opened_at,
-                'cloture' => $s->closed_at,
-                'fonds' => (int) $s->opening_amount,
-                'theorique' => $s->theoretical_closing_amount,
-                'compte' => $s->actual_closing_amount,
-                'ecart' => $s->closed_at ? (int) $s->discrepancy_amount : null,
-                'temoin' => $s->witness?->name ?? ($s->closed_at ? 'À contresigner' : 'Ouverte'),
-            ]);
+            ->map(function (CashRegisterSession $s) use ($points, $journee, $fin) {
+                $fermee = $s->closed_at && (! $journee || $s->closed_at->lessThanOrEqualTo($fin));
+
+                return [
+                    'caisse' => (self::MODULES[$s->module] ?? ucfirst((string) $s->module))
+                        . ($s->module === 'restaurant' && $s->point_of_sale_id
+                            ? ' — ' . ($points[$s->point_of_sale_id] ?? '') : ''),
+                    'caissier' => $s->user?->name ?? '—',
+                    'ouverture' => $s->opened_at,
+                    'cloture' => $fermee ? $s->closed_at : null,
+                    'fonds' => (int) $s->opening_amount,
+                    'theorique' => (! $journee || $fermee) ? $s->theoretical_closing_amount : null,
+                    'compte' => (! $journee || $fermee) ? $s->actual_closing_amount : null,
+                    'ecart' => $fermee ? (int) $s->discrepancy_amount : null,
+                    'temoin' => $fermee ? ($s->witness?->name ?? 'À contresigner') : 'Ouverte',
+                ];
+            });
 
         return $this->base($valeurs, $user)
             ->colonnes([

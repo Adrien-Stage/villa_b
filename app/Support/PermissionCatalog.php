@@ -396,6 +396,15 @@ class PermissionCatalog
      */
     public static function permissionForRoute(string $routeName): string
     {
+        $droitDossier = match ($routeName) {
+            'editions.dossier', 'editions.dossier.print' => 'editions.voir',
+            'editions.dossier.export' => 'editions.export',
+            default => null,
+        };
+        if ($droitDossier !== null) {
+            return $droitDossier;
+        }
+
         $segments = explode('.', $routeName);
 
         if (count($segments) === 1) {

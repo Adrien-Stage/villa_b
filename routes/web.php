@@ -815,6 +815,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('permission')->prefix('editions')->name('editions.')->group(function () {
         $editions = App\Http\Controllers\EditionController::class;
         Route::get('/', [$editions, 'index'])->name('index');
+        $dossier = App\Http\Controllers\DossierJournalierController::class;
+        Route::get('/dossier-journalier', [$dossier, 'show'])->name('dossier');
+        Route::get('/dossier-journalier/imprimer', [$dossier, 'print'])->name('dossier.print');
+        Route::get('/dossier-journalier/telecharger', [$dossier, 'export'])->name('dossier.export');
         Route::get('/{edition}', [$editions, 'show'])->where('edition', '[a-z0-9-]+')->name('show');
         Route::get('/{edition}/imprimer', [$editions, 'print'])->where('edition', '[a-z0-9-]+')->name('print');
         Route::get('/{edition}/telecharger', [$editions, 'export'])->where('edition', '[a-z0-9-]+')->name('export');

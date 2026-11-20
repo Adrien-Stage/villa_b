@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Editions\DossierJournalier;
 use App\Models\Account;
 use App\Models\Booking;
 use App\Models\CashRegisterSession;
 use App\Models\JournalEntryLine;
 use App\Models\NightAudit;
 use Carbon\CarbonInterface;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -91,7 +93,7 @@ class NightAuditService
             $gratuites = $this->gratuites($jour);
 
             // 3. Figer.
-            return NightAudit::create([
+            $audit = NightAudit::create([
                 'audit_date'            => $jour->toDateString(),
                 'closed_at'             => now(),
                 'closed_by'             => Auth::id(),
@@ -108,6 +110,12 @@ class NightAuditService
                 'entries_posted'        => $produites,
                 'notes'                 => $notes,
             ]);
+
+            $audit->update([
+                'daily_report' => app(DossierJournalier::class)->figer(CarbonImmutable::instance($jour)),
+            ]);
+
+            return $audit;
         });
     }
 
