@@ -155,7 +155,13 @@
             <tbody class="divide-y divide-secondary/10">
                 @forelse($historique as $a)
                     <tr class="hover:bg-accent/10">
-                        <td class="px-4 py-2 whitespace-nowrap font-medium text-primary">{{ $a->audit_date->format('d/m/Y') }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap font-medium text-primary">
+                            {{ $a->audit_date->format('d/m/Y') }}
+                            @droit('editions.voir')
+                                <a href="{{ route('editions.dossier', ['jour' => $a->audit_date->toDateString()]) }}"
+                                   class="mt-1 block text-xs underline">Ouvrir le dossier</a>
+                            @enddroit
+                        </td>
                         <td class="px-3 py-2 text-right text-primary/70 whitespace-nowrap">{{ $fcfa($a->revenue_accommodation) }}</td>
                         <td class="px-3 py-2 text-right text-primary/70 whitespace-nowrap">{{ $fcfa($a->revenue_restaurant) }}</td>
                         <td class="px-3 py-2 text-right text-primary/70 whitespace-nowrap">{{ $fcfa($a->revenue_shop) }}</td>

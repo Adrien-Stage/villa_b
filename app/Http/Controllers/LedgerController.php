@@ -190,6 +190,8 @@ class LedgerController extends Controller
         $enAttente = $cloture->pendingDays();
 
         $historique = \App\Models\NightAudit::with('closedBy')
+            ->select(['audit_date', 'closed_at', 'closed_by', 'revenue_accommodation', 'revenue_restaurant',
+                'revenue_shop', 'revenue_total', 'cash_discrepancy'])
             ->orderByDesc('audit_date')
             ->paginate(15)
             ->withQueryString();

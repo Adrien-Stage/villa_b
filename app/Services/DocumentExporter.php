@@ -6,9 +6,11 @@ use App\Support\Document\Colonne;
 use App\Support\Document\Document;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\SimpleType\Jc;
@@ -54,20 +56,37 @@ class DocumentExporter
         };
     }
 
+    /** @param list<Document> $documents */
+    public function rendreDossier(string $titre, array $documents, string $format): Response|StreamedResponse
+    {
+        $fichier = Document::intitule($titre);
+
+        return match ($format) {
+            self::FORMAT_EXCEL => $this->classeur($fichier, $documents),
+            self::FORMAT_PDF => Pdf::loadView('documents.base', [
+                'document' => $documents[0], 'documents' => $documents, 'titre' => $titre, 'pourPdf' => true,
+            ])->setPaper('a4', 'landscape')->download($fichier->nomDeFichier('pdf')),
+            default => response($this->avecImpression(view('documents.base', [
+                'document' => $documents[0], 'documents' => $documents, 'titre' => $titre,
+            ])->render())),
+        };
+    }
+
     /** Page autonome, qui déclenche l'impression à l'ouverture. */
     private function impression(Document $document): Response
     {
-        $html = view('documents.base', ['document' => $document, 'pourPdf' => false])->render();
+        return response($this->avecImpression(view('documents.base', ['document' => $document])->render()));
+    }
 
+    private function avecImpression(string $html): string
+    {
         // Injecté après le rendu plutôt que placé dans le gabarit : le PDF
         // partage ce gabarit et n'a pas à embarquer de script.
-        $html = str_replace(
+        return str_replace(
             '</body>',
             "<script>window.addEventListener('load', () => window.print());</script></body>",
             $html
         );
-
-        return response($html);
     }
 
     private function pdf(Document $document): Response
@@ -89,10 +108,26 @@ class DocumentExporter
 
     private function excel(Document $document): StreamedResponse
     {
-        $classeur = new Spreadsheet();
-        $feuille  = $classeur->getActiveSheet();
-        $feuille->setTitle(mb_substr($document->titre, 0, 31));
+        return $this->classeur($document, [$document]);
+    }
 
+    /** @param list<Document> $documents */
+    private function classeur(Document $fichier, array $documents): StreamedResponse
+    {
+        $classeur = new Spreadsheet();
+        foreach ($documents as $index => $document) {
+            $feuille = $index === 0 ? $classeur->getActiveSheet() : $classeur->createSheet();
+            $feuille->setTitle(mb_substr($document->titre, 0, 31));
+            $this->remplirFeuille($feuille, $document);
+        }
+
+        return $this->flux($fichier->nomDeFichier('xlsx'),
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            fn () => (new Xlsx($classeur))->save('php://output'));
+    }
+
+    private function remplirFeuille(Worksheet $feuille, Document $document): void
+    {
         $etab   = $document->enTeteEtablissement();
         $devise = $etab['devise'] ?? 'FCFA';
         $colonnes = $document->lesColonnes();
@@ -101,16 +136,16 @@ class DocumentExporter
 
         // En-tête : la même information que sur le papier, pour qu'un fichier
         // détaché de son écran reste interprétable.
-        $feuille->setCellValue([1, $ligne], $etab['nom'] ?? 'Établissement');
+        $feuille->setCellValueExplicit([1, $ligne], $etab['nom'] ?? 'Établissement', DataType::TYPE_STRING);
         $feuille->getStyle([1, $ligne])->getFont()->setBold(true)->setSize(14);
         $ligne++;
 
-        $feuille->setCellValue([1, $ligne++], $document->titre);
+        $feuille->setCellValueExplicit([1, $ligne++], $document->titre, DataType::TYPE_STRING);
         foreach (array_filter([$document->leSousTitre(), $document->laPeriode()]) as $texte) {
-            $feuille->setCellValue([1, $ligne++], $texte);
+            $feuille->setCellValueExplicit([1, $ligne++], $texte, DataType::TYPE_STRING);
         }
         foreach ($document->lesFiltres() as $libelle => $valeur) {
-            $feuille->setCellValue([1, $ligne++], $libelle . ' : ' . $valeur);
+            $feuille->setCellValueExplicit([1, $ligne++], $libelle . ' : ' . $valeur, DataType::TYPE_STRING);
         }
         $feuille->setCellValue([1, $ligne++], 'Édité le ' . now()->format('d/m/Y à H:i')
             . ' par ' . (auth()->user()?->name ?? '—'));
@@ -131,8 +166,12 @@ class DocumentExporter
             foreach ($colonnes as $index => $colonne) {
                 // Valeur brute : un montant doit rester un nombre dans un
                 // tableur, sinon aucune somme n'est possible.
-                $feuille->setCellValue([$index + 1, $ligne], $colonne->valeurBrute($document->valeur($donnee,
-                    $colonne)));
+                $valeur = $colonne->valeurBrute($document->valeur($donnee, $colonne));
+                if (is_string($valeur)) {
+                    $feuille->setCellValueExplicit([$index + 1, $ligne], $valeur, DataType::TYPE_STRING);
+                } else {
+                    $feuille->setCellValue([$index + 1, $ligne], $valeur);
+                }
             }
             $ligne++;
         }
@@ -164,9 +203,13 @@ class DocumentExporter
 
         $feuille->freezePane('A' . ($ligneEntete + 1));
 
-        return $this->flux($document->nomDeFichier('xlsx'),
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            fn () => (new Xlsx($classeur))->save('php://output'));
+        if ($document->laNote()) {
+            $feuille->setCellValueExplicit([1, $ligne + 2], $document->laNote(), DataType::TYPE_STRING);
+            if ($derniere > 1) {
+                $feuille->mergeCells([1, $ligne + 2, $derniere, $ligne + 2]);
+            }
+            $feuille->getStyle([1, $ligne + 2])->getAlignment()->setWrapText(true);
+        }
     }
 
     private function word(Document $document): StreamedResponse

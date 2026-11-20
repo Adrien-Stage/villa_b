@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class NightAudit extends Model
 {
+    protected $hidden = ['daily_report'];
+
     protected $fillable = [
         'audit_date',
         'closed_at',
@@ -31,6 +33,7 @@ class NightAudit extends Model
         'registers_left_open',
         'entries_posted',
         'notes',
+        'daily_report',
     ];
 
     protected $casts = [
@@ -47,6 +50,7 @@ class NightAudit extends Model
         'registers_closed'      => 'integer',
         'registers_left_open'   => 'integer',
         'entries_posted'        => 'integer',
+        'daily_report'          => 'array',
     ];
 
     public function closedBy(): BelongsTo
