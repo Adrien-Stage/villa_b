@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Editions\Catalogue;
+use App\Editions\DossierJournalier;
 use App\Editions\Edition;
 use App\Editions\Pieces;
 use App\Models\AuditLog;
@@ -35,6 +36,7 @@ class EditionController extends Controller
             'familles' => $this->catalogue->pour($user)->groupBy(fn (Edition $e) => $e->famille()),
             'specialisees' => $this->catalogue->specialiseesPour($user)->groupBy('famille'),
             'recherche' => $recherche,
+            'dossierJournalier' => app(DossierJournalier::class)->accessibles($user) !== [],
             'pieces' => $recherche !== '' ? app(Pieces::class)->chercher($recherche, $user) : collect(),
         ]);
     }

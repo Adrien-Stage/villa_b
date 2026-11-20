@@ -193,6 +193,34 @@ class AuxiliaryLedgerService
         return $ligne ? $this->nomTiers($ligne) : 'Tiers inconnu';
     }
 
+    public function agedBalanceByMonth(CarbonInterface $asOf): Collection
+    {
+        $mois = $asOf->copy()->startOfMonth();
+
+        return JournalEntryLine::query()
+            ->where('account_code', Account::CLIENTS)
+            ->whereNotNull('auxiliary_type')
+            ->where(fn ($q) => $q->whereNull('reconciliation_code')
+                ->orWhere('reconciled_at', '>', $asOf->copy()->endOfDay()))
+            ->whereHas('entry', fn ($q) => $q->whereNotNull('posted_at')
+                ->whereDate('entry_date', '<=', $asOf->toDateString()))
+            ->with(['entry', 'auxiliary'])
+            ->get()
+            ->groupBy(fn (JournalEntryLine $l) => $l->auxiliary_type . '#' . $l->auxiliary_id)
+            ->map(function (Collection $lignes) use ($mois) {
+                $tranches = array_fill_keys(['m0', 'm1', 'm2', 'm3', 'avant'], 0);
+                foreach ($lignes as $ligne) {
+                    $age = (int) $ligne->entry->entry_date->copy()->startOfMonth()->diffInMonths($mois);
+                    $tranches[$age <= 3 ? 'm' . $age : 'avant'] += $ligne->signedAmount();
+                }
+
+                return ['client' => $this->nomTiers($lignes->first()), 'total' => array_sum($tranches)] + $tranches;
+            })
+            ->filter(fn (array $ligne) => $ligne['total'] !== 0)
+            ->sortByDesc('total')
+            ->values();
+    }
+
     /** Nom lisible du tiers, quel que soit son modèle. */
     private function nomTiers(JournalEntryLine $ligne): string
     {

@@ -52,6 +52,11 @@ class Colonne
         return new self($cle, $libelle, self::DATE_HEURE);
     }
 
+    public static function depuisInstantane(array $colonne): self
+    {
+        return new self($colonne['cle'], $colonne['libelle'], $colonne['type'], $colonne['totalise']);
+    }
+
     /** Les nombres se lisent alignés à droite, le texte à gauche. */
     public function alignementDroite(): bool
     {

@@ -10,22 +10,20 @@
     l'identique depuis le navigateur comme depuis le serveur.
 --}}
 @php
-    $etab    = $document->enTeteEtablissement();
-    $devise  = $etab['devise'] ?? 'FCFA';
-    $colonnes = $document->lesColonnes();
+    $paysage = isset($documents) || count($document->lesColonnes()) > 6;
     $pourPdf = $pourPdf ?? false;
 @endphp
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>{{ $document->titre }}</title>
+    <title>{{ $titre ?? $document->titre }}</title>
     <style>
         @if($pourPdf)
             @page { margin: 12mm 12mm 16mm; }
         @else
             {{-- Au-delà de six colonnes, paysage : comme le PDF (DocumentExporter). --}}
-            @include('partials.impression', ['format' => 'A4 '.(count($colonnes) > 6 ? 'landscape' : 'portrait')])
+            @include('partials.impression', ['format' => 'A4 '.($paysage ? 'landscape' : 'portrait')])
         @endif
 
         * { font-family: DejaVu Sans, Arial, sans-serif; box-sizing: border-box; }
@@ -56,6 +54,10 @@
         table.donnees tfoot td { padding: 7px 8px; border-top: 2px solid #391F0E; font-weight: bold;
                                  font-size: 10.5px; color: #391F0E; background: #faf5ee; }
         .droite { text-align: right; }
+        .feuille-suivante { page-break-before: always; }
+        table.donnees { table-layout: fixed; }
+        table.donnees td, table.donnees th { overflow-wrap: break-word; word-wrap: break-word; }
+        table.donnees tr { page-break-inside: avoid; }
         .vide { padding: 28px; text-align: center; color: #a3917e; font-size: 11px; font-style: italic; }
 
         .note { margin-top: 12px; font-size: 9px; color: #8a7461; line-height: 1.5; }
@@ -74,6 +76,13 @@
 </head>
 <body>
 
+@foreach($documents ?? [$document] as $document)
+@php
+    $etab = $document->enTeteEtablissement();
+    $devise = $etab['devise'] ?? 'FCFA';
+    $colonnes = $document->lesColonnes();
+@endphp
+<section @class(['feuille-suivante' => ! $loop->first])>
 <div class="entete">
     @if(!empty($etab['logo']) && is_readable($etab['logo']))
         <div class="bloc logo">
@@ -163,6 +172,8 @@
     <div class="g">{{ $etab['nom'] ?? '' }} — {{ $document->titre }}</div>
     <div class="d">{{ $document->lesLignes()->count() }} ligne(s)</div>
 </div>
+</section>
+@endforeach
 
 </body>
 </html>

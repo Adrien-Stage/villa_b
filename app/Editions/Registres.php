@@ -75,7 +75,7 @@ class Registres
      *
      * @return array<string, string>
      */
-    public function services(User $user): array
+    public function services(?User $user): array
     {
         $services = ['depots_partenaires' => 'Dépôts partenaires', self::SERVICE_HEBERGEMENT => 'Hébergement',
             self::SERVICE_RECEPTION => 'POS Réception'];

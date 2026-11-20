@@ -23,6 +23,16 @@
     </p>
 </div>
 
+@if($dossierJournalier)
+    <a href="{{ route('editions.dossier') }}"
+       class="mb-6 block rounded-xl border border-secondary/30 bg-white p-4 text-primary hover:bg-accent/10">
+        <span class="font-semibold">Dossier journalier hôtelier</span>
+        <span class="mt-1 block text-sm text-primary/70">
+            Consultez les états d’une date d’exploitation et exportez les feuilles auxquelles vous avez accès.
+        </span>
+    </a>
+@endif
+
 {{-- Retrouver une pièce par son numéro. --}}
 <section class="mb-8 rounded-xl border border-secondary/20 bg-white p-5 shadow-sm" aria-labelledby="pieces">
     <h2 id="pieces" class="flex items-center gap-2 text-sm font-semibold text-primary">
