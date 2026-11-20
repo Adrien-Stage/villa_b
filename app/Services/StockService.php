@@ -160,6 +160,7 @@ class StockService
             }
 
             $wasAboveThreshold = !$item->isBelowThreshold();
+            $lots = app(StockLotAllocation::class)->consume($item, $quantity);
             $avant = (float) $item->current_stock;
             $newQty = $avant - $quantity;
             $item->update(['current_stock' => $newQty]);
@@ -172,7 +173,7 @@ class StockService
             }
 
             return $this->log($item, StockMovement::TYPE_OUT, -$quantity, $item->average_cost, $sourceType, $sourceId,
-                $reason, $etat);
+                $reason, $etat, $lots === [] ? null : ['lot_allocations' => $lots]);
         });
 
         if ($crossedThreshold) {
@@ -202,13 +203,14 @@ class StockService
         string $sourceType,
         ?int $sourceId = null,
         ?string $reason = null,
-        ?string $niveau = null
+        ?string $niveau = null,
+        ?int $receiptLineId = null,
     ): StockMovement {
         if ($quantity <= 0) {
             throw new \InvalidArgumentException('La quantité contre-passée doit être positive.');
         }
 
-        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason, $niveau) {
+        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason, $niveau, $receiptLineId) {
             $item = StockItem::lockForUpdate()->find($item->id);
             $this->ensureStoreNotFrozen($sourceType);
 
@@ -223,6 +225,9 @@ class StockService
 
             $currentQty = (float) $item->current_stock;
             $remainingQty = $currentQty - $quantity;
+            if ($receiptLineId !== null) {
+                app(StockLotAllocation::class)->cancelReceipt($item, $receiptLineId, $quantity);
+            }
             $remainingValue = $currentQty * $item->average_cost - $quantity * $unitCost;
 
             // Si les sorties intermédiaires ont été valorisées plus haut que le
@@ -256,17 +261,20 @@ class StockService
         string $sourceType,
         ?int $sourceId = null,
         ?string $reason = null,
-        ?string $niveau = null
+        ?string $niveau = null,
+        ?int $originalMovementId = null,
     ): StockMovement {
         if ($quantity <= 0) {
             throw new \InvalidArgumentException('La quantité contre-passée doit être positive.');
         }
 
-        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason, $niveau) {
+        return DB::transaction(function () use ($item, $quantity, $unitCost, $sourceType, $sourceId, $reason, $niveau, $originalMovementId) {
             $item = StockItem::lockForUpdate()->find($item->id);
             $this->ensureStoreNotFrozen($sourceType);
 
             $courant = (float) $item->current_stock;
+            $lots = $originalMovementId ? StockMovement::findOrFail($originalMovementId)->details['lot_allocations'] ?? [] : [];
+            app(StockLotAllocation::class)->restore($item, $lots);
             $nouveau = $courant + $quantity;
 
             $item->update([
@@ -278,7 +286,7 @@ class StockService
             $etat = $this->conditionnements->appliquer($item, $courant, $quantity, $niveau);
 
             return $this->log($item, StockMovement::TYPE_IN, $quantity, $unitCost, $sourceType, $sourceId, $reason,
-                $etat);
+                $etat, $lots === [] ? null : ['restored_lots' => $lots, 'original_movement_id' => $originalMovementId]);
         });
     }
 
@@ -311,6 +319,7 @@ class StockService
 
             $wasAboveThreshold = !$item->isBelowThreshold();
             $avant = (float) $item->current_stock;
+            $lots = $delta < 0 ? app(StockLotAllocation::class)->consume($item, -$delta, adjustment: true) : [];
             $item->update(['current_stock' => $countedQuantity]);
             $etat = $this->conditionnements->appliquer($item, $avant, $delta, null);
 
@@ -328,7 +337,8 @@ class StockService
                 $sourceType,
                 $sourceId,
                 $reason ?? 'Ajustement d\'inventaire',
-                $etat
+                $etat,
+                $lots === [] ? null : ['lot_allocations' => $lots],
             );
         });
 
@@ -456,7 +466,8 @@ class StockService
         string $sourceType,
         ?int $sourceId,
         ?string $reason,
-        ?array $conditionnements = null
+        ?array $conditionnements = null,
+        ?array $details = null,
     ): StockMovement {
         return StockMovement::create([
             'stock_item_id' => $item->id,
@@ -468,6 +479,7 @@ class StockService
             'stock_after'   => $item->current_stock,
             // Unités fermées après le mouvement, et celles qu'il a ouvertes.
             'packaging'     => $conditionnements,
+            'details'       => $details,
             'unit_cost'     => $unitCost,
             'stock_account' => $item->stockAccount(),
             'source_type'   => $sourceType,

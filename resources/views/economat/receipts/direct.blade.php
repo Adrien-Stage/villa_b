@@ -29,6 +29,8 @@
         'reason'    => $l['rejection_reason'] ?? '',
         'price'     => $l['unit_price'] ?? '',
         'packaging' => $l['packaging'] ?? '',
+        'lotNumber' => $l['lot_number'] ?? '',
+        'expiresOn' => $l['expires_on'] ?? '',
         'notes'     => $l['notes'] ?? '',
     ]);
     $nouveauFournisseur = !old('supplier_id') && old('nouveau_fournisseur.name');
@@ -332,6 +334,14 @@
                                 <input type="text" :name="`lines[${idx}][notes]`" x-model="ligne.notes" maxlength="255" placeholder="Note sur la ligne…" aria-label="Note sur la ligne"
                                     class="w-full px-2 py-1 text-xs border border-secondary/20 rounded bg-white
                                         text-primary">
+                                <div class="grid grid-cols-2 gap-2 mt-2 text-xs">
+                                    <label>Numéro de lot
+                                        <input type="text" :name="`lines[${idx}][lot_number]`" x-model="ligne.lotNumber" maxlength="80" class="block w-full rounded border-secondary/20">
+                                    </label>
+                                    <label>Date limite
+                                        <input type="date" :name="`lines[${idx}][expires_on]`" x-model="ligne.expiresOn" class="block w-full rounded border-secondary/20">
+                                    </label>
+                                </div>
                             </div>
                             <div class="col-span-12 md:col-span-4 flex items-center justify-end gap-3 text-[11px]
                                 text-primary/60">
@@ -430,7 +440,7 @@
                     key: this.prochaineCle++,
                     // Magasin vide : on part d'un nouvel article plutôt que d'une liste sans choix.
                     nouveau: this.articles.length === 0,
-                    itemId: '', name: '', unit: '', category: '', zone: this.zoneDefaut, packaging: '',
+                    itemId: '', name: '', unit: '', category: '', zone: this.zoneDefaut, packaging: '', lotNumber: '', expiresOn: '',
                     delivered: '', rejected: '', reason: '', price: '', notes: '',
                 });
                 this.$nextTick(() => {

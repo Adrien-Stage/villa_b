@@ -54,7 +54,11 @@ class AnalyticReportService
         $produits = $this->sumByCenter($from, $to, 7);
         $charges  = $this->sumByCenter($from, $to, 6);
 
-        $rows = collect(JournalEntryLine::CENTERS)
+        $centers = JournalEntryLine::centers();
+        foreach (array_diff(array_unique([...array_keys($produits), ...array_keys($charges)]), ['', ...array_keys($centers)]) as $code) {
+            $centers[$code] = $code;
+        }
+        $rows = collect($centers)
             ->map(function (string $libelle, string $centre) use ($produits, $charges) {
                 // Un produit est créditeur, une charge débitrice : on les
                 // ramène tous deux à des montants positifs pour la lecture.

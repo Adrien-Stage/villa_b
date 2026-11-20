@@ -47,9 +47,18 @@ class SupplierInvoiceService
             throw new RuntimeException('Le montant de la facture doit être supérieur à zéro.');
         }
 
-        $decomposition = $this->decompose($ttc, $data['withholding_type'] ?? null);
+        $type = $data['withholding_type'] ?? null;
+        $date = Carbon::parse($data['invoice_date'])->toDateString();
+        $rule = $this->taxation->withholdingRule($type, $date);
+        if ($type !== null && $rule === null) {
+            throw new RuntimeException('Aucune règle de retenue validée ne couvre cette nature et cette date de facture.');
+        }
+        if (($rule['requires_niu'] ?? false) && blank($fournisseur->tax_id)) {
+            throw new RuntimeException('Renseignez le NIU du fournisseur pour appliquer cette règle de retenue.');
+        }
+        $decomposition = $this->decompose($ttc, $type, $date);
 
-        return DB::transaction(function () use ($data, $fournisseur, $ttc, $decomposition) {
+        return DB::transaction(function () use ($data, $fournisseur, $ttc, $decomposition, $rule) {
             $ecart = 0;
 
             if (!empty($data['purchase_order_id'])) {
@@ -76,6 +85,7 @@ class SupplierInvoiceService
                 'withholding_type'         => $decomposition['withholding']['type'],
                 'withholding_basis_points' => $decomposition['withholding']['basis_points'],
                 'withholding_amount'       => $decomposition['withholding']['amount'],
+                'withholding_legal_reference' => $rule['legal_reference'] ?? null,
                 'net_payable'              => $decomposition['net_payable'],
                 'reception_variance'       => $ecart,
                 'variance_reason'          => $ecart > 0 ? trim((string) $data['variance_reason']) : null,
@@ -141,10 +151,10 @@ class SupplierInvoiceService
      *
      * @return array{ht: int, vat: int, rate_code: string|null, withholding: array{type: string|null, basis_points: int, amount: int}, net_payable: int}
      */
-    public function decompose(int $ttc, ?string $withholdingType): array
+    public function decompose(int $ttc, ?string $withholdingType, ?string $date = null): array
     {
         $tva = $this->taxation->breakdown($ttc);
-        $retenue = $this->taxation->withholding($tva->ht, $withholdingType);
+        $retenue = $this->taxation->withholding($tva->ht, $withholdingType, $date);
 
         return [
             'ht'          => $tva->ht,

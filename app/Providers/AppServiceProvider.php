@@ -30,6 +30,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        foreach (\App\Observers\SaleVatObserver::SOURCES as $sale) {
+            $sale::observe(\App\Observers\SaleVatObserver::class);
+        }
         \Carbon\Carbon::setLocale('fr');
 
         // Canal de notification Web Push (notifications système hors app)

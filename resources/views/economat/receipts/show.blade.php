@@ -354,6 +354,9 @@
                             </td>
                             <td class="px-3 py-3 text-right font-mono font-bold text-emerald-800">
                                 {{ rtrim(rtrim(number_format($line->quantity_accepted, 3, ',', ' '), '0'), ',') }}
+                                @if($line->lot)
+                                    <div class="text-xs text-primary/65">{{ $line->lot->lot_number }} · date limite {{ $line->lot->expires_on->format('d/m/Y') }}</div>
+                                @endif
                                 @if($line->packaging_name)
                                     <span class="block text-[10px] font-sans font-normal text-primary/55">{{ $line->enConditionnement((float) $line->quantity_accepted) }}</span>
                                 @endif

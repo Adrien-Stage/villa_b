@@ -329,6 +329,11 @@ test('les écrans fournisseurs s’ouvrent', function () {
 });
 
 test('la saisie d’une facture fournisseur produit son écriture', function () {
+    $tenant = \App\Models\Tenant::firstOrCreate(['id' => 1], ['name' => 'Hôtel test', 'slug' => 'hotel-test']);
+    $tenant->update(['settings' => ['taxes' => ['withholding_rules' => ['services' => [
+        'basis_points' => 500, 'starts_on' => '2026-01-01', 'legal_reference' => 'Référence fixture',
+    ]]]]]);
+
     $fournisseur = \App\Models\Supplier::create([
         'name' => 'Établissements Mbarga', 'email' => 'mbarga@test.cm', 'is_active' => true,
     ]);

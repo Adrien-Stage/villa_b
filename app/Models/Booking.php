@@ -79,6 +79,7 @@ class Booking extends Model
         'extras_amount',        // Restaurant, minibar...
         'package_amount',       // Formule figée au moment de la réservation
         'tax_amount',
+        'tourist_tax_amount',
         'discount_amount',      // Points fidélité ou remise
         'total_amount',         // Montant final
 
@@ -123,6 +124,7 @@ class Booking extends Model
         'extras_amount' => 'integer',
         'package_amount' => 'integer',
         'tax_amount' => 'integer',
+        'tourist_tax_amount' => 'integer',
         'cancellation_policy_snapshot' => 'array',
         'free_cancel_until' => 'datetime',
         'discount_amount' => 'integer',
@@ -318,10 +320,12 @@ class Booking extends Model
     {
         $this->total_nights = $this->check_in->diffInDays($this->check_out);
         $this->total_room_amount = $this->total_nights * $this->price_per_night;
+        $this->tourist_tax_amount = $this->lodgingTax((int) $this->total_nights);
         $this->total_amount = $this->total_room_amount
             + $this->package_amount
             + $this->extras_amount
             + $this->tax_amount
+            + $this->tourist_tax_amount
             - $this->discount_amount;
         $this->balance_due = $this->total_amount - $this->paid_amount;
         $this->save();
@@ -364,12 +368,19 @@ class Booking extends Model
             ->sum(fn ($item) => abs((int) $item->total_price));
 
         $consumedTotal = $consumedRoomAmount + $extrasAmount - $discountAmount;
+        $consumedTotal += $this->lodgingTax($actualNights);
 
         if ($this->hasAdditiveTax()) {
             $consumedTotal += (int) $this->tax_amount;
         }
 
         return max(0, $consumedTotal - (int) $this->paid_amount);
+    }
+
+    public function lodgingTax(int $nights): int
+    {
+        return app(\App\Services\TaxationService::class)
+            ->lodgingTax($nights, (int) $this->adults_count + (int) $this->children_count);
     }
 
     /**
@@ -461,7 +472,7 @@ class Booking extends Model
             + (int) $this->extras_amount
             - (int) $this->discount_amount;
 
-        return (int) $this->total_amount === $baseNet + (int) $this->tax_amount;
+        return (int) $this->total_amount === $baseNet + (int) $this->tax_amount + (int) $this->tourist_tax_amount;
     }
 
     /**
@@ -469,7 +480,12 @@ class Booking extends Model
      */
     public function effectiveTotalAmount(?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): int
     {
-        return (int) $this->total_amount + $this->overstayRoomAmount($defaultCheckOutTime, $at);
+        $total = (int) $this->total_amount + $this->overstayRoomAmount($defaultCheckOutTime, $at);
+        if ($this->status === BookingStatus::CHECKED_IN) {
+            $total += $this->lodgingTax($this->effectiveTotalNights($defaultCheckOutTime, $at)) - (int) $this->tourist_tax_amount;
+        }
+
+        return $total;
     }
 
     /**
@@ -477,10 +493,10 @@ class Booking extends Model
      */
     public function effectiveBalanceDue(?string $defaultCheckOutTime = null, ?CarbonInterface $at = null): int
     {
-        $overstay = $this->overstayRoomAmount($defaultCheckOutTime, $at);
+        $delta = $this->effectiveTotalAmount($defaultCheckOutTime, $at) - (int) $this->total_amount;
         $credit = max(0, (int) $this->paid_amount - (int) $this->total_amount);
 
-        return max(0, (int) $this->balance_due + $overstay - $credit);
+        return max(0, (int) $this->balance_due + $delta - $credit);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\TaxRate;
+use App\Models\SupplierInvoice;
 use App\Models\Tenant;
 use App\Models\TouristTaxBracket;
 use App\Support\TaxBreakdown;
@@ -32,21 +33,8 @@ class TaxationService
     public const BASIS_PER_PERSON = 'person';
 
     /**
-     * Taux de retenue à la source par défaut, en points de base.
-     *
-     * **Ces taux ne sont pas confirmés pour le Cameroun.** Ils proviennent du
-     * document de référence béninois cité au plan et attendent la validation
-     * du cabinet, au même titre que la taxe de séjour. Ils sont donc des
-     * défauts surchargeables par les réglages de l'établissement, jamais des
-     * constantes en dur dans les schémas d'imputation : le jour où un arrêté
-     * les corrige, rien ne se recompile.
+     * Les retenues sont définies par des règles datées dans les paramètres.
      */
-    public const WITHHOLDING_DEFAULTS = [
-        'services'     => 500,   // Prestations de services — 5 %
-        'fees'         => 1_000, // Honoraires — 10 %
-        'intellectual' => 1_500, // Prestations intellectuelles — 15 %
-    ];
-
     private ?array $settings = null;
     private ?TaxRate $defaultRate = null;
 
@@ -69,7 +57,8 @@ class TaxationService
         // Extraction « en dedans » : ht = ttc / (1 + taux), en arithmétique
         // entière. Le diviseur vaut 10 000 + bp, soit 11 925 pour 19,25 %.
         $divisor = 10_000 + $bp;
-        $ht = intdiv($ttc * 10_000 + intdiv($divisor, 2), $divisor);
+        $sign = $ttc < 0 ? -1 : 1;
+        $ht = $sign * intdiv(abs($ttc) * 10_000 + intdiv($divisor, 2), $divisor);
 
         // La taxe est le RESTE, jamais un second arrondi : ht + vat === ttc.
         $vat = $ttc - $ht;
@@ -78,7 +67,7 @@ class TaxationService
         // arrondit une part, on déduit l'autre.
         $surtax = 0;
         if ($rate->surtax_basis_points > 0) {
-            $surtax = intdiv($vat * $rate->surtax_basis_points + intdiv($bp, 2), $bp);
+            $surtax = $sign * intdiv(abs($vat) * $rate->surtax_basis_points + intdiv($bp, 2), $bp);
         }
 
         return new TaxBreakdown(
@@ -113,7 +102,8 @@ class TaxationService
 
         $drift = $total->ht - array_sum(array_map(fn (TaxBreakdown $l) => $l->ht, $lines));
 
-        if ($drift !== 0 && $lines !== []) {
+        $surtaxDrift = $total->surtax - array_sum(array_map(fn (TaxBreakdown $line) => $line->surtax, $lines));
+        if (($drift !== 0 || $surtaxDrift !== 0) && $lines !== []) {
             // Report de l'écart sur la ligne au plus gros TTC : c'est celle
             // où un centime se remarque le moins.
             $index = array_search(max($amounts), $amounts, true);
@@ -123,8 +113,8 @@ class TaxationService
                 ttc: $line->ttc,
                 ht: $line->ht + $drift,
                 vat: $line->vat - $drift,
-                vatOnly: $line->vatOnly - $drift,
-                surtax: $line->surtax,
+                vatOnly: $line->vatOnly - $drift - $surtaxDrift,
+                surtax: $line->surtax + $surtaxDrift,
                 rateBasisPoints: $line->rateBasisPoints,
                 rateCode: $line->rateCode,
             );
@@ -188,6 +178,16 @@ class TaxationService
             : self::BASIS_PER_ROOM;
     }
 
+    /** Montant opérationnel CGI 2026, par personne hébergée et par nuitée. */
+    public function lodgingTax(int $nights, int $guests): int
+    {
+        if (!$this->touristTaxEnabled()) {
+            return 0;
+        }
+
+        return max(0, $nights) * max(1, $guests) * $this->touristTaxBracket()->amount_per_night;
+    }
+
     /** Le taux appliqué par défaut aux ventes. */
     public function defaultRate(): ?TaxRate
     {
@@ -233,9 +233,9 @@ class TaxationService
      * @param  int  $ht  Base hors taxes, en centimes.
      * @return array{type: string|null, basis_points: int, amount: int}
      */
-    public function withholding(int $ht, ?string $type): array
+    public function withholding(int $ht, ?string $type, ?string $date = null): array
     {
-        $bp = $this->withholdingRate($type);
+        $bp = $this->withholdingRate($type, $date);
 
         if ($type === null || $bp <= 0 || $ht <= 0) {
             return ['type' => null, 'basis_points' => 0, 'amount' => 0];
@@ -248,15 +248,9 @@ class TaxationService
     }
 
     /** Taux applicable à une nature de retenue, en points de base. */
-    public function withholdingRate(?string $type): int
+    public function withholdingRate(?string $type, ?string $date = null): int
     {
-        if ($type === null) {
-            return 0;
-        }
-
-        $configures = (array) $this->setting('withholding_rates', []);
-
-        return (int) ($configures[$type] ?? self::WITHHOLDING_DEFAULTS[$type] ?? 0);
+        return (int) ($this->withholdingRule($type, $date)['basis_points'] ?? 0);
     }
 
     /**
@@ -268,7 +262,7 @@ class TaxationService
     {
         $taux = [];
 
-        foreach (array_keys(self::WITHHOLDING_DEFAULTS) as $type) {
+        foreach (array_keys(SupplierInvoice::WITHHOLDING_TYPES) as $type) {
             $taux[$type] = $this->withholdingRate($type);
         }
 
@@ -284,7 +278,24 @@ class TaxationService
      */
     public function withholdingRatesConfirmed(): bool
     {
-        return (bool) $this->setting('withholding_rates_confirmed', false);
+        return max($this->withholdingRates()) > 0;
+    }
+
+    public function withholdingRule(?string $type, ?string $date = null): ?array
+    {
+        if (!isset(SupplierInvoice::WITHHOLDING_TYPES[$type])) {
+            return null;
+        }
+        $rule = $this->setting('withholding_rules', [])[$type] ?? [];
+        $date ??= today()->toDateString();
+        $bp = (int) ($rule['basis_points'] ?? 0);
+        if ($bp <= 0 || $bp > 10_000 || blank($rule['legal_reference'] ?? null)
+            || blank($rule['starts_on'] ?? null) || $date < $rule['starts_on']
+            || (filled($rule['ends_on'] ?? null) && $date > $rule['ends_on'])) {
+            return null;
+        }
+
+        return $rule;
     }
 
     private function resolveRate(TaxRate|string|null $rate): ?TaxRate

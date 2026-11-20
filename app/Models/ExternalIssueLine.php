@@ -10,7 +10,7 @@ class ExternalIssueLine extends Model
 {
     use \App\Models\Concerns\SaisiEnConditionnement;
 
-    protected $fillable = ['external_issue_id', 'stock_item_id', 'quantity', 'packaging_name', 'unit_cost', 'total_cost', 'notes'];
+    protected $fillable = ['external_issue_id', 'stock_item_id', 'stock_movement_id', 'quantity', 'packaging_name', 'unit_cost', 'total_cost', 'notes'];
 
     protected $casts = [
         'quantity'   => 'decimal:3',

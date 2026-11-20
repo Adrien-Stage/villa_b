@@ -175,7 +175,7 @@
             <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40
                 text-center">Qté</div>
             <div class="col-span-2 text-xs font-semibold uppercase tracking-widest text-primary/40
-                text-right">{{ $invoice->tax_amount > 0 ? 'P.U. HT' : 'P.U.' }}</div>
+                text-right">{{ $invoice->tax_amount > 0 ? 'P.U. TTC' : 'P.U.' }}</div>
             @if($invoice->tax_amount > 0)
             <div class="col-span-1 text-xs font-semibold uppercase tracking-widest text-primary/40
                 text-center">TVA</div>
@@ -190,6 +190,9 @@
             <div class="{{ $invoice->tax_amount > 0 ? 'col-span-6' : 'col-span-7' }}">
                 <p class="text-sm text-primary">{{ $item->description }}</p>
                 <p class="text-xs text-primary/40 capitalize">{{ $item->category }}</p>
+                @if($item->vat_reason)
+                    <p class="text-xs text-primary/60">{{ $item->vat_reason }}</p>
+                @endif
             </div>
             <div class="col-span-1 text-xs text-primary/70 text-center">
                 {{ $item->quantity }}
@@ -214,12 +217,18 @@
         <div class="ml-auto w-64 space-y-2">
             <div class="flex justify-between text-xs text-primary/60">
                 <span>{{ $invoice->tax_amount > 0 ? 'Sous-total HT' : 'Sous-total' }}</span>
-                <span>{{ number_format($invoice->subtotal / 100, 0, ',', ' ') }} FCFA</span>
+                <span>{{ number_format(($invoice->total_amount - $invoice->tax_amount - $invoice->tourist_tax_amount) / 100, 2, ',', ' ') }} FCFA</span>
             </div>
             @if($invoice->tax_amount > 0)
             <div class="flex justify-between text-xs text-primary/60">
-                <span>TVA (19,25%)</span>
-                <span>{{ number_format($invoice->tax_amount / 100, 0, ',', ' ') }} FCFA</span>
+                <span>TVA et CAC</span>
+                <span>{{ number_format($invoice->tax_amount / 100, 2, ',', ' ') }} FCFA</span>
+            </div>
+            @endif
+            @if($invoice->tourist_tax_amount > 0)
+            <div class="flex justify-between text-xs text-primary/60">
+                <span>Taxe de séjour</span>
+                <span>{{ number_format($invoice->tourist_tax_amount / 100, 2, ',', ' ') }} FCFA</span>
             </div>
             @endif
             <div class="flex justify-between text-sm font-semibold text-primary pt-2 border-t border-secondary/20">
@@ -241,7 +250,7 @@
     {{-- Mentions légales --}}
     <div class="px-8 py-4 border-t border-secondary/10 bg-accent/5">
         <p class="text-xs text-primary/40 text-center">
-            {{ $invoice->legal_notes ?? 'TVA 19,25% incluse — République du Cameroun' }}
+            {{ $invoice->legal_notes ?? 'République du Cameroun' }}
         </p>
         <p class="text-xs text-primary/30 text-center mt-1">
             {{ $tenant->name }} · {{ $tenant->address }} · Merci de votre confiance

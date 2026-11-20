@@ -17,6 +17,7 @@ class Account extends Model
     public const CLIENTS = '411000';
     public const PARTNER_DEPOSITS = '419000';
     public const SUPPLIERS = '401000';
+    public const SUPPLIER_ADVANCES = '409100';
     public const PERSONNEL = '421000';
 
     /** Comptes de trésorerie. */

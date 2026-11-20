@@ -30,6 +30,40 @@ beforeEach(function () {
     test()->actingAs(User::factory()->create(['role' => 'econome']));
 });
 
+test('un mouvement d’économat ajouté après le premier lot est comptabilisé une seule fois', function () {
+    $item = articleEconomat('Riz tardif', null);
+    $stock = app(StockService::class);
+    $posting = app(LedgerPostingService::class);
+    $stock->recordIn($item, 2, 1000);
+    $first = $posting->postEconomatStock(now());
+    $late = $stock->recordIn($item, 3, 1000);
+    $second = $posting->postEconomatStock(now());
+
+    expect($first->totalDebit())->toBe(2000)
+        ->and($second->totalDebit())->toBe(3000)
+        ->and($posting->postEconomatStock(now()))->toBeNull();
+    $this->assertDatabaseHas('ledger_stock_movements', ['movement_id' => $late->id, 'journal_entry_id' => $second->id]);
+});
+
+test('les réceptions datées attribuent en priorité le lot central qui expire le plus tôt', function () {
+    $supplier = Supplier::create(['name' => 'Livraison de produits frais', 'is_active' => true]);
+    $item = articleEconomat('Yaourts', null);
+    $receipts = app(\App\Services\GoodsReceiptService::class);
+    foreach (['LOT-LONG' => '2026-06-22', 'LOT-COURT' => '2026-06-16'] as $number => $expires) {
+        $receipts->receiveDirect([
+            'supplier_id' => $supplier->id,
+            'lines' => [['stock_item_id' => $item->id, 'quantity_delivered' => 2, 'unit_price' => 10,
+                'lot_number' => $number, 'expires_on' => $expires]],
+        ], auth()->user());
+    }
+    $stock = app(StockService::class);
+    $out = $stock->recordOut($item, 1);
+    expect($out->details['lot_allocations'][0]['lot_number'])->toBe('LOT-COURT');
+    Carbon::setTestNow('2026-06-17 10:00');
+    expect(fn () => $stock->recordOut($item, 3))->toThrow(RuntimeException::class, 'périmés');
+    expect((float) $item->fresh()->current_stock)->toBe(3.0);
+});
+
 afterEach(fn () => Carbon::setTestNow());
 
 function articleEconomat(string $nom, ?string $compte, float $stock = 0, int $cump = 0): StockItem

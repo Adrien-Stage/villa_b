@@ -862,6 +862,22 @@
             class="flex flex-col flex-1 min-h-0 overflow-hidden">
             @csrf
             <div class="px-6 py-5 space-y-4 flex-1 overflow-y-auto min-h-0">
+            @if(app(\App\Services\TaxationService::class)->vatEnabled())
+                <details class="rounded-lg border border-secondary/20 p-3">
+                    <summary class="text-xs cursor-pointer font-semibold">Traitement TVA particulier</summary>
+                    <label class="text-xs block mt-2">Taux de la prestation
+                        <select name="vat_rate_code" class="block w-full rounded-lg border-secondary/30">
+                            <option value="">Taux habituel</option>
+                            @foreach (\App\Models\TaxRate::query()->availableOn(today()->toDateString())->where('is_default', false)->orderBy('code')->get() as $rate)
+                                <option value="{{ $rate->code }}" @selected(old('vat_rate_code') === $rate->code)>{{ $rate->label }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="text-xs block mt-2">Motif et référence de pièce
+                        <input name="vat_reason" maxlength="180" value="{{ old('vat_reason') }}" class="block w-full rounded-lg border-secondary/30">
+                    </label>
+                </details>
+            @endif
             <div>
                 <label class="block text-xs font-semibold uppercase tracking-widest text-primary/50
                     mb-1.5">Type *</label>

@@ -40,6 +40,7 @@ class Invoice extends Model
         // Montants
         'subtotal',             // Total avant taxes
         'tax_amount',           // TVA et taxes locales
+        'tourist_tax_amount',
         'total_amount',         // TTC
         
         // Paiement
@@ -61,6 +62,7 @@ class Invoice extends Model
         'invoice_date' => 'date',
         'subtotal' => 'integer',
         'tax_amount' => 'integer',
+        'tourist_tax_amount' => 'integer',
         'total_amount' => 'integer',
         'paid_amount' => 'integer',
         'balance_due' => 'integer',

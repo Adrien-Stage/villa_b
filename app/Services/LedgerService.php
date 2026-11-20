@@ -58,7 +58,11 @@ class LedgerService
         ?string $schema = null,
         ?string $reference = null,
         bool $autoPost = true,
+        ?CarbonInterface $valueDate = null,
     ): JournalEntry {
+        if ($valueDate && $valueDate->toDateString() > $date->toDateString()) {
+            throw new RuntimeException('La date d’origine ne peut pas suivre la date comptable.');
+        }
         // Idempotence : on rend l'écriture existante plutôt que d'en créer
         // une seconde. Vérifié avant tout travail, y compris en cas de rejeu.
         if ($source !== null && $schema !== null) {
@@ -69,47 +73,45 @@ class LedgerService
             }
         }
 
-        $journal = Journal::byCode($journalCode)
-            ?? throw new RuntimeException("Journal « {$journalCode} » introuvable.");
-
-        $period = $this->periodFor($date);
-
-        if ($period->isLocked()) {
-            throw new RuntimeException(
-                "La période {$period->label()} est verrouillée : aucune écriture ne peut y être ajoutée. "
-                . "Passez par une contre-passation datée d'une période ouverte."
-            );
-        }
-
-        // La clôture journalière fige la journée au même titre que le
-        // verrouillage fige le mois : un mouvement découvert après coup ne
-        // doit pas s'y glisser rétroactivement.
-        if (NightAudit::isClosed($date)) {
-            throw new RuntimeException(
-                "La journée du {$date->format('d/m/Y')} est clôturée : aucune écriture ne peut y être ajoutée. "
-                . "Portez l'opération à une date ouverte."
-            );
-        }
-
-        $normalized = $this->normalizeLines($lines);
-
-        return DB::transaction(function () use ($journal, $period, $date, $label, $normalized, $source, $schema,
+        return DB::transaction(function () use ($journalCode, $date, $valueDate, $label, $lines, $source, $schema,
             $reference, $autoPost) {
-            $entry = JournalEntry::create([
+            $period = $this->lockForDate($date);
+            if ($source !== null && $schema !== null && ($existing = $this->findBySource($source, $schema))) {
+                return $existing;
+            }
+            $this->requireOpenDate($period, $date);
+
+            $journal = Journal::byCode($journalCode)
+                ?? throw new RuntimeException("Journal « {$journalCode} » introuvable.");
+            $normalized = $this->normalizeLines($lines);
+
+            $attributes = [
                 'journal_id'       => $journal->id,
                 'fiscal_period_id' => $period->id,
                 'entry_date'       => $date->toDateString(),
+                'value_date'       => $valueDate?->toDateString(),
                 'reference'        => $reference,
                 'label'            => $label,
                 'source_type'      => $source ? $source::class : null,
                 'source_id'        => $source?->getKey(),
                 'schema'           => $schema,
-                'posted_at'        => $autoPost ? now() : null,
                 'created_by'       => Auth::id(),
-            ]);
+            ];
+            $entry = $source !== null && $schema !== null
+                ? JournalEntry::query()->createOrFirst([
+                    'source_type' => $source::class, 'source_id' => $source->getKey(), 'schema' => $schema,
+                ], $attributes)
+                : JournalEntry::create($attributes);
+            if (!$entry->wasRecentlyCreated) {
+                return $entry;
+            }
 
             foreach ($normalized as $line) {
                 $entry->lines()->create($line);
+            }
+
+            if ($autoPost) {
+                $entry->update(['posted_at' => now(), 'validated_by' => Auth::id()]);
             }
 
             return $entry->load('lines');
@@ -124,32 +126,35 @@ class LedgerService
      */
     public function reverse(JournalEntry $entry, ?CarbonInterface $date = null, ?string $reason = null): JournalEntry
     {
-        if ($entry->isReversed()) {
-            throw new RuntimeException('Cette écriture a déjà été contre-passée.');
-        }
-
-        if ($entry->isReversal()) {
-            throw new RuntimeException("Une contre-passation ne s'extourne pas à son tour.");
-        }
-
-        $entry->loadMissing('lines', 'journal');
         $date ??= now();
-        $period = $this->periodFor($date);
 
-        if ($period->isLocked()) {
-            throw new RuntimeException(
-                "La période {$period->label()} est verrouillée : impossible d'y porter la contre-passation.");
-        }
+        return DB::transaction(function () use ($entry, $date, $reason) {
+            $period = $this->lockForDate($date);
+            $this->requireOpenDate($period, $date);
+            $entry = JournalEntry::query()->lockForUpdate()->findOrFail($entry->id);
 
-        return DB::transaction(function () use ($entry, $date, $period, $reason) {
+            if (!$entry->isPosted()) {
+                throw new RuntimeException('Seule une écriture validée peut être contre-passée.');
+            }
+            if ($entry->isReversed() || JournalEntry::query()->where('reverses_id', $entry->id)->exists()) {
+                throw new RuntimeException('Cette écriture a déjà été contre-passée.');
+            }
+            if ($entry->isReversal()) {
+                throw new RuntimeException("Une contre-passation ne s'extourne pas à son tour.");
+            }
+            if ($date->toDateString() < $entry->entry_date->toDateString()) {
+                throw new RuntimeException("La contre-passation doit suivre la date de l'écriture d'origine.");
+            }
+            $description = 'Extourne — ' . ($reason ? "{$reason} — " : '') . $entry->label;
+
             $reversal = JournalEntry::create([
                 'journal_id'       => $entry->journal_id,
                 'fiscal_period_id' => $period->id,
                 'entry_date'       => $date->toDateString(),
+                'value_date'       => ($entry->value_date ?? $entry->entry_date)->toDateString(),
                 'reference'        => $entry->reference,
-                'label'            => 'Extourne — ' . $entry->label . ($reason ? " ({$reason})" : ''),
+                'label'            => mb_substr($description, 0, 255),
                 'reverses_id'      => $entry->id,
-                'posted_at'        => now(),
                 'created_by'       => Auth::id(),
             ]);
 
@@ -166,6 +171,7 @@ class LedgerService
                 ]);
             }
 
+            $reversal->update(['posted_at' => now(), 'validated_by' => Auth::id()]);
             $entry->update(['reversed_by_id' => $reversal->id]);
 
             return $reversal->load('lines');
@@ -187,13 +193,37 @@ class LedgerService
      */
     public function lockPeriod(FiscalPeriod $period): FiscalPeriod
     {
-        if ($period->isLocked()) {
+        return DB::transaction(function () use ($period) {
+            $period = FiscalPeriod::query()->lockForUpdate()->findOrFail($period->id);
+            if (!$period->isLocked()) {
+                if ($period->entries()->whereNull('posted_at')->exists()) {
+                    throw new RuntimeException('La période contient des écritures à valider ou à retirer.');
+                }
+                $period->update(['locked_at' => now(), 'locked_by' => Auth::id()]);
+            }
+
             return $period;
+        });
+    }
+
+    /** Verrou commun aux écritures et à la clôture, à prendre dans une transaction. */
+    public function lockForDate(CarbonInterface $date): FiscalPeriod
+    {
+        $period = $this->periodFor($date);
+
+        return FiscalPeriod::query()->lockForUpdate()->findOrFail($period->id);
+    }
+
+    public function requireOpenDate(FiscalPeriod $period, CarbonInterface $date): void
+    {
+        if ($period->isLocked()) {
+            throw new RuntimeException("La période {$period->label()} est verrouillée. Choisissez une période ouverte.");
         }
-
-        $period->update(['locked_at' => now(), 'locked_by' => Auth::id()]);
-
-        return $period->fresh();
+        if (NightAudit::isClosed($date)) {
+            throw new RuntimeException(
+                "La journée du {$date->format('d/m/Y')} est clôturée. Portez l'opération à une date ouverte."
+            );
+        }
     }
 
     /**
@@ -208,33 +238,36 @@ class LedgerService
      */
     public function postOpeningBalance(FiscalYear $year, array $balances): JournalEntry
     {
-        if ($year->hasOpeningBalance()) {
-            throw new RuntimeException("Les à-nouveaux de l'exercice {$year->label} ont déjà été repris.");
-        }
-
-        foreach ($balances as $line) {
-            $account = $this->account($line['account']);
-
-            if (!$account->isBalanceSheet()) {
-                throw new RuntimeException(
-                    "Le compte {$account->code} est un compte de gestion : il ne se reprend pas en à-nouveaux."
-                );
+        return DB::transaction(function () use ($year, $balances) {
+            $year = FiscalYear::query()->lockForUpdate()->findOrFail($year->id);
+            if ($year->hasOpeningBalance()) {
+                throw new RuntimeException("Les à-nouveaux de l'exercice {$year->label} ont déjà été repris.");
             }
-        }
 
-        $entry = $this->post(
-            journalCode: Journal::MISC,
-            date: $year->starts_on->copy(),
-            label: "Reprise des à-nouveaux — {$year->label}",
-            lines: $balances,
-            source: $year,
-            schema: 'opening_balance',
-            reference: 'AN-' . $year->starts_on->year,
-        );
+            foreach ($balances as $line) {
+                $account = $this->account($line['account']);
 
-        $year->update(['opening_posted_at' => now()]);
+                if (!$account->isBalanceSheet()) {
+                    throw new RuntimeException(
+                        "Le compte {$account->code} est un compte de gestion : il ne se reprend pas en à-nouveaux."
+                    );
+                }
+            }
 
-        return $entry;
+            $entry = $this->post(
+                journalCode: Journal::MISC,
+                date: $year->starts_on->copy(),
+                label: "Reprise des à-nouveaux — {$year->label}",
+                lines: $balances,
+                source: $year,
+                schema: 'opening_balance',
+                reference: 'AN-' . $year->starts_on->year,
+            );
+
+            $year->update(['opening_posted_at' => now()]);
+
+            return $entry;
+        });
     }
 
     /**

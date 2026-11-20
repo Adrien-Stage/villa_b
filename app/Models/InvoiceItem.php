@@ -27,6 +27,9 @@ class InvoiceItem extends Model
         'total_price',          // quantity * unit_price
         'tax_rate',             // % de TVA appliqué
         'tax_amount',
+        'tax_rate_code',
+        'tax_surtax_amount',
+        'vat_reason',
         'category',             // 'room', 'restaurant', 'extra', 'tax', 'discount'
         'source_type',          // Polymorphisme optionnel : 'App\Models\Booking', 'App\Models\RestaurantOrder'
         'source_id',
@@ -38,6 +41,7 @@ class InvoiceItem extends Model
         'total_price' => 'integer',
         'tax_rate' => 'decimal:2',
         'tax_amount' => 'integer',
+        'tax_surtax_amount' => 'integer',
     ];
 
     public function invoice(): BelongsTo

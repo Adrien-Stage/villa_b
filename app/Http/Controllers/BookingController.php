@@ -1127,6 +1127,8 @@ class BookingController extends Controller
         // même montant qu'avant sa mise en service, seule la décomposition
         // apparaît désormais sur la facture.
         $taxAmount = $this->taxation->breakdown($totalAmount)->vat;
+        $lodgingTax = $this->taxation->lodgingTax($nights, (int) $validated['adults_count'] + $childrenCount);
+        $totalAmount += $lodgingTax;
         $balanceDue = max(0, $totalAmount - $paymentAmount);
 
         $tenantId = Auth::user()->tenant_id
@@ -1180,6 +1182,7 @@ class BookingController extends Controller
             'extras_amount'   => $extrasAmount,
             'package_amount'  => $packageAmount,
             'tax_amount'      => $taxAmount,
+            'tourist_tax_amount' => $lodgingTax,
             'discount_amount' => $totalDiscount,
             'total_amount'    => $totalAmount,
             'deposit_amount'  => $paymentAmount,
@@ -1915,6 +1918,8 @@ class BookingController extends Controller
             'unit_price'       => ['required', 'integer', 'min:0'],
             'is_complimentary' => ['boolean'],
             'notes'            => ['nullable', 'string'],
+            'vat_rate_code'    => ['nullable', 'string', 'max:20'],
+            'vat_reason'       => ['required_with:vat_rate_code', 'nullable', 'string', 'max:180'],
             // Prestation choisie au catalogue : permet de reconnaître celles
             // que la convention partenaire couvre.
             'service_item_id'  => ['nullable', 'integer', 'exists:service_items,id'],
@@ -1925,6 +1930,11 @@ class BookingController extends Controller
 
         $isComplimentary = $validated['is_complimentary'] ?? false;
         $notes           = $validated['notes'] ?? null;
+        $rateCode = $validated['vat_rate_code'] ?? null;
+        if ($rateCode !== null && (!$this->taxation->vatEnabled()
+            || !\App\Models\TaxRate::query()->availableOn(today()->toDateString())->where('code', $rateCode)->exists())) {
+            return back()->withErrors(['vat_rate_code' => 'Ce traitement TVA est indisponible à la date de prestation.'])->withInput();
+        }
 
         // La gratuité conventionnelle est décidée côté serveur : se fier à la
         // case cochée par le navigateur permettrait d'offrir n'importe quoi.
@@ -1956,6 +1966,8 @@ class BookingController extends Controller
             'occurred_at'      => now(),
             'recorded_by'      => Auth::id(),
             'notes'            => $notes,
+            'vat_rate_code'    => $rateCode,
+            'vat_reason'       => $rateCode !== null ? $validated['vat_reason'] : null,
         ]);
 
         // Recalcule les extras et le solde du booking
@@ -1991,12 +2003,15 @@ class BookingController extends Controller
                 $taxAmount   = $this->taxation->breakdown($totalAmount)->vat;
             }
 
+            $lodgingTax = $booking->lodgingTax((int) $booking->total_nights);
+            $totalAmount += $lodgingTax;
             $balanceDue = max(0, $totalAmount - (int) $booking->paid_amount);
 
             $booking->update([
                 'extras_amount'   => $extrasAmount,
                 'discount_amount' => $discountAmount,
                 'tax_amount'      => $taxAmount,
+                'tourist_tax_amount' => $lodgingTax,
                 'total_amount'    => $totalAmount,
                 'balance_due'     => $balanceDue,
             ]);
@@ -2240,6 +2255,9 @@ class BookingController extends Controller
         $totalAmount      = $totalRoomAmount;
         // TVA extraite du total TTC, jamais ajoutée par dessus.
         $taxAmount        = $this->taxation->breakdown($totalAmount)->vat;
+        $lodgingTax       = $this->taxation->lodgingTax($nights, (int) $validated['adults_count']
+            + (int) ($validated['children_count'] ?? 0));
+        $totalAmount     += $lodgingTax;
 
         $booking->update([
             'room_id'          => $room->id,
@@ -2252,6 +2270,7 @@ class BookingController extends Controller
             'price_per_night'  => $pricePerNight,
             'total_room_amount' => $totalRoomAmount,
             'tax_amount'       => $taxAmount,
+            'tourist_tax_amount' => $lodgingTax,
             'total_amount'     => $totalAmount,
             'balance_due'      => max(0, $totalAmount - $booking->paid_amount),
             'source'           => $validated['source'] ?? $booking->source,

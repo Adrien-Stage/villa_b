@@ -27,7 +27,8 @@
         <div class="min-w-0">
             <h1 class="text-lg font-semibold text-primary font-heading">{{ $entry->label }}</h1>
             <p class="text-xs text-primary/55 mt-1">
-                {{ $entry->entry_date->format('d/m/Y') }}
+                {{ $entry->number() }} · {{ $entry->entry_date->format('d/m/Y') }}
+                @if($entry->value_date) · opération du {{ $entry->value_date->format('d/m/Y') }} @endif
                 · journal <span class="font-mono">{{ $entry->journal?->code }}</span>
                 @if($entry->reference) · pièce <span class="font-mono">{{ $entry->reference }}</span> @endif
                 · {{ $entry->period?->label() }}
@@ -73,7 +74,7 @@
                         <td class="px-3 py-2 text-primary/70">{{ $l->label ?: '—' }}</td>
                         <td class="px-3 py-2 text-primary/60">{{ $l->auxiliary?->full_name ?? $l->auxiliary?->name ?? '—' }}</td>
                         <td class="px-3 py-2 text-primary/60">
-                            {{ $l->analytic_center ? (\App\Models\JournalEntryLine::CENTERS[$l->analytic_center] ?? $l->analytic_center) : '—' }}
+                            {{ $l->analytic_center ? ($centers[$l->analytic_center] ?? $l->analytic_center) : '—' }}
                         </td>
                         <td class="px-3 py-2 text-right text-primary/80 whitespace-nowrap">{{ $l->debit ? $fcfa($l->debit) : '' }}</td>
                         <td class="px-5 py-2 text-right text-primary/80 whitespace-nowrap">{{ $l->credit ? $fcfa($l->credit) : '' }}</td>
@@ -112,18 +113,22 @@
 @endif
 
 {{-- Contre-passation --}}
-@unless($entry->isReversed() || $entry->isReversal())
+@if($entry->isPosted() && !$entry->isReversed() && !$entry->isReversal()
+    && app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'accounting.ledger.entry.reverse'))
     <div class="rounded-xl border border-secondary/20 bg-white p-4">
         <h2 class="text-sm font-semibold text-primary mb-1">Contre-passer cette écriture</h2>
         <p class="text-xs text-primary/60 mb-3">
-            Une écriture validée ne se modifie ni ne se supprime. La correction produit une écriture inverse,
-            datée d'aujourd'hui — antidater rouvrirait une période close.
+            La correction crée une écriture inverse à la date ouverte sélectionnée. La date d’origine reste visible.
         </p>
         <form
             method="POST"
             action="{{ route('accounting.ledger.entry.reverse', $entry) }}"
             class="flex flex-col sm:flex-row gap-2">
             @csrf
+            <label class="sr-only" for="reversal-date">Date comptable de la correction</label>
+            <input type="date" name="date" id="reversal-date" value="{{ old('date', today()->toDateString()) }}"
+                min="{{ $entry->entry_date->toDateString() }}" max="{{ today()->toDateString() }}" required
+                class="rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
             <input type="text" name="reason" required minlength="5" maxlength="255"
                    placeholder="Motif de la correction (obligatoire)"
                    class="w-full rounded-lg border border-secondary/25 bg-white text-sm p-2.5">
@@ -135,6 +140,7 @@
             </button>
         </form>
         @error('reason')<p class="text-xs text-red-500 mt-1.5">{{ $message }}</p>@enderror
+        @error('date')<p class="text-xs text-red-500 mt-1.5">{{ $message }}</p>@enderror
     </div>
-@endunless
+@endif
 @endsection

@@ -312,6 +312,9 @@ class RestaurantBanquetController extends Controller
         if ($cible === RestaurantBanquet::ANNULE) {
             $attributs['canceled_at'] = now();
         }
+        if ($cible === RestaurantBanquet::REALISE) {
+            $attributs['realized_at'] = now();
+        }
         // Réalisé et déjà tout payé : il est soldé.
         if ($cible === RestaurantBanquet::REALISE && $banquet->resteDu() === 0) {
             $attributs['status'] = RestaurantBanquet::SOLDE;
