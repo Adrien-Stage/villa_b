@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Enums\RoomStatus;
 use App\Models\Booking;
 use App\Models\CashRegisterActivity;
+use App\Models\CashRegisterSession;
 use App\Models\Customer;
 use App\Models\FolioItem;
 use App\Models\Payment;
@@ -14,6 +15,7 @@ use App\Models\RoomType;
 use App\Services\CashRegisterCircuit;
 use App\Services\CheckinCodeNotifier;
 use App\Services\CheckOutService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -930,7 +932,7 @@ class BookingController extends Controller
             'room_id'        => ['required', 'exists:rooms,id'],
             'check_in'       => ['required', 'date'],
             'check_out'      => ['required', 'date', 'after:check_in'],
-            'check_in_time'  => ['nullable', 'string', 'max:10', 'regex:/^\d{1,2}:\d{2}$/'],
+            'check_in_time'  => ['nullable', 'string', 'max:10', 'regex:/^(?:[01]?\d|2[0-3]):[0-5]\d$/'],
             'adults_count'   => ['required', 'integer', 'min:1'],
             'children_count' => ['nullable', 'integer', 'min:0'],
             'children_ages'   => ['nullable', 'array'],
@@ -965,10 +967,60 @@ class BookingController extends Controller
             'draft_token'    => ['nullable', 'string', 'max:64'],
         ]);
 
+        $booking = DB::transaction(fn () => $this->enregistrerSejour($request, $validated, $activeSession, $tenantId));
+        if ($booking instanceof RedirectResponse) {
+            return $booking;
+        }
 
-        $room     = Room::with('roomType')->findOrFail($validated['room_id']);
+        $needsApproval = $booking->status === BookingStatus::PENDING && $request->boolean('is_offerte');
+
+        if ($needsApproval) {
+            $this->notifier->toRoles(['manager'], new \App\Notifications\ComplimentaryBookingRequested($booking));
+        }
+
+        // Nouvelle réservation — in-app (cloche) et push système (même app
+        // fermée). Le manager qui vient de recevoir la demande de validation
+        // est écarté : deux cloches pour la même réservation noient le signal
+        // actionnable sous l'information.
+        $creatorName = Auth::user()->name ?? 'Réception';
+        $this->notifier->toRoles(
+            $needsApproval ? ['reception'] : ['manager', 'reception'],
+            new \App\Notifications\NewBookingCreated($booking, $creatorName),
+            Auth::id()
+        );
+
+        // Le code de check-in ne part qu'à l'interlocuteur désigné à la dernière
+        // étape. L'envoyer aux deux doublait la circulation d'un code d'accès et
+        // rendait impossible de savoir qui l'avait reçu.
+        $envoi = app(CheckinCodeNotifier::class)->send($booking, $booking->code_recipient);
+
+        $successMsg = $booking->status === BookingStatus::PENDING
+            ? "Réservation {$booking->booking_number} créée et en attente d'autorisation par le manager."
+            : "Réservation {$booking->booking_number} créée et acompte enregistré.";
+
+        // Où est parti le code : sans ce retour, la réception ne peut pas
+        // répondre au client qui appelle en disant n'avoir rien reçu.
+        $successMsg .= in_array('email', $envoi['sent'], true)
+            ? " Code de check-in envoyé au {$envoi['label']} ({$envoi['email']})."
+            : " Attention : aucun code n'a pu être envoyé au {$envoi['label']} — communiquez-le de vive voix.";
+
+        return redirect()
+            ->route('bookings.summary', $booking)
+            ->with('success', $successMsg)
+            ->with('checkin_code', $booking->checkin_code);
+    }
+
+    private function enregistrerSejour(Request $request, array $validated, CashRegisterSession $activeSession,
+        ?int $tenantId): Booking|RedirectResponse
+    {
+        $room     = Room::with('roomType')->lockForUpdate()->findOrFail($validated['room_id']);
         $checkIn  = \Carbon\Carbon::parse($validated['check_in']);
         $checkOut = \Carbon\Carbon::parse($validated['check_out']);
+        $refus = $this->roomAvailability->conflictReason($room, $checkIn, $checkOut,
+            arrivalTime: $validated['check_in_time'] ?? '14:00');
+        if ($refus !== null) {
+            return back()->withInput()->withErrors(['room_id' => $refus]);
+        }
         $nights   = $checkIn->diffInDays($checkOut);
 
         // Validations spécifiques pour le prix négocié et l'acompte (avec surcharge éventuelle)
@@ -1205,24 +1257,6 @@ class BookingController extends Controller
                 ->update(['status' => 'completed']);
         }
 
-        $needsApproval = $booking->status === BookingStatus::PENDING && $request->boolean('is_offerte');
-
-
-        if ($needsApproval) {
-            $this->notifier->toRoles(['manager'], new \App\Notifications\ComplimentaryBookingRequested($booking));
-        }
-
-        // Nouvelle réservation — in-app (cloche) et push système (même app
-        // fermée). Le manager qui vient de recevoir la demande de validation
-        // est écarté : deux cloches pour la même réservation noient le signal
-        // actionnable sous l'information.
-        $creatorName = Auth::user()->name ?? 'Réception';
-        $this->notifier->toRoles(
-            $needsApproval ? ['reception'] : ['manager', 'reception'],
-            new \App\Notifications\NewBookingCreated($booking, $creatorName),
-            Auth::id()
-        );
-
         // Enregistrer le paiement (Acompte) si montant > 0
         $payment = null;
         if ($paymentAmount > 0) {
@@ -1394,11 +1428,6 @@ class BookingController extends Controller
             ]);
         }
 
-        // Le code de check-in ne part qu'à l'interlocuteur désigné à la dernière
-        // étape. L'envoyer aux deux doublait la circulation d'un code d'accès et
-        // rendait impossible de savoir qui l'avait reçu.
-        $envoi = app(CheckinCodeNotifier::class)->send($booking, $booking->code_recipient);
-
         $this->cashRegisterCircuit->enregistrerInterventionTiers(
             $activeSession,
             Auth::user(),
@@ -1414,20 +1443,7 @@ class BookingController extends Controller
             ])
         );
 
-        $successMsg = $booking->status === BookingStatus::PENDING
-            ? "Réservation {$booking->booking_number} créée et en attente d'autorisation par le manager."
-            : "Réservation {$booking->booking_number} créée et acompte enregistré.";
-
-        // Où est parti le code : sans ce retour, la réception ne peut pas
-        // répondre au client qui appelle en disant n'avoir rien reçu.
-        $successMsg .= in_array('email', $envoi['sent'], true)
-            ? " Code de check-in envoyé au {$envoi['label']} ({$envoi['email']})."
-            : " Attention : aucun code n'a pu être envoyé au {$envoi['label']} — communiquez-le de vive voix.";
-
-        return redirect()
-            ->route('bookings.summary', $booking)
-            ->with('success', $successMsg)
-            ->with('checkin_code', $booking->checkin_code);
+        return $booking;
     }
 
     // ===== RÉCAPITULATIF APRÈS CONFIRMATION =====

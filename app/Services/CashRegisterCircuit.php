@@ -17,6 +17,7 @@ use App\Support\RoleCatalog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Le circuit d'une caisse, le même partout — réception, boutique, chaque
@@ -292,7 +293,9 @@ class CashRegisterCircuit
         );
 
         if ($sessionHolder !== null) {
-            app(Notifier::class)->send($sessionHolder, new CashRegisterThirdPartyActivity($activity));
+            DB::afterCommit(fn () => app(Notifier::class)->send(
+                $sessionHolder, new CashRegisterThirdPartyActivity($activity)
+            ));
         }
 
         return $activity;

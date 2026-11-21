@@ -12,6 +12,7 @@ use App\Services\Notifier;
 use App\Services\RoomAvailabilityService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -43,10 +44,14 @@ class PublicBookingController extends Controller
             return response()->json(['ok' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $data = $validator->validated();
+        return DB::transaction(fn () => $this->enregistrerDemande($validator->validated()));
+    }
+
+    private function enregistrerDemande(array $data): JsonResponse
+    {
 
         /** @var Room $room */
-        $room = Room::with('roomType')->findOrFail($data['room_id']);
+        $room = Room::with('roomType')->lockForUpdate()->findOrFail($data['room_id']);
 
         if (!$room->roomType || !$room->roomType->is_active) {
             return response()->json(['ok' => false,
@@ -76,7 +81,7 @@ class PublicBookingController extends Controller
         // Notifier managers + réception (in-app + push système). Passe par le
         // Notifier : il résout aussi les rôles portés par le pivot, donc les
         // utilisateurs multi-modules ne sont pas oubliés.
-        app(Notifier::class)->toRoles(['manager', 'reception'], new WebsiteBookingReceived($booking));
+        DB::afterCommit(fn () => app(Notifier::class)->toRoles(['manager', 'reception'], new WebsiteBookingReceived($booking)));
 
         return response()->json([
             'ok'             => true,
