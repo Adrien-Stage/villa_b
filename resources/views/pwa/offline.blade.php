@@ -29,6 +29,9 @@
         }
         button:hover { background: #2C1810; }
         .hint { margin-top: 16px; font-size: 12px; color: rgba(57,31,14,.45); }
+        details { text-align: left; border-top: 1px solid #ddd; margin-top: 20px; padding-top: 12px; }
+        details input, details textarea { width: 100%; margin: 5px 0 12px; }
+        details button { margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -43,11 +46,11 @@
         </div>
         <h1>Vous êtes hors connexion</h1>
         <p>
-            Cette page n'est pas disponible sans réseau. Vos données saisies avant la coupure
-            ne sont pas perdues : reconnectez-vous pour poursuivre.
+            Reconnectez-vous pour accéder à votre établissement.
         </p>
         <button type="button" onclick="location.reload()">Réessayer</button>
         <p class="hint" id="status">Vérification de la connexion…</p>
+        @include('accounting.ledger.partials.offline-draft')
     </div>
 
     <script>
@@ -55,8 +58,7 @@
         function refreshStatus() {
             const el = document.getElementById('status');
             if (navigator.onLine) {
-                el.textContent = 'Connexion rétablie — rechargement…';
-                setTimeout(() => location.reload(), 600);
+                el.textContent = 'Connexion rétablie. Sélectionnez Réessayer pour reprendre.';
             } else {
                 el.textContent = 'En attente du réseau…';
             }

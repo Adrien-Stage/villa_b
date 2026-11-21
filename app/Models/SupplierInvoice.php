@@ -31,6 +31,10 @@ class SupplierInvoice extends Model
 
     /** Comptes de charge proposés à la saisie, par nature d'achat. */
     public const CHARGE_ACCOUNTS = [
+        '231000' => 'Immobilisation — bâtiments',
+        '241000' => 'Immobilisation — matériel et outillage',
+        '244000' => 'Immobilisation — matériel et mobilier',
+        '245000' => 'Immobilisation — matériel de transport',
         '601000' => 'Achats de marchandises',
         '602000' => 'Matières premières et fournitures',
         '605000' => 'Eau, électricité, carburant',
@@ -58,6 +62,7 @@ class SupplierInvoice extends Model
         'withholding_type',
         'withholding_basis_points',
         'withholding_amount',
+        'withholding_legal_reference',
         'net_payable',
         'reception_variance',
         'variance_reason',

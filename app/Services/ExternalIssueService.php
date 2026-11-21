@@ -78,6 +78,7 @@ class ExternalIssueService
                 ExternalIssueLine::create([
                     'external_issue_id' => $sortie->id,
                     'stock_item_id'     => $item->id,
+                    'stock_movement_id' => $mouvement->id,
                     'quantity'          => $quantite,
                     'packaging_name'    => $conditionnement,
                     'unit_cost'         => $cout,
@@ -114,7 +115,8 @@ class ExternalIssueService
                     $sortie->id,
                     "Annulation de la sortie {$sortie->number} — {$motif}",
                     // Sortis en cartons : ils reviennent fermés.
-                    $ligne->packaging_name
+                    $ligne->packaging_name,
+                    $ligne->stock_movement_id,
                 );
             }
 

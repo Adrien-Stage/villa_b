@@ -7,6 +7,9 @@
 @endphp
 
 @section('content')
+@if(session('error') || $errors->any())
+    <p role="alert" class="mb-4 p-3 rounded-lg bg-red-50 text-red-800 text-sm">{{ session('error') ?? $errors->first() }}</p>
+@endif
 <div class="mb-4">
     <h1 class="text-2xl font-semibold text-primary font-heading font-mono">{{ $invoice->number }}</h1>
     <p class="text-sm text-primary/60 mt-1">{{ $invoice->supplier?->name }} — {{ $invoice->invoice_date->format('d/m/Y') }}</p>
@@ -100,6 +103,32 @@
     </div>
 
     <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl border border-secondary/20 shadow-sm p-5 mb-4">
+            <h2 class="text-sm font-semibold text-primary mb-2">Reste dû</h2>
+            <p class="font-mono text-primary">{{ number_format($remaining / 100, 2, ',', ' ') }} FCFA</p>
+            @if($remaining > 0 && app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'accounting.ledger.suppliers.pay'))
+                <form method="post" action="{{ route('accounting.ledger.suppliers.pay', $invoice) }}" class="mt-4 space-y-2">
+                    @csrf
+                    <label class="block text-xs">Date
+                        <input name="date" type="date" value="{{ old('date', today()->toDateString()) }}" required class="block w-full rounded-lg border-secondary/30">
+                    </label>
+                    <label class="block text-xs">Montant réglé en FCFA
+                        <input name="amount" type="number" value="{{ old('amount') }}" min="1" step="1" required class="block w-full rounded-lg border-secondary/30">
+                    </label>
+                    <label class="block text-xs">Mode de règlement
+                        <select name="method" required class="block w-full rounded-lg border-secondary/30">
+                            @foreach(\App\Services\SupplierSettlement::SETTLEMENT_METHODS as $key => $label)
+                                <option value="{{ $key }}" @selected(old('method') === $key)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="block text-xs">Référence du justificatif
+                        <input name="reference" maxlength="60" value="{{ old('reference') }}" required class="block w-full rounded-lg border-secondary/30">
+                    </label>
+                    <button class="rounded-lg bg-primary text-white px-3 py-2 text-sm">Enregistrer le règlement</button>
+                </form>
+            @endif
+        </div>
         <div class="bg-white rounded-xl border border-secondary/20 shadow-sm p-5">
             <h2 class="text-sm font-semibold text-primary mb-3">Montants</h2>
             <dl class="space-y-2 text-xs">

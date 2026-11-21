@@ -41,6 +41,69 @@
 </div>
 
 <div id="accounts-container">
+@if (app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'accounting.ledger.accounts.creer'))
+    @foreach (array_filter([session('success'), $errors->first()]) as $message)
+        <p role="status" class="bg-accent/20 rounded-lg p-3 mb-4 text-sm">{{ $message }}</p>
+    @endforeach
+    <details class="bg-white border border-secondary/20 rounded-xl p-4 mb-4">
+        <summary class="font-semibold cursor-pointer">Plan de comptes et centres analytiques</summary>
+        <form action="{{ route('accounting.ledger.accounts.store') }}" method="post" class="mt-3 flex flex-wrap items-end gap-3 text-sm">
+            @csrf
+            <input type="hidden" name="kind" value="account">
+            <label>Code SYSCOHADA
+                <input name="code" inputmode="numeric" maxlength="20" required class="block rounded-lg border-secondary/30">
+            </label>
+            <label>Libellé
+                <input name="label" maxlength="180" required class="block rounded-lg border-secondary/30">
+            </label>
+            <label>Usage
+                <select name="is_postable" class="block rounded-lg border-secondary/30">
+                    <option value="1">Compte imputable</option>
+                    <option value="0">Regroupement</option>
+                </select>
+            </label>
+            <label><input name="is_collective" type="checkbox" value="1"> Collectif</label>
+            <button class="bg-primary text-white px-3 py-2 rounded-lg">Ajouter le compte</button>
+        </form>
+        <form action="{{ route('accounting.ledger.accounts.store') }}" method="post" class="mt-4 flex flex-wrap items-end gap-3 text-sm">
+            @csrf
+            <input type="hidden" name="kind" value="center">
+            <label>Code du centre
+                <input name="code" maxlength="40" pattern="[a-z][a-z0-9_]{0,39}" required class="block rounded-lg border-secondary/30">
+            </label>
+            <label>Libellé du centre
+                <input name="label" maxlength="100" required class="block rounded-lg border-secondary/30">
+            </label>
+            <button class="bg-primary text-white px-3 py-2 rounded-lg">Enregistrer le centre</button>
+        </form>
+        <form action="{{ route('accounting.ledger.accounts.store') }}" method="post" class="mt-4 flex flex-wrap items-end gap-3 text-sm">
+            @csrf
+            <input type="hidden" name="kind" value="rate">
+            <label>Code du traitement TVA
+                <input name="code" maxlength="20" pattern="[A-Z][A-Z0-9_]{1,19}" required class="block rounded-lg border-secondary/30">
+            </label>
+            <label>Libellé
+                <input name="label" maxlength="120" required class="block rounded-lg border-secondary/30">
+            </label>
+            <label>Taux total en points de base
+                <input name="rate_basis_points" type="number" min="0" max="10000" required class="block rounded-lg border-secondary/30">
+            </label>
+            <label>Dont CAC en points de base
+                <input name="surtax_basis_points" type="number" value="0" min="0" max="10000" required class="block rounded-lg border-secondary/30">
+            </label>
+            <label>Référence juridique
+                <input name="legal_reference" maxlength="180" required class="block rounded-lg border-secondary/30">
+            </label>
+            <label>Début d’application
+                <input name="effective_on" type="date" required class="block rounded-lg border-secondary/30">
+            </label>
+            <label>Fin d’application
+                <input name="ends_on" type="date" class="block rounded-lg border-secondary/30">
+            </label>
+            <button class="bg-primary text-white px-3 py-2 rounded-lg">Ajouter le traitement TVA</button>
+        </form>
+    </details>
+@endif
 @forelse($comptes as $classeNum => $lignes)
     <div class="bg-white rounded-xl border border-secondary/20 shadow-sm overflow-hidden mb-4">
         <div class="px-5 py-3 border-b border-secondary/15 bg-accent/10">

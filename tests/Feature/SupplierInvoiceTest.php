@@ -13,6 +13,15 @@ use Illuminate\Support\Carbon;
 
 uses(RefreshDatabase::class);
 
+beforeEach(function () {
+    $rules = [];
+    foreach (['services' => 500, 'fees' => 1000, 'intellectual' => 1500] as $type => $rate) {
+        $rules[$type] = ['basis_points' => $rate, 'starts_on' => '2026-01-01', 'legal_reference' => 'Référence fixture'];
+    }
+    $tenant = Tenant::firstOrCreate(['id' => 1], ['name' => 'Test', 'slug' => 'test']);
+    $tenant->update(['settings' => ['taxes' => ['withholding_rules' => $rules]]]);
+});
+
 function fournisseur(string $nom = 'Établissements Mbarga'): Supplier
 {
     return Supplier::create([
@@ -30,7 +39,8 @@ function activerTva(): void
         ['name' => 'Test', 'slug' => 'test']
     );
 
-    Tenant::query()->update(['settings' => ['taxes' => ['vat_enabled' => true]]]);
+    $tenant = Tenant::firstOrFail();
+    $tenant->update(['settings' => array_replace_recursive($tenant->settings, ['taxes' => ['vat_enabled' => true]])]);
 }
 
 function saisirFacture(array $overrides = []): SupplierInvoice
@@ -78,13 +88,19 @@ test('les trois natures de retenue appliquent leurs taux', function () {
     expect($service->decompose(1_000_000, SupplierInvoice::WITHHOLDING_INTELLECTUAL)['withholding']['amount'])->toBe(150_000);
 });
 
-test('un taux surchargé dans les réglages remplace le défaut', function () {
-    Tenant::query()->firstOrCreate(['id' => 1], ['name' => 'Test', 'slug' => 'test']);
-    Tenant::query()->update(['settings' => ['taxes' => ['withholding_rates' => ['services' => 220]]]]);
+test('une retenue s’applique uniquement dans la période validée', function () {
+    Tenant::query()->update(['settings' => ['taxes' => ['withholding_rules' => ['services' => [
+        'basis_points' => 220, 'starts_on' => '2026-07-01', 'ends_on' => '2026-12-31',
+        'legal_reference' => 'Référence fixture',
+    ]]]]]);
 
-    // Les taux ne sont pas confirmés pour le Cameroun : ils doivent rester
-    // pilotables sans redéploiement.
-    expect(app(TaxationService::class)->withholdingRate('services'))->toBe(220);
+    $taxation = app(TaxationService::class);
+    expect($taxation->withholdingRate('services', '2026-07-01'))->toBe(220)
+        ->and($taxation->withholdingRate('services', '2026-06-30'))->toBe(0)
+        ->and($taxation->withholdingRate('services', '2027-01-01'))->toBe(0);
+    expect(fn () => saisirFacture(['withholding_type' => SupplierInvoice::WITHHOLDING_SERVICES]))
+        ->toThrow(RuntimeException::class, 'Aucune règle de retenue');
+    expect(JournalEntry::count())->toBe(0);
 });
 
 // ── Écriture produite ───────────────────────────────────────────────────────

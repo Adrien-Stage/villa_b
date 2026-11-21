@@ -50,7 +50,7 @@ class BudgetLine extends Model
     /** Les centres du budget : ceux de l'analytique, plus la structure. */
     public static function centres(): array
     {
-        return JournalEntryLine::CENTERS + [self::CENTER_STRUCTURE => 'Structure (non ventilé)'];
+        return JournalEntryLine::centers() + [self::CENTER_STRUCTURE => 'Structure (non ventilé)'];
     }
 
     public function updatedBy(): BelongsTo

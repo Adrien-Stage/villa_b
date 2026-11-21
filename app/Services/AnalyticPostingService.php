@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Journal;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
+use App\Models\NightAudit;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
@@ -70,12 +71,18 @@ class AnalyticPostingService
      */
     public function mirror(CarbonInterface $from, CarbonInterface $to): ?JournalEntry
     {
-        $schema = $this->schemaFor($from, $to);
+        return DB::transaction(function () use ($from, $to) {
+            $this->ledger->lockForDate($to);
+            if ($this->existingMirror($from, $to) !== null) {
+                return null;
+            }
 
-        if ($this->existingMirror($from, $to) !== null) {
-            return null;
-        }
+            return $this->writeMirror($from, $to, $to, $this->schemaFor($from, $to));
+        });
+    }
 
+    private function writeMirror(CarbonInterface $from, CarbonInterface $to, CarbonInterface $date, string $schema): ?JournalEntry
+    {
         $ventilation = $this->chargesByCenter($from, $to);
 
         if ($ventilation['total'] === 0 && $ventilation['centers'] === []) {
@@ -84,17 +91,10 @@ class AnalyticPostingService
 
         $lignes = [];
 
-        foreach (self::COST_ACCOUNTS as $centre => $compte) {
-            $montant = $ventilation['centers'][$centre] ?? 0;
-
-            if ($montant !== 0) {
-                $lignes[] = $this->ligneSignee(
-                    $compte,
-                    'Charges ' . (JournalEntryLine::CENTERS[$centre] ?? $centre),
-                    $montant,
-                    $centre,
-                );
-            }
+        $labels = JournalEntryLine::centers();
+        foreach ($ventilation['centers'] as $centre => $montant) {
+            $lignes[] = $this->ligneSignee(self::COST_ACCOUNTS[$centre] ?? '925000',
+                'Charges ' . ($labels[$centre] ?? $centre), $montant, $centre);
         }
 
         if ($ventilation['unassigned'] !== 0) {
@@ -114,10 +114,11 @@ class AnalyticPostingService
 
         return $this->ledger->post(
             journalCode: Journal::MISC,
-            date: $to->copy()->startOfDay(),
+            date: $date,
             label: 'Reflet analytique — ' . $this->periodLabel($from, $to),
             lines: $lignes,
             schema: $schema,
+            valueDate: $date->isSameDay($to) ? null : $to,
         );
     }
 
@@ -132,17 +133,19 @@ class AnalyticPostingService
         string $reason = 'Reflet analytique recalculé'): ?JournalEntry
     {
         return DB::transaction(function () use ($from, $to, $reason) {
+            $period = $this->ledger->lockForDate($to);
             $existant = $this->existingMirror($from, $to);
-
-            if ($existant !== null) {
-                $this->ledger->reverse($existant, $to->copy()->startOfDay(), $reason);
-
-                // L'extourne libère le schéma : sans cela, mirror() se
-                // croirait déjà passé et ne referait rien.
-                $existant->update(['schema' => $existant->schema . ':annule-' . now()->timestamp]);
+            $date = $period->isLocked() || NightAudit::isClosed($to) ? now() : $to;
+            $schema = $this->schemaFor($from, $to);
+            if ($existant) {
+                if ($date->isBefore($existant->entry_date)) {
+                    $date = now();
+                }
+                $this->ledger->reverse($existant, $date, $reason);
+                $schema .= ':' . $existant->id;
             }
 
-            return $this->mirror($from, $to);
+            return $this->writeMirror($from, $to, $date, $schema);
         });
     }
 
@@ -198,7 +201,7 @@ class AnalyticPostingService
         foreach ($lignes as $ligne) {
             $montant = (int) $ligne->montant;
 
-            if ($ligne->centre === null || !isset(self::COST_ACCOUNTS[$ligne->centre])) {
+            if ($ligne->centre === null || $ligne->centre === '') {
                 $sansCentre += $montant;
                 continue;
             }
@@ -239,9 +242,12 @@ class AnalyticPostingService
     /** Écriture de reflet déjà produite pour cette période, s'il y en a une. */
     public function existingMirror(CarbonInterface $from, CarbonInterface $to): ?JournalEntry
     {
+        $schema = $this->schemaFor($from, $to);
         return JournalEntry::query()
-            ->where('schema', $this->schemaFor($from, $to))
+            ->where(fn ($q) => $q->where('schema', $schema)->orWhere('schema', 'like', $schema . ':%'))
             ->whereNull('reversed_by_id')
+            ->whereNotNull('posted_at')
+            ->latest('id')
             ->with('lines')
             ->first();
     }

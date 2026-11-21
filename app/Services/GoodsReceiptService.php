@@ -212,7 +212,7 @@ class GoodsReceiptService
                 $notes    = $lineInput['notes'] ?? null;
 
                 // Création de la ligne de bon de réception
-                GoodsReceiptLine::create([
+                $receiptLine = GoodsReceiptLine::create([
                     'goods_receipt_id'       => $receipt->id,
                     'purchase_order_line_id' => $line->id,
                     'stock_item_id'          => $line->stock_item_id,
@@ -245,6 +245,16 @@ class GoodsReceiptService
                         // Des cartons reçus entiers entrent comme cartons fermés.
                         niveau: $conditionnement
                     );
+                    if (filled($lineInput['lot_number'] ?? null)) {
+                        $expiry = (string) ($lineInput['expires_on'] ?? '');
+                        if ($expiry === '' || $expiry < $receivedAt->toDateString()) {
+                            throw new RuntimeException('Un lot accepté doit porter une date limite égale ou postérieure à sa réception.');
+                        }
+                        \App\Models\StockLot::create([
+                            'stock_item_id' => $line->stock_item_id, 'goods_receipt_line_id' => $receiptLine->id,
+                            'lot_number' => $lineInput['lot_number'], 'expires_on' => $expiry, 'quantity_remaining' => $accepted,
+                        ]);
+                    }
 
                     // Le prix payé devient le tarif de ce fournisseur, à la date
                     // de la livraison — et l'article sans fournisseur habituel
@@ -358,6 +368,8 @@ class GoodsReceiptService
                     'quantity_accepted'  => $accepte,
                     'quantity_rejected'  => $refuse,
                     'packaging'          => $conditionnement,
+                    'lot_number'         => $ligne['lot_number'] ?? null,
+                    'expires_on'         => $ligne['expires_on'] ?? null,
                     'rejection_reason'   => $ligne['rejection_reason'] ?? null,
                     'notes'              => $ligne['notes'] ?? null,
                 ];
@@ -492,7 +504,8 @@ class GoodsReceiptService
                         sourceId: $receipt->id,
                         reason: "Annulation réception {$receipt->number}",
                         // Reçus en cartons : ce sont des cartons fermés qui repartent.
-                        niveau: $line->packaging_name
+                        niveau: $line->packaging_name,
+                        receiptLineId: $line->id,
                     );
 
                     // Déduire de la ligne de commande

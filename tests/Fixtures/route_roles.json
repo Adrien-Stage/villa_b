@@ -65,6 +65,10 @@
   "manager",
   "support"
  ],
+ "accounting.ledger.accounts.store": [
+  "accountant",
+  "finance_manager"
+ ],
  "accounting.ledger.aged": [
   "accountant",
   "admin",
@@ -87,6 +91,17 @@
   "support"
  ],
  "accounting.ledger.analytic.mirror": [
+  "accountant",
+  "finance_manager"
+ ],
+ "accounting.ledger.assets.index": [
+  "accountant",
+  "admin",
+  "finance_manager",
+  "manager",
+  "support"
+ ],
+ "accounting.ledger.assets.store": [
   "accountant",
   "finance_manager"
  ],
@@ -119,6 +134,42 @@
   "support"
  ],
  "accounting.ledger.entry.reverse": [
+  "accountant",
+  "finance_manager"
+ ],
+ "accounting.ledger.exchange.import": [
+  "accountant",
+  "finance_manager"
+ ],
+ "accounting.ledger.exchange.index": [
+  "accountant",
+  "admin",
+  "finance_manager",
+  "manager",
+  "support"
+ ],
+ "accounting.ledger.exchange.match": [
+  "accountant",
+  "finance_manager"
+ ],
+ "accounting.ledger.exchange.payment": [
+  "accountant",
+  "finance_manager"
+ ],
+ "accounting.ledger.fiscal.export": [
+  "accountant",
+  "admin",
+  "finance_manager",
+  "manager"
+ ],
+ "accounting.ledger.fiscal.index": [
+  "accountant",
+  "admin",
+  "finance_manager",
+  "manager",
+  "support"
+ ],
+ "accounting.ledger.fiscal.store": [
   "accountant",
   "finance_manager"
  ],
@@ -189,6 +240,27 @@
   "accountant",
   "finance_manager"
  ],
+ "accounting.ledger.statutory.close": [
+  "accountant",
+  "finance_manager"
+ ],
+ "accounting.ledger.statutory.dsf": [
+  "accountant",
+  "finance_manager"
+ ],
+ "accounting.ledger.statutory.export": [
+  "accountant",
+  "admin",
+  "finance_manager",
+  "manager"
+ ],
+ "accounting.ledger.statutory.index": [
+  "accountant",
+  "admin",
+  "finance_manager",
+  "manager",
+  "support"
+ ],
  "accounting.ledger.suppliers": [
   "accountant",
   "admin",
@@ -196,7 +268,15 @@
   "manager",
   "support"
  ],
+ "accounting.ledger.suppliers.advance": [
+  "accountant",
+  "finance_manager"
+ ],
  "accounting.ledger.suppliers.create": [
+  "accountant",
+  "finance_manager"
+ ],
+ "accounting.ledger.suppliers.pay": [
   "accountant",
   "finance_manager"
  ],

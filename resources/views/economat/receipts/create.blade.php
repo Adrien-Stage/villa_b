@@ -257,6 +257,12 @@
                                         placeholder="Note..."
                                         class="w-full mt-1 px-2 py-1 text-xs border border-secondary/20 rounded
                                             bg-white text-primary">
+                                    <input type="text" :name="'lines[' + id + '][lot_number]'" maxlength="80" placeholder="Numéro de lot"
+                                        aria-label="Numéro de lot" class="w-full mt-1 px-2 py-1 text-xs border border-secondary/20 rounded">
+                                    <label class="block mt-1 text-xs">Date limite du lot
+                                        <input type="date" :name="'lines[' + id + '][expires_on]'"
+                                            class="w-full px-2 py-1 text-xs border border-secondary/20 rounded">
+                                    </label>
                                 </td>
                             </tr>
                         @endforeach

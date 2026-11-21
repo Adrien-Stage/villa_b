@@ -66,7 +66,7 @@ class RestaurantBanquet extends Model
     protected $fillable = [
         'point_of_sale_id', 'reference', 'title', 'customer_id', 'booking_id', 'client_name', 'client_phone', 'client_email',
         'event_date', 'start_time', 'end_time', 'space_id', 'covers', 'price_per_cover', 'extras_amount',
-        'total_amount', 'deposit_required', 'menu', 'menu_items', 'status', 'source', 'notes', 'created_by', 'confirmed_at', 'canceled_at',
+        'total_amount', 'deposit_required', 'menu', 'menu_items', 'status', 'source', 'notes', 'created_by', 'confirmed_at', 'canceled_at', 'realized_at',
     ];
 
     protected $casts = [
@@ -79,6 +79,7 @@ class RestaurantBanquet extends Model
         'menu_items' => 'array',
         'confirmed_at' => 'datetime',
         'canceled_at' => 'datetime',
+        'realized_at' => 'datetime',
     ];
 
     public function payments(): HasMany

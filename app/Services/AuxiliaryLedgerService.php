@@ -82,8 +82,9 @@ class AuxiliaryLedgerService
         $lignes = JournalEntryLine::query()
             ->where('account_code', $accountCode)
             ->whereNotNull('auxiliary_type')
-            ->whereNull('reconciliation_code')
-            ->whereHas('entry', fn ($q) => $q->whereNotNull('posted_at'))
+            ->openAt($asOf)
+            ->whereHas('entry', fn ($q) => $q->whereNotNull('posted_at')
+                ->whereDate('entry_date', '<=', $asOf->toDateString()))
             ->with('entry')
             ->get();
 
@@ -200,8 +201,7 @@ class AuxiliaryLedgerService
         return JournalEntryLine::query()
             ->where('account_code', Account::CLIENTS)
             ->whereNotNull('auxiliary_type')
-            ->where(fn ($q) => $q->whereNull('reconciliation_code')
-                ->orWhere('reconciled_at', '>', $asOf->copy()->endOfDay()))
+            ->openAt($asOf)
             ->whereHas('entry', fn ($q) => $q->whereNotNull('posted_at')
                 ->whereDate('entry_date', '<=', $asOf->toDateString()))
             ->with(['entry', 'auxiliary'])

@@ -71,7 +71,12 @@ class EnsurePermission
         }
 
         if ($this->resolver->allows(Auth::user(), $permission)) {
-            return $next($request);
+            $response = $next($request);
+            if (str_starts_with($routeName, 'accounting.') || str_starts_with($routeName, 'editions.')) {
+                $response->headers->set('Cache-Control', 'private, no-store');
+            }
+
+            return $response;
         }
 
         return $this->roleAccess->refuser($request, $roles);

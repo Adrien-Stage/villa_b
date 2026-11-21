@@ -47,6 +47,8 @@ class FolioItem extends Model
         'recorded_by',
         'occurred_at',
         'notes',
+        'vat_rate_code',
+        'vat_reason',
     ];
 
     protected $casts = [

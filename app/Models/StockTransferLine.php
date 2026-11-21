@@ -10,7 +10,7 @@ class StockTransferLine extends Model
 {
     use \App\Models\Concerns\SaisiEnConditionnement;
 
-    protected $fillable = ['stock_transfer_id', 'stock_item_id', 'quantity', 'packaging_name', 'unit_cost', 'total_cost'];
+    protected $fillable = ['stock_transfer_id', 'stock_item_id', 'stock_movement_id', 'quantity', 'packaging_name', 'unit_cost', 'total_cost'];
 
     protected $casts = [
         'quantity'   => 'decimal:3',

@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Ligne d'écriture : un compte, un sens, un montant.
@@ -28,6 +31,13 @@ class JournalEntryLine extends Model
         self::CENTER_SHOP          => 'Boutique',
         self::CENTER_STORE         => 'Économat',
     ];
+
+    public static function centers(): array
+    {
+        return DB::table('ledger_analytic_centers')->orderBy('code')->pluck('label', 'code')->all()
+            + self::CENTERS + ['bar' => 'Bar', 'conferences' => 'Conférences et banquets', 'spa' => 'Spa',
+                'laundry' => 'Blanchisserie', 'activity' => 'Activités'];
+    }
 
     protected $fillable = [
         'journal_entry_id',
@@ -82,5 +92,14 @@ class JournalEntryLine extends Model
     public function scopeForAuxiliary($query, string $type, int $id)
     {
         return $query->where('auxiliary_type', $type)->where('auxiliary_id', $id);
+    }
+
+    public function scopeOpenAt(Builder $query, CarbonInterface $date): Builder
+    {
+        return $query->whereRaw('COALESCE((
+            SELECT e.matched FROM ledger_reconciliation_events e
+            WHERE e.line_id = journal_entry_lines.id AND e.recorded_at <= ?
+            ORDER BY e.recorded_at DESC, e.id DESC LIMIT 1
+        ), FALSE) = FALSE', [$date->copy()->endOfDay()->toDateTimeString()]);
     }
 }

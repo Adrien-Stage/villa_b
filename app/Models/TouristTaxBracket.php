@@ -20,6 +20,7 @@ class TouristTaxBracket extends Model
         '3'          => '3 étoiles',
         '4'          => '4 étoiles',
         '5'          => '5 étoiles',
+        'hebergement_meuble' => 'Logement meublé ou gîte',
     ];
 
     protected $fillable = [

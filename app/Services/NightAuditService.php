@@ -36,8 +36,10 @@ class NightAuditService
     /** Comptes de trésorerie : ce qui est réellement entré en caisse ou en banque. */
     private const TREASURY = [Account::CASH, Account::BANK, '531000'];
 
-    public function __construct(private readonly LedgerPostingService $posting)
-    {
+    public function __construct(
+        private readonly LedgerPostingService $posting,
+        private readonly LedgerService $ledger,
+    ) {
     }
 
     /**
@@ -71,18 +73,17 @@ class NightAuditService
     {
         $jour = $date->copy()->startOfDay();
 
-        if (NightAudit::isClosed($jour)) {
-            throw new RuntimeException(
-                "La journée du {$jour->format('d/m/Y')} est déjà clôturée. "
-                . "Une correction passe désormais par une écriture datée d'aujourd'hui."
-            );
-        }
-
         if ($jour->greaterThan(now()->startOfDay())) {
             throw new RuntimeException("Impossible de clôturer une journée à venir.");
         }
 
         return DB::transaction(function () use ($jour, $notes) {
+            $period = $this->ledger->lockForDate($jour);
+            if (NightAudit::isClosed($jour)) {
+                throw new RuntimeException("La journée du {$jour->format('d/m/Y')} est déjà clôturée.");
+            }
+            $this->ledger->requireOpenDate($period, $jour);
+
             // 1. Comptabiliser — dernière passe avant le gel.
             $produites = array_sum($this->posting->postDay($jour));
 
@@ -174,7 +175,7 @@ class NightAuditService
         ];
     }
 
-    /** Trésorerie encaissée dans la journée (débits des comptes de trésorerie). */
+    /** Entrées nettes de trésorerie par pièce, après neutralisation des transferts internes. */
     private function tresorerie(CarbonInterface $date): int
     {
         return (int) JournalEntryLine::query()
@@ -182,7 +183,11 @@ class NightAuditService
             ->whereDate('journal_entries.entry_date', $date->toDateString())
             ->whereNotNull('journal_entries.posted_at')
             ->whereIn('journal_entry_lines.account_code', self::TREASURY)
-            ->sum('journal_entry_lines.debit');
+            ->selectRaw('SUM(journal_entry_lines.debit) - SUM(journal_entry_lines.credit) AS net')
+            ->groupBy('journal_entries.id')
+            ->havingRaw('SUM(journal_entry_lines.debit) > SUM(journal_entry_lines.credit)')
+            ->get()
+            ->sum('net');
     }
 
     /**
