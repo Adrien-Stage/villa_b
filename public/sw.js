@@ -7,31 +7,17 @@
  *  2. Application installable (PWA) : met en cache la coquille et les assets
  *     pour un démarrage rapide, et affiche une page dédiée hors connexion.
  *
- * Principe de prudence : ce cache ne sert QUE des ressources publiques et des
- * pages consultées. Les requêtes qui modifient des données ne sont jamais
- * interceptées — un ERP ne doit pas rejouer une écriture depuis un cache.
+ * Le cache ne contient que des ressources publiques et la page hors ligne.
  */
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 const SHELL_CACHE = `wetchah-shell-${VERSION}`;
 const ASSET_CACHE = `wetchah-assets-${VERSION}`;
-const PAGE_CACHE  = `wetchah-pages-${VERSION}`;
 
 const OFFLINE_URL = '/offline';
 
 // Ressources indispensables pour afficher quelque chose sans réseau.
-const SHELL_URLS = [OFFLINE_URL, '/manifest.webmanifest'];
-
-/**
- * Chemins jamais mis en cache : authentification, paiements, caisse et toute
- * donnée sensible ou fortement volatile. Servir une version périmée y serait
- * pire que d'afficher une erreur réseau.
- */
-const NEVER_CACHE = [
-	'/login', '/logout', '/admin',
-	'/api/', '/broadcasting/', '/push/',
-	'/bookings/', '/payments', '/cash-register', '/caisse',
-];
+const SHELL_URLS = [OFFLINE_URL, '/manifest.webmanifest', '/pwa/ledger-draft.js'];
 
 // ── Installation / activation ────────────────────────────────────────────
 
@@ -72,37 +58,22 @@ self.addEventListener('fetch', (event) => {
 	// sensibles. On laisse le navigateur faire son travail normalement.
 	if (request.method !== 'GET') return;
 	if (url.origin !== self.location.origin) return;
-	if (NEVER_CACHE.some((path) => url.pathname.startsWith(path))) return;
-
-	// Navigation (pages HTML) : réseau d'abord, cache en secours, puis page
-	// hors-ligne. L'utilisateur voit toujours la donnée la plus fraîche.
 	if (request.mode === 'navigate') {
-		event.respondWith(networkFirst(request));
+		event.respondWith(navigate(request));
 		return;
 	}
 
 	// Assets versionnés (build Vite) et icônes : cache d'abord, c'est immuable.
-	if (url.pathname.startsWith('/build/') || url.pathname.startsWith('/pwa/') || url.pathname.startsWith('/storage/')) {
+	if (url.pathname.startsWith('/build/assets/') || url.pathname.startsWith('/pwa/')) {
 		event.respondWith(cacheFirst(request, ASSET_CACHE));
 		return;
 	}
 });
 
-/** Réseau d'abord : réponse fraîche mise en cache, repli hors-ligne sinon. */
-async function networkFirst(request) {
+async function navigate(request) {
 	try {
-		const response = await fetch(request);
-
-		if (response && response.ok) {
-			const cache = await caches.open(PAGE_CACHE);
-			cache.put(request, response.clone());
-		}
-
-		return response;
+		return await fetch(request, { cache: 'no-store' });
 	} catch (error) {
-		const cached = await caches.match(request);
-		if (cached) return cached;
-
 		const offline = await caches.match(OFFLINE_URL);
 		return offline || new Response('Hors connexion', {
 			status: 503,

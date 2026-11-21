@@ -104,7 +104,9 @@ test('le service worker est présent et gère cache et push', function () {
         ->toContain('showNotification')
         // Garde-fous : jamais de cache sur les écritures ni les routes sensibles
         ->toContain("request.method !== 'GET'")
-        ->toContain('NEVER_CACHE');
+        ->toContain("fetch(request, { cache: 'no-store' })")
+        ->toContain('/pwa/ledger-draft.js')
+        ->not->toContain('PAGE_CACHE', "url.pathname.startsWith('/storage/')");
 });
 
 test('les pages exposent les balises d’installation', function () {

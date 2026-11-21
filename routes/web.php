@@ -936,6 +936,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::get('/', [$l, 'index'])->name('index');
             Route::get('/plan-de-comptes', [$l, 'accounts'])->name('accounts');
+            Route::post('/plan-de-comptes', [$l, 'storeAccountConfiguration'])->name('accounts.store');
             Route::get('/journaux', [$l, 'journals'])->name('journals');
             Route::get('/grand-livre', [$l, 'generalLedger'])->name('general');
             Route::get('/balance', [$l, 'balance'])->name('balance');
@@ -947,6 +948,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Périodes et exercices — le verrouillage matérialise l'Article 22.
             Route::get('/periodes', [$l, 'periods'])->name('periods');
             Route::post('/exercices', [$l, 'openYear'])->name('years.open');
+            $books = App\Http\Controllers\LedgerBooksController::class;
+            Route::get('/livres', [$books, 'index'])->name('statutory.index');
+            Route::get('/livres/export', [$books, 'export'])->name('statutory.export');
+            Route::post('/exercices/{year}/arrete', [$books, 'close'])->name('statutory.close');
+            Route::post('/exercices/{year}/dsf', [$books, 'dsf'])->name('statutory.dsf');
+            $exchange = App\Http\Controllers\LedgerExchangeController::class;
+            Route::get('/echanges', [$exchange, 'index'])->name('exchange.index');
+            Route::post('/echanges/import', [$exchange, 'import'])->name('exchange.import');
+            Route::post('/echanges/paiements', [$exchange, 'payment'])->name('exchange.payment');
+            Route::post('/echanges/pointage/{line}', [$exchange, 'matchLine'])->whereNumber('line')->name('exchange.match');
+            $assets = App\Http\Controllers\FixedAssetController::class;
+            Route::get('/immobilisations', [$assets, 'index'])->name('assets.index');
+            Route::post('/immobilisations', [$assets, 'store'])->name('assets.store');
+            $fiscal = App\Http\Controllers\LedgerFiscalController::class;
+            Route::get('/fiscalite', [$fiscal, 'index'])->name('fiscal.index');
+            Route::post('/fiscalite', [$fiscal, 'store'])->name('fiscal.store');
+            Route::get('/fiscalite/pieces/{event}', [$fiscal, 'export'])->whereNumber('event')->name('fiscal.export');
             Route::post('/periodes/{period}/verrouiller', [$l, 'lockPeriod'])->name('periods.lock');
 
             // Reprise des à-nouveaux — déclarée avant /ecritures/{entry}.
@@ -970,8 +988,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/fournisseurs', [$fou, 'index'])->name('suppliers');
             Route::get('/fournisseurs/nouvelle', [$fou, 'create'])->name('suppliers.create');
             Route::post('/fournisseurs', [$fou, 'store'])->name('suppliers.store');
+            Route::post('/fournisseurs/avances', [$fou, 'advance'])->name('suppliers.advance');
             Route::get('/retenues', [$fou, 'withholdingStatement'])->name('withholding');
             Route::get('/fournisseurs/{invoice}', [$fou, 'show'])->whereNumber('invoice')->name('suppliers.show');
+            Route::post('/fournisseurs/{invoice}/reglements', [$fou, 'pay'])->whereNumber('invoice')->name('suppliers.pay');
 
             // Analytique (classe 9) : rentabilité par point de vente.
             $ana = App\Http\Controllers\AnalyticController::class;

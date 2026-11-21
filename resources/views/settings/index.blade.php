@@ -849,15 +849,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-primary/70 mb-1">Base de calcul</label>
-                                <select
-                                    name="settings[tourist_tax_basis]"
-                                    class="w-full rounded-lg border border-secondary/20 bg-white text-sm p-2.5">
-                                    <option value="room" @selected(($taxes['tourist_tax_basis'] ?? 'room') === 'room')>Par nuitée (chambre)</option>
-                                    <option value="person" @selected(($taxes['tourist_tax_basis'] ?? '') === 'person')>Par nuitée et par personne</option>
-                                </select>
-                            </div>
+                            <p class="text-xs text-primary/70 self-end mb-3">Assiette du CGI 2026 · par personne hébergée et par nuitée</p>
                         </div>
 
                         <div class="mt-4 overflow-x-auto">
@@ -884,12 +876,32 @@
                             </table>
                         </div>
 
-                        <p class="mt-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px]
-                            text-amber-800">
-                            <strong>Barème à confirmer.</strong> Ces montants sont provisoires et doivent être validés par
-                            votre expert-comptable au regard des textes en vigueur, de même que l'assiette retenue
-                            (par chambre ou par personne).
-                        </p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-xl border border-secondary/20 space-y-4">
+                        <label class="block text-sm font-semibold text-primary">NIU de l’établissement
+                            <input name="settings[issuer_niu]" maxlength="60" value="{{ old('settings.issuer_niu', $taxes['issuer_niu'] ?? '') }}"
+                                class="block mt-2 rounded-lg border-secondary/30 bg-white">
+                        </label>
+                        <h3 class="text-sm font-semibold text-primary">Règles de retenue applicables</h3>
+                        <p class="text-xs text-primary/70">Saisissez une règle validée pour le régime de l’établissement. Cent points de base correspondent à 1 %.</p>
+                        @foreach(\App\Models\SupplierInvoice::WITHHOLDING_TYPES as $key => $label)
+                            @php $rule = $taxes['withholding_rules'][$key] ?? []; @endphp
+                            <fieldset class="grid sm:grid-cols-2 gap-2 border border-secondary/20 rounded-lg p-3 text-xs">
+                                <legend class="font-semibold">{{ $label }}</legend>
+                                @foreach (['basis_points' => ['Taux en points de base', 'number'], 'legal_reference' => ['Texte ou validation de référence', 'text'],
+                                    'starts_on' => ['Applicable à partir du', 'date'], 'ends_on' => ['Fin d’application', 'date']] as $field => [$fieldLabel, $inputType])
+                                    <label>{{ $fieldLabel }}
+                                        <input type="{{ $inputType }}" name="settings[withholding_rules][{{ $key }}][{{ $field }}]"
+                                            value="{{ old('settings.withholding_rules.' . $key . '.' . $field, $rule[$field] ?? '') }}"
+                                            class="block w-full rounded-lg border-secondary/30 bg-white">
+                                    </label>
+                                @endforeach
+                                <label><input type="hidden" name="settings[withholding_rules][{{ $key }}][requires_niu]" value="0">
+                                    <input type="checkbox" name="settings[withholding_rules][{{ $key }}][requires_niu]" value="1" @checked($rule['requires_niu'] ?? false)>
+                                    Exiger le NIU du fournisseur
+                                </label>
+                            </fieldset>
+                        @endforeach
                     </div>
                 </div>
             </form>

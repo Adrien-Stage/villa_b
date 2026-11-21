@@ -30,6 +30,43 @@
     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm
         text-red-700">{{ session('error') }}</div>
 @endif
+@if($errors->any())
+    <p role="alert" class="mb-4 p-3 rounded-lg bg-red-50 text-red-800 text-sm">{{ $errors->first() }}</p>
+@endif
+
+@if(app(\App\Services\PermissionResolver::class)->allows(auth()->user(), 'accounting.ledger.suppliers.pay'))
+    <details class="mb-4 bg-white border border-secondary/20 rounded-xl p-4">
+        <summary class="font-semibold text-primary cursor-pointer">Enregistrer une avance fournisseur</summary>
+        <form method="post" action="{{ route('accounting.ledger.suppliers.advance') }}" class="mt-3 flex flex-wrap gap-3 items-end text-sm">
+            @csrf
+            <label>Fournisseur
+                <select name="supplier_id" required class="block rounded-lg border-secondary/30">
+                    <option value="">Sélectionner</option>
+                    @foreach($fournisseurs as $fournisseur)
+                        <option value="{{ $fournisseur->id }}" @selected(old('supplier_id') == $fournisseur->id)>{{ $fournisseur->name }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label>Date de versement
+                <input name="date" type="date" value="{{ old('date', today()->toDateString()) }}" required class="block rounded-lg border-secondary/30">
+            </label>
+            <label>Montant en FCFA
+                <input name="amount" type="number" min="1" value="{{ old('amount') }}" required class="block rounded-lg border-secondary/30">
+            </label>
+            <label>Mode
+                <select name="method" required class="block rounded-lg border-secondary/30">
+                    @foreach(\App\Services\SupplierSettlement::METHODS as $key => $method)
+                        <option value="{{ $key }}" @selected(old('method') === $key)>{{ $method }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <label>Référence du justificatif
+                <input name="reference" maxlength="60" value="{{ old('reference') }}" required class="block rounded-lg border-secondary/30">
+            </label>
+            <button class="rounded-lg bg-primary text-white px-4 py-2">Enregistrer</button>
+        </form>
+    </details>
+@endif
 
 <div class="grid grid-cols-2 gap-3 mb-4">
     <div class="bg-white rounded-xl border border-secondary/20 p-3.5">

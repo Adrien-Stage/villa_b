@@ -92,6 +92,7 @@ class StockTransferService
                 StockTransferLine::create([
                     'stock_transfer_id' => $transfert->id,
                     'stock_item_id'     => $item->id,
+                    'stock_movement_id' => $sortie->id,
                     'quantity'          => $quantite,
                     'packaging_name'    => $conditionnement,
                     'unit_cost'         => $cout,
@@ -139,7 +140,8 @@ class StockTransferService
                     $transfert->id,
                     "Annulation du transfert {$transfert->number} — {$motif}",
                     // Partis en cartons : ils reviennent fermés.
-                    $ligne->packaging_name
+                    $ligne->packaging_name,
+                    $ligne->stock_movement_id,
                 );
             }
 

@@ -116,16 +116,15 @@ test('la somme des bases de lignes égale la base du total', function () {
 test('la taxe de séjour suit le classement de l’établissement', function () {
     $service = taxationSetup();
 
-    // 3 étoiles => 2 000 F la nuitée, sur 3 nuits.
-    expect($service->touristTax(nights: 3))->toBe(600_000);
+    // CGI 2026, 3 étoiles, 3 000 F par nuitée.
+    expect($service->touristTax(nights: 3))->toBe(900_000);
     expect($service->touristTaxBracket()->classification)->toBe('3');
 });
 
 test('la taxe de séjour peut être assise sur les personnes', function () {
     $service = taxationSetup(['tourist_tax_basis' => TaxationService::BASIS_PER_PERSON]);
 
-    // 2 000 F × 3 nuits × 2 personnes
-    expect($service->touristTax(nights: 3, persons: 2))->toBe(1_200_000);
+    expect($service->touristTax(nights: 3, persons: 2))->toBe(1_800_000);
 });
 
 test('la taxe de séjour désactivée n’est pas appliquée', function () {
@@ -149,5 +148,5 @@ test('la migration de données a livré les taux et le barème', function () {
     expect(TaxRate::where('code', TaxRate::CODE_STANDARD)->exists())->toBeTrue();
     expect(TaxRate::where('code', TaxRate::CODE_EXEMPT)->exists())->toBeTrue();
     expect(TaxRate::default()->code)->toBe(TaxRate::CODE_STANDARD);
-    expect(TouristTaxBracket::count())->toBe(6);
+    expect(TouristTaxBracket::count())->toBe(7);
 });

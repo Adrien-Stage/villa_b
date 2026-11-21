@@ -138,7 +138,7 @@ class SupplierInvoiceController extends Controller
         return redirect()->route('accounting.ledger.suppliers')->with('success', $message);
     }
 
-    public function show(SupplierInvoice $invoice): View
+    public function show(SupplierInvoice $invoice, \App\Services\SupplierSettlement $settlement): View
     {
         $invoice->load('supplier', 'purchaseOrder', 'createdBy');
 
@@ -146,9 +146,50 @@ class SupplierInvoiceController extends Controller
         $ecriture = \App\Models\JournalEntry::query()
             ->where('source_type', SupplierInvoice::class)
             ->where('source_id', $invoice->id)
+            ->where('schema', \App\Services\LedgerPostingService::SCHEMA_SUPPLIER_INVOICE)
             ->first();
 
-        return view('accounting.ledger.supplier-invoice', compact('invoice', 'ecriture'));
+        $remaining = $settlement->balance($invoice, today());
+
+        return view('accounting.ledger.supplier-invoice', compact('invoice', 'ecriture', 'remaining'));
+    }
+
+    public function pay(Request $request, SupplierInvoice $invoice, \App\Services\SupplierSettlement $service): RedirectResponse
+    {
+        $data = $request->validate([
+            'date' => ['required', 'date_format:Y-m-d'],
+            'amount' => ['required', 'integer', 'min:1', 'max:2000000000'],
+            'method' => ['required', Rule::in(array_keys(\App\Services\SupplierSettlement::SETTLEMENT_METHODS))],
+            'reference' => ['required', 'string', 'max:60'],
+        ]);
+
+        try {
+            $entry = $service->pay($invoice, Carbon::parse($data['date']), (int) $data['amount'] * 100,
+                $data['method'], $data['reference']);
+        } catch (\RuntimeException $error) {
+            return back()->withInput()->with('error', $error->getMessage());
+        }
+
+        return redirect()->route('accounting.ledger.entry', $entry)->with('success', 'Le règlement a été enregistré.');
+    }
+
+    public function advance(Request $request, \App\Services\SupplierSettlement $service): RedirectResponse
+    {
+        $data = $request->validate([
+            'supplier_id' => ['required', 'exists:suppliers,id'],
+            'date' => ['required', 'date_format:Y-m-d'],
+            'amount' => ['required', 'integer', 'min:1', 'max:2000000000'],
+            'method' => ['required', Rule::in(array_keys(\App\Services\SupplierSettlement::METHODS))],
+            'reference' => ['required', 'string', 'max:60'],
+        ]);
+        try {
+            $entry = $service->advance(Supplier::findOrFail($data['supplier_id']), Carbon::parse($data['date']),
+                (int) $data['amount'] * 100, $data['method'], $data['reference']);
+        } catch (\RuntimeException $error) {
+            return back()->withInput()->with('error', $error->getMessage());
+        }
+
+        return redirect()->route('accounting.ledger.entry', $entry)->with('success', 'L’avance a été enregistrée.');
     }
 
     /** État des retenues à la source, pour la déclaration. */

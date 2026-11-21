@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Ligne de réception d'un bon de réception fournisseur.
@@ -61,6 +62,11 @@ class GoodsReceiptLine extends Model
     public function item(): BelongsTo
     {
         return $this->belongsTo(StockItem::class, 'stock_item_id');
+    }
+
+    public function lot(): HasOne
+    {
+        return $this->hasOne(StockLot::class);
     }
 
     public function rejectionReasonLabel(): ?string

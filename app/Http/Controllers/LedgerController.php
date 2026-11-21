@@ -70,6 +70,41 @@ class LedgerController extends Controller
         return view('accounting.ledger.accounts', compact('comptes', 'classe'));
     }
 
+    public function storeAccountConfiguration(Request $request): RedirectResponse
+    {
+        $kind = $request->validate(['kind' => ['required', 'in:account,center,rate']])['kind'];
+        if ($kind === 'account') {
+            $data = $request->validate([
+                'code' => ['required', 'regex:/^[1-9][0-9]{1,19}$/', 'unique:accounts,code'],
+                'label' => ['required', 'string', 'max:180'],
+                'is_postable' => ['required', 'boolean'],
+                'is_collective' => ['nullable', 'boolean'],
+            ]);
+            Account::create($data + ['account_class' => (int) $data['code'][0], 'is_active' => true]);
+        } elseif ($kind === 'center') {
+            $data = $request->validate([
+                'code' => ['required', 'regex:/^[a-z][a-z0-9_]{0,39}$/'],
+                'label' => ['required', 'string', 'max:100'],
+            ]);
+            \Illuminate\Support\Facades\DB::table('ledger_analytic_centers')->upsert(
+                [$data + ['created_at' => now(), 'updated_at' => now()]], ['code'], ['label', 'updated_at'],
+            );
+        } else {
+            $data = $request->validate([
+                'code' => ['required', 'regex:/^[A-Z][A-Z0-9_]{1,19}$/', 'unique:tax_rates,code'],
+                'label' => ['required', 'string', 'max:120'],
+                'rate_basis_points' => ['required', 'integer', 'min:0', 'max:10000'],
+                'surtax_basis_points' => ['required', 'integer', 'min:0', 'lte:rate_basis_points'],
+                'legal_reference' => ['required', 'string', 'max:180'],
+                'effective_on' => ['required', 'date_format:Y-m-d'],
+                'ends_on' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:effective_on'],
+            ]);
+            \App\Models\TaxRate::create($data + ['is_active' => true, 'is_default' => false]);
+        }
+
+        return redirect()->route('accounting.ledger.accounts')->with('success', 'Le référentiel a été mis à jour.');
+    }
+
     /** Journaux et leurs écritures. */
     public function journals(Request $request): View
     {
@@ -118,8 +153,9 @@ class LedgerController extends Controller
     public function show(JournalEntry $entry): View
     {
         $entry->load(['lines', 'journal', 'period', 'reverses', 'reversedBy']);
+        $centers = \App\Models\JournalEntryLine::centers();
 
-        return view('accounting.ledger.entry', compact('entry'));
+        return view('accounting.ledger.entry', compact('entry', 'centers'));
     }
 
     /** Contre-passation d'une écriture. */
@@ -127,12 +163,14 @@ class LedgerController extends Controller
     {
         $validated = $request->validate([
             'reason' => ['required', 'string', 'min:5', 'max:255'],
+            'date' => ['nullable', 'date_format:Y-m-d', 'before_or_equal:today'],
         ], [
             'reason.required' => 'Une contre-passation doit être motivée.',
         ]);
 
         try {
-            $extourne = $this->ledger->reverse($entry, now(), $validated['reason']);
+            $date = isset($validated['date']) ? Carbon::parse($validated['date']) : now();
+            $extourne = $this->ledger->reverse($entry, $date, $validated['reason']);
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -171,7 +209,11 @@ class LedgerController extends Controller
             return back()->with('error', 'Cette période est déjà verrouillée.');
         }
 
-        $this->ledger->lockPeriod($period);
+        try {
+            $this->ledger->lockPeriod($period);
+        } catch (\RuntimeException $error) {
+            return back()->with('error', $error->getMessage());
+        }
 
         return back()->with('success', "La période {$period->label()} est verrouillée. Toute correction passera désormais par une contre-passation.");
     }

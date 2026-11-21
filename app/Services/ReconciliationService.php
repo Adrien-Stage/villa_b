@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\JournalEntryLine;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -31,28 +33,26 @@ class ReconciliationService
      */
     public function reconcile(array $lineIds): string
     {
-        $lignes = JournalEntryLine::query()->whereIn('id', $lineIds)->get();
+        return DB::transaction(function () use ($lineIds) {
+            $lignes = JournalEntryLine::query()
+                ->whereIn('id', $lineIds)
+                ->whereHas('entry', fn ($q) => $q->whereNotNull('posted_at'))
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
 
-        if ($lignes->count() < 2) {
-            throw new RuntimeException('Un lettrage rapproche au moins deux lignes.');
-        }
-
-        $this->assertMemeTiers($lignes);
-        $this->assertNonLettrees($lignes);
-        $this->assertEquilibre($lignes);
-
-        $lettre = $this->nextCode($lignes->first()->account_code);
-
-        DB::transaction(function () use ($lignes, $lettre) {
-            foreach ($lignes as $ligne) {
-                $ligne->update([
-                    'reconciliation_code' => $lettre,
-                    'reconciled_at'       => now(),
-                ]);
+            if ($lignes->count() < 2 || $lignes->count() !== count(array_unique($lineIds))) {
+                throw new RuntimeException('Sélectionnez au moins deux lignes validées pour le lettrage.');
             }
-        });
+            $this->assertMemeTiers($lignes);
+            $this->assertNonLettrees($lignes);
+            $this->assertEquilibre($lignes);
 
-        return $lettre;
+            $lettre = 'R' . Str::upper(Str::random(16));
+            $this->recordEvent($lignes, $lettre, true);
+
+            return $lettre;
+        });
     }
 
     /**
@@ -64,9 +64,32 @@ class ReconciliationService
      */
     public function unreconcile(string $code): int
     {
-        return JournalEntryLine::query()
-            ->where('reconciliation_code', $code)
-            ->update(['reconciliation_code' => null, 'reconciled_at' => null]);
+        return DB::transaction(function () use ($code) {
+            $lignes = JournalEntryLine::query()->where('reconciliation_code', $code)
+                ->orderBy('id')->lockForUpdate()->get();
+            $this->assertMemeTiers($lignes);
+            $this->recordEvent($lignes, $code, false);
+
+            return $lignes->count();
+        });
+    }
+
+    private function recordEvent(Collection $lines, string $code, bool $matched): void
+    {
+        $at = now();
+        foreach ($lines as $line) {
+            $line->update([
+                'reconciliation_code' => $matched ? $code : null,
+                'reconciled_at' => $matched ? $at : null,
+            ]);
+            DB::table('ledger_reconciliation_events')->insert([
+                'line_id' => $line->id,
+                'code' => $code,
+                'matched' => $matched,
+                'actor_id' => Auth::id(),
+                'recorded_at' => $at,
+            ]);
+        }
     }
 
     /**
@@ -104,20 +127,6 @@ class ReconciliationService
         }
 
         return $lettres;
-    }
-
-    /** Prochaine lettre disponible sur un compte : A001, A002… */
-    public function nextCode(string $accountCode): string
-    {
-        $dernier = JournalEntryLine::query()
-            ->where('account_code', $accountCode)
-            ->whereNotNull('reconciliation_code')
-            ->orderByDesc('reconciliation_code')
-            ->value('reconciliation_code');
-
-        $numero = $dernier ? ((int) substr($dernier, 1)) + 1 : 1;
-
-        return 'A' . str_pad((string) $numero, 4, '0', STR_PAD_LEFT);
     }
 
     // ── Rouages internes ────────────────────────────────────────────────────

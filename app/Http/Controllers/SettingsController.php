@@ -237,6 +237,27 @@ class SettingsController extends Controller
             return $this->validatedInventorySchedule($request);
         }
 
+        if ($tab === 'taxes') {
+            $rules = [
+                'settings.vat_enabled' => ['sometimes', 'boolean'],
+                'settings.tourist_tax_enabled' => ['sometimes', 'boolean'],
+                'settings.classification' => ['nullable', \Illuminate\Validation\Rule::in(array_keys(\App\Models\TouristTaxBracket::CLASSIFICATIONS))],
+                'settings.issuer_niu' => ['nullable', 'string', 'max:60'],
+                'settings.withholding_rules' => ['sometimes', 'array:services,fees,intellectual'],
+            ];
+            foreach (array_keys(\App\Models\SupplierInvoice::WITHHOLDING_TYPES) as $type) {
+                $path = "settings.withholding_rules.{$type}";
+                $rules[$path] = ['sometimes', 'array:basis_points,legal_reference,starts_on,ends_on,requires_niu'];
+                $rules["{$path}.basis_points"] = ['nullable', 'integer', 'between:1,10000'];
+                $rules["{$path}.legal_reference"] = ["required_with:{$path}.basis_points", 'nullable', 'string', 'max:180'];
+                $rules["{$path}.starts_on"] = ["required_with:{$path}.basis_points", 'nullable', 'date_format:Y-m-d'];
+                $rules["{$path}.ends_on"] = ['nullable', 'date_format:Y-m-d', "after_or_equal:{$path}.starts_on"];
+                $rules["{$path}.requires_niu"] = ['sometimes', 'boolean'];
+            }
+
+            return $request->validate($rules)['settings'] ?? [];
+        }
+
         if ($tab !== 'general') {
             return $data;
         }

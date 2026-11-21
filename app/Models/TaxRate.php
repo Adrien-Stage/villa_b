@@ -28,6 +28,9 @@ class TaxRate extends Model
         'surtax_account',
         'is_default',
         'is_active',
+        'effective_on',
+        'ends_on',
+        'legal_reference',
     ];
 
     protected $casts = [
@@ -53,5 +56,12 @@ class TaxRate extends Model
     {
         return static::query()->where('is_active', true)->where('is_default', true)->first()
             ?? static::query()->where('is_active', true)->first();
+    }
+
+    public function scopeAvailableOn($query, string $date)
+    {
+        return $query->where('is_active', true)
+            ->where(fn ($q) => $q->whereNull('effective_on')->orWhere('effective_on', '<=', $date))
+            ->where(fn ($q) => $q->whereNull('ends_on')->orWhere('ends_on', '>=', $date));
     }
 }

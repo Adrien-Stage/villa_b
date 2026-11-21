@@ -19,6 +19,7 @@ class JournalEntry extends Model
         'journal_id',
         'fiscal_period_id',
         'entry_date',
+        'value_date',
         'reference',
         'label',
         'source_type',
@@ -28,10 +29,12 @@ class JournalEntry extends Model
         'reverses_id',
         'reversed_by_id',
         'created_by',
+        'validated_by',
     ];
 
     protected $casts = [
         'entry_date' => 'date',
+        'value_date' => 'date',
         'posted_at'  => 'datetime',
     ];
 
@@ -63,6 +66,11 @@ class JournalEntry extends Model
     public function isPosted(): bool
     {
         return $this->posted_at !== null;
+    }
+
+    public function number(): string
+    {
+        return sprintf('E-%08d', $this->id);
     }
 
     public function isReversed(): bool

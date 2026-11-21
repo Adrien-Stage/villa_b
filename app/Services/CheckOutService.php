@@ -143,9 +143,12 @@ class CheckOutService
             $totalAmount = max(0, $subtotal);
             $taxAmount = app(TaxationService::class)->breakdown($totalAmount)->vat;
         }
+        $lodgingTax = $booking->lodgingTax((int) $booking->total_nights);
+        $totalAmount += $lodgingTax;
 
         // Paiements déjà reçus
         $paidAmount = (int) $booking->payments()
+            ->where(fn ($q) => $q->whereNull('payment_origin')->orWhere('payment_origin', '!=', \App\Models\Payment::ORIGIN_POS_RECEPTION))
             ->where(fn ($q) => $q->whereNull('invoice_id')->orWhereIn('invoice_id', Invoice::where('kind',
                 Invoice::KIND_SEJOUR)->select('id')))
             ->where('status', 'completed')
@@ -155,6 +158,7 @@ class CheckOutService
             'extras_amount'   => $extrasAmount,
             'discount_amount' => $discountAmount,
             'tax_amount'      => $taxAmount,
+            'tourist_tax_amount' => $lodgingTax,
             'total_amount'    => $totalAmount,
             'paid_amount'     => $paidAmount,
             'balance_due'     => max(0, $totalAmount - $paidAmount),
@@ -167,14 +171,16 @@ class CheckOutService
     private function createInvoice(Booking $booking): Invoice
     {
         $nightlyRate = $booking->effectiveNightlyRate();
+        $legacyTax = $booking->hasAdditiveTax() ? (int) $booking->tax_amount : 0;
 
         $invoice = Invoice::create([
             'booking_id'     => $booking->id,
             'customer_id'    => $booking->customer_id,
             'invoice_number' => $this->generateInvoiceNumber(),
             'invoice_date'   => now(),
-            'subtotal'       => $booking->total_room_amount + $booking->extras_amount - $booking->discount_amount,
+            'subtotal'       => $booking->total_amount - $booking->tourist_tax_amount - $legacyTax,
             'tax_amount'     => $booking->tax_amount,
+            'tourist_tax_amount' => $booking->tourist_tax_amount,
             'total_amount'   => $booking->total_amount,
             'paid_amount'    => $booking->paid_amount,
             'balance_due'    => $booking->balance_due,
@@ -183,8 +189,7 @@ class CheckOutService
         ]);
 
         // Ligne hébergement
-        InvoiceItem::create([
-            'invoice_id'  => $invoice->id,
+        $items = [[
             'description' => "Hébergement — {$booking->total_nights} nuit(s) × " .
                 number_format($nightlyRate / 100, 0, ',', ' ') . " FCFA",
             'quantity'    => $booking->total_nights,
@@ -195,14 +200,14 @@ class CheckOutService
             'category'    => 'room',
             'source_type' => Booking::class,
             'source_id'   => $booking->id,
-        ]);
+        ]];
+        $discount = (int) $booking->discount_amount;
 
         // Lignes du folio (extras). La ligne d'hébergement du folio est déjà
         // portée par la ligne ci-dessus : la reprendre ferait payer la chambre deux fois à l'écran.
-        foreach ($booking->folioItems()->whereNotIn('type', [FolioItem::TYPE_PAYMENT, FolioItem::TYPE_ROOM])
-            ->get() as $item) {
-            InvoiceItem::create([
-                'invoice_id'  => $invoice->id,
+        foreach ($booking->folioItems()->whereNotIn('type', [FolioItem::TYPE_PAYMENT, FolioItem::TYPE_ROOM, FolioItem::TYPE_DISCOUNT])
+            ->where('is_complimentary', false)->orderBy('id')->get() as $item) {
+            $items[] = [
                 'description' => $item->description,
                 'quantity'    => $item->quantity,
                 'unit_price'  => $item->unit_price,
@@ -212,8 +217,59 @@ class CheckOutService
                 'category'    => $item->type,
                 'source_type' => FolioItem::class,
                 'source_id'   => $item->id,
-            ]);
+                'tax_rate_code' => $item->vat_rate_code,
+                'vat_reason' => $item->vat_reason,
+            ];
         }
+
+        $package = (int) $invoice->subtotal + $discount - array_sum(array_column($items, 'total_price'));
+        if ($package > 0) {
+            $items[] = [
+                'description' => 'Formule du séjour', 'quantity' => 1, 'unit_price' => $package,
+                'total_price' => $package, 'category' => 'package',
+            ];
+        }
+        if ($discount > 0) {
+            $items[] = [
+                'description' => 'Remise du séjour', 'quantity' => 1, 'unit_price' => -$discount,
+                'total_price' => -$discount, 'category' => FolioItem::TYPE_DISCOUNT,
+            ];
+        }
+
+        $taxation = app(TaxationService::class);
+        if ($legacyTax > 0) {
+            $items[] = [
+                'description' => 'Taxe historique du séjour', 'quantity' => 1, 'unit_price' => $legacyTax,
+                'total_price' => $legacyTax, 'category' => 'legacy_tax',
+            ];
+        } else {
+            $taxTotal = 0;
+            foreach (collect($items)->groupBy(fn ($item) => $item['tax_rate_code'] ?? '', preserveKeys: true) as $code => $group) {
+                $tax = $taxation->breakdownLines($group->pluck('total_price')->all(), $code === '' ? null : $code);
+                foreach (array_values($group->keys()->all()) as $offset => $index) {
+                    $line = $tax['lines'][$offset];
+                    $items[$index]['tax_rate'] = $line->ratePercentage();
+                    $items[$index]['tax_rate_code'] = $line->rateCode;
+                    $items[$index]['tax_amount'] = $line->vat;
+                    $items[$index]['tax_surtax_amount'] = $line->surtax;
+                }
+                $taxTotal += $tax['total']->vat;
+            }
+            $invoice->update(['tax_amount' => $taxTotal]);
+            $booking->update(['tax_amount' => $taxTotal]);
+        }
+
+        if ($invoice->tourist_tax_amount > 0) {
+            $units = max(1, (int) $booking->adults_count + (int) $booking->children_count) * (int) $booking->total_nights;
+            $items[] = [
+                'description' => 'Taxe de séjour — ' . $units . ' nuitée(s) personne',
+                'quantity' => $units, 'unit_price' => intdiv($invoice->tourist_tax_amount, max(1, $units)),
+                'total_price' => $invoice->tourist_tax_amount, 'category' => 'tourist_tax',
+                'tax_rate_code' => 'HORS_CHAMP',
+                'vat_reason' => 'Taxe de séjour à reverser',
+            ];
+        }
+        $invoice->items()->createMany($items);
 
         return $invoice;
     }

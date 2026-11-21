@@ -158,6 +158,8 @@ class GoodsReceiptController extends Controller
             'lines'                      => ['required', 'array'],
             'lines.*.quantity_delivered' => ['nullable', 'numeric', 'min:0'],
             'lines.*.quantity_accepted'  => ['nullable', 'numeric', 'min:0'],
+            'lines.*.lot_number'         => ['nullable', 'required_with:lines.*.expires_on', 'string', 'max:80'],
+            'lines.*.expires_on'         => ['nullable', 'required_with:lines.*.lot_number', 'date_format:Y-m-d'],
             'lines.*.quantity_rejected'  => ['nullable', 'numeric', 'min:0'],
             'lines.*.packaging'          => ['nullable', 'string', 'max:40'],
             'lines.*.rejection_reason'   => ['nullable', 'string', 'max:100'],
@@ -236,6 +238,8 @@ class GoodsReceiptController extends Controller
                 ->where('is_active', true)],
             'lines.*.quantity_delivered' => ['required', 'numeric', 'gt:0', 'max:99999999'],
             'lines.*.quantity_rejected'  => ['nullable', 'numeric', 'min:0', 'max:99999999'],
+            'lines.*.lot_number'         => ['nullable', 'required_with:lines.*.expires_on', 'string', 'max:80'],
+            'lines.*.expires_on'         => ['nullable', 'required_with:lines.*.lot_number', 'date_format:Y-m-d'],
             'lines.*.packaging'          => ['nullable', 'string', 'max:40'],
             'lines.*.rejection_reason'   => ['nullable', Rule::in(array_keys(GoodsReceiptLine::REASONS))],
             // Prix unitaire en FCFA : sans lui, le coût moyen du stock serait faussé.
@@ -299,7 +303,7 @@ class GoodsReceiptController extends Controller
     {
         $receipt->load(['purchaseOrder.lines.item', 'purchaseOrder.receipts.attachments',
             'purchaseOrder.receipts.lines.item', 'supplier', 'receivedBy', 'lines.item.category',
-            'lines.item.packagings', 'lines.item.zone', 'attachments.uploadedBy']);
+            'lines.item.packagings', 'lines.item.zone', 'lines.lot', 'attachments.uploadedBy']);
 
         return view('economat.receipts.show', [
             'receipt' => $receipt,

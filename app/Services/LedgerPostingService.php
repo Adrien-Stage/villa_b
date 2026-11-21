@@ -4,11 +4,17 @@ namespace App\Services;
 
 use App\Models\Account;
 use App\Models\Expense;
+use App\Models\FolioItem;
 use App\Models\Invoice;
 use App\Models\Journal;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use App\Models\Payment;
+use App\Models\ReceptionSale;
+use App\Models\ReceptionSaleItem;
+use App\Models\RestaurantBuffetEntry;
+use App\Models\RestaurantBanquet;
+use App\Models\RestaurantBanquetPayment;
 use App\Models\RestaurantCustomerOrder;
 use App\Models\RestaurantPantryMovement;
 use App\Models\ShopOrder;
@@ -16,7 +22,10 @@ use App\Models\StockMovement;
 use App\Models\StockRequisition;
 use App\Models\SupplierInvoice;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Les schémas d'imputation : ce qui transforme une opération en écriture.
@@ -40,6 +49,10 @@ class LedgerPostingService
     public const SCHEMA_PAYMENT = 'payment';
     public const SCHEMA_RESTAURANT_SALE = 'restaurant_sale';
     public const SCHEMA_SHOP_SALE = 'shop_sale';
+    public const SCHEMA_RECEPTION_SALE = 'reception_sale';
+    public const SCHEMA_BUFFET_ENTRY = 'buffet_entry';
+    public const SCHEMA_BANQUET_SALE = 'banquet_sale';
+    public const SCHEMA_BANQUET_PAYMENT = 'banquet_payment';
     public const SCHEMA_EXPENSE = 'expense';
     public const SCHEMA_FOOD_COST = 'food_cost';
     public const SCHEMA_SUPPLIER_INVOICE = 'supplier_invoice';
@@ -73,6 +86,10 @@ class LedgerPostingService
             self::SCHEMA_INVOICE         => 0,
             self::SCHEMA_RESTAURANT_SALE => 0,
             self::SCHEMA_SHOP_SALE       => 0,
+            self::SCHEMA_RECEPTION_SALE  => 0,
+            self::SCHEMA_BUFFET_ENTRY    => 0,
+            self::SCHEMA_BANQUET_SALE    => 0,
+            self::SCHEMA_BANQUET_PAYMENT => 0,
             self::SCHEMA_PAYMENT         => 0,
             self::SCHEMA_EXPENSE         => 0,
             self::SCHEMA_FOOD_COST       => 0,
@@ -120,6 +137,33 @@ class LedgerPostingService
                     $compte[self::SCHEMA_RESTAURANT_SALE]++;
                 }
             });
+
+        ReceptionSale::query()->whereIn('payment_status', ['paid', 'charged_to_room'])
+            ->whereBetween('paid_at', [$start, $end])->with(['booking.customer', 'payment', 'customer'])
+            ->each(function (ReceptionSale $sale) use (&$compte) {
+                if ($this->postReceptionSale($sale)) {
+                    $compte[self::SCHEMA_RECEPTION_SALE]++;
+                }
+            });
+
+        RestaurantBuffetEntry::query()->whereBetween('created_at', [$start, $end])->with('booking.customer')
+            ->each(function (RestaurantBuffetEntry $entry) use (&$compte) {
+                if ($this->postSale(
+                    order: $entry,
+                    ttc: $entry->amount,
+                    revenueAccount: Account::REVENUE_RESTAURANT,
+                    center: JournalEntryLine::CENTER_RESTAURANT,
+                    schema: self::SCHEMA_BUFFET_ENTRY,
+                    label: 'Buffet — entrée #' . $entry->id,
+                    date: $entry->created_at,
+                    method: $entry->payment_method,
+                    customer: $entry->booking?->customer,
+                )) {
+                    $compte[self::SCHEMA_BUFFET_ENTRY]++;
+                }
+            });
+
+        $this->postBanquets($start, $end, $compte);
 
         ShopOrder::query()
             ->where('payment_status', 'paid')
@@ -199,34 +243,16 @@ class LedgerPostingService
         }
 
         $booking = $invoice->booking;
-        $extras = (int) ($booking?->extras_amount ?? 0);
-        $ttc = (int) $invoice->total_amount - $extras;
-
-        if ($ttc <= 0) {
-            return null; // Séjour offert, ou intégralement composé d'extras.
-        }
-
-        $decomposition = $this->taxation->breakdown($ttc);
         $client = $invoice->customer ?? $booking?->customer;
 
-        $lignes = [[
-            'account'   => Account::CLIENTS,
-            'label'     => 'Facture ' . $invoice->invoice_number,
-            'debit'     => $ttc,
-            'auxiliary' => $client,
-        ], [
-            'account' => Account::REVENUE_ACCOMMODATION,
-            'label'   => 'Hébergement',
-            'credit'  => $decomposition->ht,
-            'center'  => JournalEntryLine::CENTER_ACCOMMODATION,
-        ]];
-
-        if ($decomposition->vat > 0) {
-            $lignes[] = [
-                'account' => Account::VAT_COLLECTED,
-                'label'   => 'TVA collectée',
-                'credit'  => $decomposition->vat,
-            ];
+        $invoice->loadMissing('items');
+        if ($invoice->items->contains(fn ($item) => $item->category !== 'tourist_tax' && $item->tax_rate_code !== null)) {
+            $lignes = $this->invoiceTaxLines($invoice, $client);
+        } else {
+            $lignes = $this->legacyInvoiceLines($invoice, $client);
+        }
+        if ($lignes === []) {
+            return null;
         }
 
         return $this->ledger->post(
@@ -238,6 +264,155 @@ class LedgerPostingService
             schema: self::SCHEMA_INVOICE,
             reference: $invoice->invoice_number,
         );
+    }
+
+    private function legacyInvoiceLines(Invoice $invoice, $client): array
+    {
+        $lodgingTax = (int) $invoice->tourist_tax_amount;
+        $ttc = (int) $invoice->total_amount - (int) ($invoice->booking?->extras_amount ?? 0) - $lodgingTax;
+        if ($ttc <= 0 && $lodgingTax === 0) {
+            return [];
+        }
+
+        $ttc = max(0, $ttc);
+        $tax = $this->taxation->breakdown($ttc);
+        return [
+            ['account' => Account::CLIENTS, 'debit' => $ttc + $lodgingTax, 'auxiliary' => $client],
+            ['account' => Account::REVENUE_ACCOMMODATION, 'credit' => $tax->ht,
+                'center' => JournalEntryLine::CENTER_ACCOMMODATION],
+            ['account' => Account::VAT_COLLECTED, 'credit' => $tax->vat],
+            ['account' => Account::TOURIST_TAX, 'credit' => $lodgingTax],
+        ];
+    }
+
+    private function invoiceTaxLines(Invoice $invoice, $client): array
+    {
+        $folioIds = $invoice->items->where('source_type', FolioItem::class)->pluck('source_id');
+        $fromSales = collect();
+        if ($folioIds->isNotEmpty()) {
+            $fromSales = RestaurantCustomerOrder::query()->whereIn('folio_item_id', $folioIds)
+                ->where('payment_status', 'paid')->pluck('folio_item_id')
+                ->merge(ShopOrder::query()->whereIn('folio_item_id', $folioIds)
+                    ->where('payment_status', 'paid')->pluck('folio_item_id'))
+                ->merge(RestaurantBuffetEntry::query()->whereIn('folio_item_id', $folioIds)->pluck('folio_item_id'))
+                ->merge(ReceptionSaleItem::query()->whereIn('folio_item_id', $folioIds)->pluck('folio_item_id'))
+                ->merge(\App\Models\MinibarCheckLine::query()->whereIn('folio_item_id', $folioIds)->pluck('folio_item_id'));
+        }
+        $total = 0;
+        $imputations = [];
+        foreach ($invoice->items as $item) {
+            if ($item->source_type === FolioItem::class && $fromSales->contains($item->source_id)) {
+                continue;
+            }
+            $total += $item->total_price;
+            if ($item->category === 'tourist_tax') {
+                $this->imputer($imputations, Account::TOURIST_TAX, 'Taxe de séjour', 0, $item->total_price);
+                continue;
+            }
+            $centre = match ($item->category) {
+                'restaurant' => JournalEntryLine::CENTER_RESTAURANT,
+                'shop' => JournalEntryLine::CENTER_SHOP,
+                'laundry', 'spa', 'activity' => $item->category,
+                default => JournalEntryLine::CENTER_ACCOMMODATION,
+            };
+            $compte = match ($centre) {
+                JournalEntryLine::CENTER_RESTAURANT => Account::REVENUE_RESTAURANT,
+                JournalEntryLine::CENTER_SHOP => Account::REVENUE_SHOP,
+                default => Account::REVENUE_ACCOMMODATION,
+            };
+            $this->imputerCredit($imputations, $compte, $item->description, $item->total_price - $item->tax_amount, $centre);
+            $this->imputerCredit($imputations, Account::VAT_COLLECTED, 'TVA collectée', $item->tax_amount - $item->tax_surtax_amount);
+            $this->imputerCredit($imputations, Account::VAT_SURTAX, 'Centimes additionnels communaux', $item->tax_surtax_amount);
+        }
+        if ($total === 0 && $imputations === []) {
+            return [];
+        }
+
+        return array_merge([[
+            'account' => Account::CLIENTS, 'label' => $invoice->invoice_number,
+            'debit' => max(0, $total), 'credit' => max(0, -$total), 'auxiliary' => $client,
+        ]], array_values($imputations));
+    }
+
+    private function imputerCredit(array &$imputations, string $account, string $label, int $value, ?string $center = null): void
+    {
+        if ($value !== 0) {
+            $this->imputer($imputations, $account, $label, max(0, -$value), max(0, $value), $center);
+        }
+    }
+
+    public function postReceptionSale(ReceptionSale $sale): ?JournalEntry
+    {
+        $method = $sale->payment_type === 'room_charge' ? 'room_charge' : $sale->payment_method;
+        // Une ancienne écriture d'encaissement peut déjà solder cette vente.
+        // Dans ce cas la vente crée la créance correspondante.
+        if ($sale->payment && $this->dejaComptabilise($sale->payment, self::SCHEMA_PAYMENT)) {
+            $method = 'room_charge';
+        }
+
+        return $this->postSale(
+            order: $sale,
+            ttc: $sale->total_amount,
+            revenueAccount: Account::REVENUE_ACCOMMODATION,
+            center: JournalEntryLine::CENTER_ACCOMMODATION,
+            schema: self::SCHEMA_RECEPTION_SALE,
+            label: 'POS Réception — ' . $sale->sale_number,
+            date: $sale->paid_at,
+            method: $method,
+            customer: $sale->booking?->customer ?? $sale->customer,
+            recordedVat: $sale->tax_amount,
+        );
+    }
+
+    private function postBanquets(CarbonInterface $start, CarbonInterface $end, array &$counts): void
+    {
+        RestaurantBanquet::withoutGlobalScopes()->whereIn('status', [RestaurantBanquet::REALISE, RestaurantBanquet::SOLDE])
+            ->where(fn ($q) => $q->whereBetween('realized_at', [$start, $end])
+                ->orWhere(fn ($q) => $q->whereNull('realized_at')->whereDate('event_date', $start)))
+            ->with(['customer', 'booking.customer'])->each(function (RestaurantBanquet $banquet) use (&$counts, $start) {
+                if ($this->postSale(
+                    order: $banquet, ttc: $banquet->total_amount, revenueAccount: Account::REVENUE_RESTAURANT,
+                    center: 'conferences', schema: self::SCHEMA_BANQUET_SALE, label: 'Banquet — ' . $banquet->reference,
+                    date: $banquet->realized_at ?? $start, method: 'room_charge',
+                    customer: $banquet->booking?->customer ?? $banquet->customer,
+                )) {
+                    $counts[self::SCHEMA_BANQUET_SALE]++;
+                }
+                $banquet->payments()->where('paid_at', '<', $start)->get()->each(function (RestaurantBanquetPayment $payment) use ($banquet, $start) {
+                    $entry = $this->ledger->findBySource($payment, self::SCHEMA_BANQUET_PAYMENT);
+                    if ($entry?->lines->contains('account_code', Account::PARTNER_DEPOSITS)) {
+                        $this->applyBanquetAdvance($payment, $banquet, $start);
+                    }
+                });
+            });
+
+        RestaurantBanquetPayment::query()->whereBetween('paid_at', [$start, $end])
+            ->with(['banquet' => fn ($q) => $q->withoutGlobalScopes()->with(['customer', 'booking.customer'])])
+            ->each(function (RestaurantBanquetPayment $payment) use ($start, &$counts) {
+                $banquet = $payment->banquet;
+                if (!$banquet || $payment->amount <= 0 || $this->dejaComptabilise($payment, self::SCHEMA_BANQUET_PAYMENT)) {
+                    return;
+                }
+                $sale = $this->ledger->findBySource($banquet, self::SCHEMA_BANQUET_SALE);
+                $account = $this->compteTresorerie($payment->payment_method);
+                $unearned = !$sale || $sale->entry_date->greaterThan($start);
+                $this->ledger->post($account === Account::CASH ? Journal::CASH : Journal::BANK, $start,
+                    'Règlement banquet — ' . $banquet->reference, [
+                        ['account' => $account, 'debit' => $payment->amount],
+                        ['account' => $unearned ? Account::PARTNER_DEPOSITS : Account::CLIENTS,
+                            'credit' => $payment->amount, 'auxiliary' => $banquet->booking?->customer ?? $banquet->customer],
+                    ], source: $payment, schema: self::SCHEMA_BANQUET_PAYMENT, reference: $payment->receiptReference());
+                $counts[self::SCHEMA_BANQUET_PAYMENT]++;
+            });
+    }
+
+    private function applyBanquetAdvance(RestaurantBanquetPayment $payment, RestaurantBanquet $banquet, CarbonInterface $date): void
+    {
+        $customer = $banquet->booking?->customer ?? $banquet->customer;
+        $this->ledger->post(Journal::MISC, $date, 'Imputation de l’acompte — ' . $banquet->reference, [
+            ['account' => Account::PARTNER_DEPOSITS, 'debit' => $payment->amount, 'auxiliary' => $customer],
+            ['account' => Account::CLIENTS, 'credit' => $payment->amount, 'auxiliary' => $customer],
+        ], source: $payment, schema: 'banquet_apply_advance', reference: $payment->receiptReference());
     }
 
     /**
@@ -296,6 +471,10 @@ class LedgerPostingService
         $montant = (int) $payment->amount;
 
         if ($montant === 0) {
+            return null;
+        }
+        if ($montant > 0 && $payment->payment_origin === Payment::ORIGIN_POS_RECEPTION
+            && ReceptionSale::query()->where('payment_id', $payment->id)->where('payment_status', 'paid')->exists()) {
             return null;
         }
 
@@ -448,37 +627,20 @@ class LedgerPostingService
      */
     public function postFoodCost(CarbonInterface $date): ?JournalEntry
     {
-        $start = $date->copy()->startOfDay();
-        $end = $date->copy()->endOfDay();
+        return $this->postStockBatch(
+            self::SCHEMA_FOOD_COST,
+            $date,
+            'Coût matière',
+            RestaurantPantryMovement::query()->where('type', RestaurantPantryMovement::TYPE_OUT),
+            function (Collection $mouvements) {
+                $cout = (int) $mouvements->sum('total_cost');
 
-        $cout = (int) RestaurantPantryMovement::query()
-            ->where('type', RestaurantPantryMovement::TYPE_OUT)
-            ->whereBetween('occurred_at', [$start, $end])
-            ->sum('total_cost');
-
-        if ($cout <= 0) {
-            return null;
-        }
-
-        // Pas de modèle source : on marque l'idempotence par un schéma daté.
-        $schema = self::SCHEMA_FOOD_COST . ':' . $start->toDateString();
-
-        $existante = JournalEntry::query()->where('schema', $schema)->first();
-
-        if ($existante !== null) {
-            return null;
-        }
-
-        return $this->ledger->post(
-            journalCode: Journal::MISC,
-            date: $start,
-            label: 'Coût matière du ' . $start->format('d/m/Y'),
-            lines: [
-                ['account' => '603200', 'label' => 'Consommation cuisine', 'debit' => $cout,
-                    'center' => JournalEntryLine::CENTER_RESTAURANT],
-                ['account' => '321000', 'label' => 'Sortie de stock', 'credit' => $cout],
-            ],
-            schema: $schema,
+                return $cout > 0 ? [
+                    ['account' => '603200', 'label' => 'Consommation cuisine', 'debit' => $cout,
+                        'center' => JournalEntryLine::CENTER_RESTAURANT],
+                    ['account' => '321000', 'label' => 'Sortie de stock', 'credit' => $cout],
+                ] : [];
+            },
         );
     }
 
@@ -500,24 +662,19 @@ class LedgerPostingService
      */
     public function postEconomatStock(CarbonInterface $date): ?JournalEntry
     {
-        $start = $date->copy()->startOfDay();
-        $end = $date->copy()->endOfDay();
-        $schema = self::SCHEMA_ECONOMAT_STOCK . ':' . $start->toDateString();
-
-        if (JournalEntry::query()->where('schema', $schema)->exists()) {
-            return null;
-        }
-
         // La reprise du stock initial entre au grand livre par les à-nouveaux
         // du comptable : la passer ici la compterait deux fois.
         $mouvements = StockMovement::query()
             ->with('item.category')
             ->where(fn ($q) => $q->whereNull('source_type')
-                ->orWhere('source_type', '!=', StockMovement::SOURCE_OPENING))
-            ->whereBetween('occurred_at', [$start, $end])
-            ->orderBy('id')
-            ->get();
+                ->orWhere('source_type', '!=', StockMovement::SOURCE_OPENING));
 
+        return $this->postStockBatch(self::SCHEMA_ECONOMAT_STOCK, $date, 'Mouvements de stock économat',
+            $mouvements, $this->economatLines(...));
+    }
+
+    private function economatLines(Collection $mouvements): array
+    {
         $requisitions = StockRequisition::query()
             ->whereIn('id', $mouvements
                 ->where('source_type', StockMovement::SOURCE_REQUISITION)
@@ -603,17 +760,7 @@ class LedgerPostingService
             $this->imputer($imputations, $stock, $libelle, 0, $valeur);
         }
 
-        if ($imputations === []) {
-            return null;
-        }
-
-        return $this->ledger->post(
-            journalCode: Journal::MISC,
-            date: $start,
-            label: 'Mouvements de stock économat du ' . $start->format('d/m/Y'),
-            lines: array_values($imputations),
-            schema: $schema,
-        );
+        return array_values($imputations);
     }
 
     /**
@@ -632,23 +779,18 @@ class LedgerPostingService
      */
     public function postPantryStock(CarbonInterface $date): ?JournalEntry
     {
-        $start = $date->copy()->startOfDay();
-        $end = $date->copy()->endOfDay();
-        $schema = self::SCHEMA_PANTRY_STOCK . ':' . $start->toDateString();
-
-        if (JournalEntry::query()->where('schema', $schema)->exists()) {
-            return null;
-        }
-
         $mouvements = RestaurantPantryMovement::query()
             ->whereIn('type', [RestaurantPantryMovement::TYPE_IN, RestaurantPantryMovement::TYPE_ADJUST])
             ->whereNull('stock_requisition_id')
             ->where(fn ($q) => $q->whereNull('reason')
-                ->orWhere('reason', '!=', RestaurantPantryMovement::REASON_TRANSFER_IN))
-            ->whereBetween('occurred_at', [$start, $end])
-            ->orderBy('id')
-            ->get();
+                ->orWhere('reason', '!=', RestaurantPantryMovement::REASON_TRANSFER_IN));
 
+        return $this->postStockBatch(self::SCHEMA_PANTRY_STOCK, $date, 'Mouvements du garde-manger',
+            $mouvements, $this->pantryLines(...));
+    }
+
+    private function pantryLines(Collection $mouvements): array
+    {
         $imputations = [];
         $stock = Account::STOCK_KITCHEN;
         $variation = Account::variationFor($stock);
@@ -689,17 +831,7 @@ class LedgerPostingService
             }
         }
 
-        if ($imputations === []) {
-            return null;
-        }
-
-        return $this->ledger->post(
-            journalCode: Journal::MISC,
-            date: $start,
-            label: 'Mouvements du garde-manger du ' . $start->format('d/m/Y'),
-            lines: array_values($imputations),
-            schema: $schema,
-        );
+        return array_values($imputations);
     }
 
     /**
@@ -740,46 +872,31 @@ class LedgerPostingService
      */
     public function postMinibarStock(CarbonInterface $date): ?JournalEntry
     {
-        $start = $date->copy()->startOfDay();
-        $end = $date->copy()->endOfDay();
-        $schema = self::SCHEMA_MINIBAR_STOCK . ':' . $start->toDateString();
-
-        if (JournalEntry::query()->where('schema', $schema)->exists()) {
-            return null;
-        }
-
-        $imputations = [];
-
-        \App\Models\MinibarMovement::query()
+        $mouvements = \App\Models\MinibarMovement::query()
             ->with('item.category')
-            ->where('type', \App\Models\MinibarMovement::TYPE_CONSUMPTION)
-            ->whereBetween('occurred_at', [$start, $end])
-            ->orderBy('id')
-            ->get()
-            ->each(function (\App\Models\MinibarMovement $mouvement) use (&$imputations) {
-                $valeur = (int) round(abs($mouvement->quantity) * $mouvement->unit_cost);
-                if ($valeur <= 0) {
-                    return;
-                }
+            ->where('type', \App\Models\MinibarMovement::TYPE_CONSUMPTION);
 
-                $stock = $mouvement->stock_account ?: $mouvement->item?->stockAccount() ?? Account::STOCK_STORE;
-                $libelle = 'Consommations des mini-bars';
-                $this->imputer($imputations, Account::variationFor($stock), $libelle, $valeur, 0,
-                    JournalEntryLine::CENTER_ACCOMMODATION);
-                $this->imputer($imputations, $stock, $libelle, 0, $valeur);
-            });
+        return $this->postStockBatch(self::SCHEMA_MINIBAR_STOCK, $date, 'Consommations des mini-bars',
+            $mouvements, $this->minibarStockLines(...));
+    }
 
-        if ($imputations === []) {
-            return null;
+    private function minibarStockLines(Collection $mouvements): array
+    {
+        $imputations = [];
+        foreach ($mouvements as $mouvement) {
+            $valeur = (int) round(abs($mouvement->quantity) * $mouvement->unit_cost);
+            if ($valeur <= 0) {
+                continue;
+            }
+
+            $stock = $mouvement->stock_account ?: $mouvement->item?->stockAccount() ?? Account::STOCK_STORE;
+            $libelle = 'Consommations des mini-bars';
+            $this->imputer($imputations, Account::variationFor($stock), $libelle, $valeur, 0,
+                JournalEntryLine::CENTER_ACCOMMODATION);
+            $this->imputer($imputations, $stock, $libelle, 0, $valeur);
         }
 
-        return $this->ledger->post(
-            journalCode: Journal::MISC,
-            date: $start,
-            label: 'Consommations des mini-bars du ' . $start->format('d/m/Y'),
-            lines: array_values($imputations),
-            schema: $schema,
-        );
+        return array_values($imputations);
     }
 
     /**
@@ -795,14 +912,6 @@ class LedgerPostingService
      */
     public function postServiceStoreStock(CarbonInterface $date): ?JournalEntry
     {
-        $start = $date->copy()->startOfDay();
-        $end = $date->copy()->endOfDay();
-        $schema = self::SCHEMA_SERVICE_STORE . ':' . $start->toDateString();
-
-        if (JournalEntry::query()->where('schema', $schema)->exists()) {
-            return null;
-        }
-
         $mouvements = \App\Models\ServiceStoreMovement::query()
             ->with('store', 'item.category')
             ->where(fn ($q) => $q->where('type', \App\Models\ServiceStoreMovement::TYPE_ADJUSTMENT)
@@ -813,11 +922,14 @@ class LedgerPostingService
                     \App\Models\ServiceStoreMovement::SOURCE_BAR_SALE,
                     \App\Models\ServiceStoreMovement::SOURCE_BAR_RETURN,
                     \App\Models\ServiceStoreMovement::SOURCE_BAR_VARIANCE,
-                ]))
-            ->whereBetween('occurred_at', [$start, $end])
-            ->orderBy('id')
-            ->get();
+                ]));
 
+        return $this->postStockBatch(self::SCHEMA_SERVICE_STORE, $date, 'Consommations des dépôts de service',
+            $mouvements, $this->serviceStoreLines(...));
+    }
+
+    private function serviceStoreLines(Collection $mouvements): array
+    {
         $demandes = \App\Models\MaintenanceRequest::query()
             ->whereKey($mouvements->where('source_type', \App\Models\ServiceStoreMovement::SOURCE_INTERVENTION)
                 ->pluck('source_id')->filter()->unique())
@@ -868,17 +980,55 @@ class LedgerPostingService
             }
         }
 
-        if ($imputations === []) {
-            return null;
-        }
+        return array_values($imputations);
+    }
 
-        return $this->ledger->post(
-            journalCode: Journal::MISC,
-            date: $start,
-            label: 'Consommations des dépôts de service du ' . $start->format('d/m/Y'),
-            lines: array_values($imputations),
-            schema: $schema,
-        );
+    /**
+     * Un lot quotidien peut recevoir des compléments jusqu'à la clôture.
+     * On conserve les mouvements déjà traités, y compris ceux sans incidence
+     * comptable. Les lots de l'ancien format n'avaient pas cette provenance.
+     */
+    private function postStockBatch(string $stream, CarbonInterface $date, string $label, Builder $query,
+        callable $buildLines): ?JournalEntry
+    {
+        $start = $date->copy()->startOfDay();
+        $end = $date->copy()->endOfDay();
+        $schema = $stream . ':' . $start->toDateString();
+
+        return DB::transaction(function () use ($start, $end, $schema, $stream, $label, $query, $buildLines) {
+            $this->ledger->lockForDate($start);
+            $initial = JournalEntry::query()->where('schema', $schema)->first();
+            $legacy = $initial && !DB::table('ledger_stock_movements')->where('journal_entry_id', $initial->id)->exists();
+            $mouvements = $query
+                ->whereBetween('occurred_at', [$start, $end])
+                ->when($legacy, fn ($q) => $q->where('created_at', '>', $initial->created_at))
+                ->whereNotIn('id', DB::table('ledger_stock_movements')->select('movement_id')->where('stream', $stream))
+                ->orderBy('id')
+                ->get();
+
+            if ($mouvements->isEmpty()) {
+                return null;
+            }
+
+            $lines = $buildLines($mouvements);
+            $entry = $lines === [] ? null : $this->ledger->post(
+                journalCode: Journal::MISC,
+                date: $start,
+                label: $label . ' du ' . $start->format('d/m/Y'),
+                lines: $lines,
+                schema: $initial ? $schema . ':' . $mouvements->first()->id : $schema,
+            );
+
+            foreach ($mouvements->pluck('id')->chunk(250) as $ids) {
+                DB::table('ledger_stock_movements')->insert($ids->map(fn ($id) => [
+                    'stream' => $stream,
+                    'movement_id' => $id,
+                    'journal_entry_id' => $entry?->id,
+                ])->all());
+            }
+
+            return $entry;
+        });
     }
 
     /**
@@ -949,6 +1099,7 @@ class LedgerPostingService
         $date,
         ?string $method,
         $customer,
+        ?int $recordedVat = null,
     ): ?JournalEntry {
         if ($this->dejaComptabilise($order, $schema)) {
             return null;
@@ -958,7 +1109,12 @@ class LedgerPostingService
             return null;
         }
 
-        $decomposition = $this->taxation->breakdown($ttc);
+        $snapshot = $order->vat_snapshot ? json_decode($order->vat_snapshot, true, flags: JSON_THROW_ON_ERROR) : null;
+        if ($snapshot && (int) $snapshot['total'] !== $ttc) {
+            throw new \RuntimeException('Le montant de la vente diffère de sa ventilation fiscale initiale. Vérifiez la pièce et sa régularisation.');
+        }
+        $vat = $snapshot['vat'] ?? $recordedVat ?? $this->taxation->breakdown($ttc)->vat;
+        $surtax = $snapshot['surtax'] ?? 0;
         $auFolio = $method === 'room_charge';
         $contrepartie = $auFolio ? Account::CLIENTS : $this->compteTresorerie($method);
 
@@ -970,16 +1126,19 @@ class LedgerPostingService
         ], [
             'account' => $revenueAccount,
             'label'   => 'Vente',
-            'credit'  => $decomposition->ht,
+            'credit'  => $ttc - $vat - $surtax,
             'center'  => $center,
         ]];
 
-        if ($decomposition->vat > 0) {
+        if ($vat > 0) {
             $lignes[] = [
                 'account' => Account::VAT_COLLECTED,
                 'label'   => 'TVA collectée',
-                'credit'  => $decomposition->vat,
+                'credit'  => $vat,
             ];
+        }
+        if ($surtax > 0) {
+            $lignes[] = ['account' => Account::VAT_SURTAX, 'label' => 'Centimes additionnels communaux', 'credit' => $surtax];
         }
 
         return $this->ledger->post(
@@ -1020,6 +1179,7 @@ class LedgerPostingService
             'hebergement', 'housekeeping' => JournalEntryLine::CENTER_ACCOMMODATION,
             'restaurant'                  => JournalEntryLine::CENTER_RESTAURANT,
             'boutique'                    => JournalEntryLine::CENTER_SHOP,
+            'bar', 'conferences', 'spa', 'laundry', 'activity' => $service,
             default                       => JournalEntryLine::CENTER_STORE,
         };
     }
@@ -1035,8 +1195,10 @@ class LedgerPostingService
         return match ($method) {
             'cash', null           => Account::CASH,
             'orange_money',
+            'mobile_money',
             'mtn_momo'             => '531000',
             'bank_transfer',
+            'transfer',
             'check',
             'stripe',
             'card'                 => Account::BANK,
