@@ -348,3 +348,49 @@ test("le contrôleur exporte et consulte, seul le service achats importe ; l'éc
 
     $this->actingAs($this->econome)->get(route('economat.classeur.index'))->assertSee('Analyser le fichier');
 });
+
+test('un mouvement importé conserve le lot consommé et la trace du classeur', function (bool $versDepot) {
+    $article = StockItem::create(['reference' => '1PL1678', 'name' => 'Tuyau', 'unit' => 'pièce']);
+    $fournisseur = Supplier::create(['name' => 'Fournisseur de test', 'is_active' => true]);
+    app(\App\Services\GoodsReceiptService::class)->receiveDirect([
+        'supplier_id' => $fournisseur->id,
+        'lines' => [['stock_item_id' => $article->id, 'quantity_delivered' => 3, 'unit_price' => 10,
+            'lot_number' => 'LOT-001', 'expires_on' => '2026-10-25']],
+    ], $this->econome);
+    $depot = $versDepot ? ServiceStore::create(['name' => 'Étage', 'department' => 'autre']) : null;
+    $chemin = classeurSurDisque([
+        'magasin' => $depot ? C::PREFIXE_DEPOT . $depot->name : C::MAGASIN_CENTRAL,
+        'articles' => [['id' => $article->id, 'reference' => $article->reference, 'designation' => $article->name, 'unite' => 'pièce']],
+        'mouvements' => [mouvementDuClasseur('2026-10-18', $article->reference,
+            $depot ? C::TYPE_ENTREE : C::TYPE_SORTIE, 1, ['cout' => 10, 'destination' => 'Étage', 'document' => 'BL-12'])],
+    ]);
+    deposer($chemin, $depot);
+    $import = StockImport::sole();
+    expect($import->analysis['erreurs'])->toBe([]);
+    $this->post(route('economat.classeur.confirm', $import))->assertSessionHas('success');
+    $sortie = StockMovement::where('stock_import_id', $import->id)->where('type', 'out')->sole();
+    expect($sortie->details['lot_allocations'][0]['lot_number'])->toBe('LOT-001')
+        ->and((float) $sortie->details['lot_allocations'][0]['quantity'])->toBe(1.0)
+        ->and((float) \App\Models\StockLot::sole()->quantity_remaining)->toBe(2.0)
+        ->and($sortie->details['document'])->toBe('BL-12')
+        ->and($sortie->details[$depot ? 'vers_depot' : 'beneficiaire'])->toBe('Étage');
+})->with(['magasin central' => false, 'livraison au dépôt' => true]);
+
+test('la date du jour est admise au format Excel et au format texte', function () {
+    $chemin = classeurSurDisque([
+        'articles' => articlesPlomberie(),
+        'mouvements' => [
+            mouvementDuClasseur('2026-10-19', '1PL1678', C::TYPE_ENTREE, 1),
+            mouvementDuClasseur('2026-10-19', 'GPIPE110', C::TYPE_ENTREE, 1),
+        ],
+    ], function ($classeur) {
+        $classeur->getSheetByName(C::ONGLET_MOUVEMENTS)->setCellValueExplicit('B6', '19/10/2026',
+            \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+    });
+    deposer($chemin);
+    $import = StockImport::sole();
+    expect($import->analysis['erreurs'])->toBe([]);
+    $this->post(route('economat.classeur.confirm', $import))->assertSessionHas('success');
+    expect($import->movements()->get()->map(fn ($m) => $m->occurred_at->toDateString())->all())
+        ->toBe(['2026-10-19', '2026-10-19']);
+});
