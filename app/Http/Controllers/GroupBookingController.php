@@ -245,8 +245,11 @@ class GroupBookingController extends Controller
 
     public function addRoom(Request $request, GroupBooking $groupBooking)
     {
-        $tenantId = Auth::user()->tenant_id ?? Tenant::current()?->id;
-        
+        return DB::transaction(fn () => $this->enregistrerChambreDuGroupe($request, $groupBooking));
+    }
+
+    private function enregistrerChambreDuGroupe(Request $request, GroupBooking $groupBooking)
+    {
         if ($request->filled('new_customer')) {
             $customerRules = [
                 'first_name' => ['required', 'string', 'max:100'],
@@ -280,7 +283,7 @@ class GroupBookingController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $room = Room::with('roomType')->findOrFail($validated['room_id']);
+        $room = Room::with('roomType')->lockForUpdate()->findOrFail($validated['room_id']);
         $checkIn = $groupBooking->start_date;
         $checkOut = $groupBooking->end_date;
         $nights = $checkIn->diffInDays($checkOut);
@@ -291,7 +294,7 @@ class GroupBookingController extends Controller
             ->conflictReason($room, $checkIn, $checkOut);
 
         if ($refus !== null) {
-            return back()->withErrors(['room_id' => $refus]);
+            throw \Illuminate\Validation\ValidationException::withMessages(['room_id' => $refus]);
         }
 
         $tenantId = Auth::user()->tenant_id
@@ -305,60 +308,45 @@ class GroupBookingController extends Controller
         // TVA extraite du total TTC, jamais ajoutée par dessus.
         $taxAmount = app(\App\Services\TaxationService::class)->breakdown($totalAmount)->vat;
 
-        DB::transaction(function () use (
-            $groupBooking,
-            $room,
-            $validated,
-            $customerId,
-            $tenantId,
-            $checkIn,
-            $checkOut,
-            $nights,
-            $pricePerNight,
-            $totalRoomAmount,
-            $taxAmount,
-            $totalAmount
-        ) {
-            $booking = Booking::create([
-                'group_booking_id' => $groupBooking->id,
-                'room_id' => $room->id,
-                'customer_id' => $customerId,
-                'booker_id' => $groupBooking->booker_id,
-                'status' => BookingStatus::CONFIRMED,
-                'check_in' => $checkIn,
-                'check_out' => $checkOut,
-                'adults_count' => $validated['adults_count'],
-                'children_count' => $validated['children_count'] ?? 0,
-                'total_nights' => $nights,
-                'price_per_night' => $pricePerNight,
-                'total_room_amount' => $totalRoomAmount,
-                'extras_amount' => 0,
-                'tax_amount' => $taxAmount,
-                'discount_amount' => 0,
-                'total_amount' => $totalAmount,
-                'deposit_amount' => 0,
-                'paid_amount' => 0,
-                'balance_due' => $totalAmount,
-                'source' => 'group',
-                'notes' => $validated['notes'] ?? null,
-                'created_by' => Auth::id(),
-                'tenant_id' => $tenantId,
-            ]);
+        $booking = Booking::create([
+            'group_booking_id' => $groupBooking->id,
+            'room_id' => $room->id,
+            'customer_id' => $customerId,
+            'booker_id' => $groupBooking->booker_id,
+            'status' => BookingStatus::CONFIRMED,
+            'check_in' => $checkIn,
+            'check_out' => $checkOut,
+            'adults_count' => $validated['adults_count'],
+            'children_count' => $validated['children_count'] ?? 0,
+            'total_nights' => $nights,
+            'price_per_night' => $pricePerNight,
+            'total_room_amount' => $totalRoomAmount,
+            'extras_amount' => 0,
+            'tax_amount' => $taxAmount,
+            'discount_amount' => 0,
+            'total_amount' => $totalAmount,
+            'deposit_amount' => 0,
+            'paid_amount' => 0,
+            'balance_due' => $totalAmount,
+            'source' => 'group',
+            'notes' => $validated['notes'] ?? null,
+            'created_by' => Auth::id(),
+            'tenant_id' => $tenantId,
+        ]);
 
-            // Ligne folio hébergement
-            FolioItem::create([
-                'booking_id' => $booking->id,
-                'customer_id' => $booking->customer_id,
-                'type' => FolioItem::TYPE_ROOM,
-                'description' => "Hébergement {$nights} nuit(s) — Chambre {$room->number}",
-                'quantity' => $nights,
-                'unit_price' => $pricePerNight,
-                'total_price' => $totalRoomAmount,
-                'earns_points' => true,
-                'occurred_at' => now(),
-                'recorded_by' => Auth::id(),
-            ]);
-        });
+        // Ligne folio hébergement
+        FolioItem::create([
+            'booking_id' => $booking->id,
+            'customer_id' => $booking->customer_id,
+            'type' => FolioItem::TYPE_ROOM,
+            'description' => "Hébergement {$nights} nuit(s) — Chambre {$room->number}",
+            'quantity' => $nights,
+            'unit_price' => $pricePerNight,
+            'total_price' => $totalRoomAmount,
+            'earns_points' => true,
+            'occurred_at' => now(),
+            'recorded_by' => Auth::id(),
+        ]);
 
         // Met à jour le statut du groupe si c'est la première chambre
         if ($groupBooking->status === 'pending') {

@@ -156,12 +156,12 @@ class RoomAvailabilityService
      * séjour précédent ? Oui si le ménage a le temps de passer entre l'heure
      * limite de sortie et l'heure d'arrivée.
      */
-    public function canTurnOverSameDay(?RoomType $type): bool
+    public function canTurnOverSameDay(?RoomType $type, ?string $arrivalTime = null): bool
     {
         $readyAt = Carbon::parse($this->checkOutTime())
             ->addMinutes($this->delayMinutesFor($type));
 
-        return $readyAt->lessThanOrEqualTo(Carbon::parse($this->checkInTime()));
+        return $readyAt->lessThanOrEqualTo(Carbon::parse($arrivalTime ?? $this->checkInTime()));
     }
 
     /** Séjours actifs de la chambre qui recoupent la période demandée. */
@@ -184,7 +184,7 @@ class RoomAvailabilityService
      * elle peut passer. Le message est destiné au client comme au réceptionniste.
      */
     public function conflictReason(Room $room, CarbonInterface|string $checkIn, CarbonInterface|string $checkOut,
-        ?int $ignoreBookingId = null): ?string
+        ?int $ignoreBookingId = null, ?string $arrivalTime = null): ?string
     {
         $checkIn  = Carbon::parse($checkIn)->startOfDay();
         $checkOut = Carbon::parse($checkOut)->startOfDay();
@@ -201,8 +201,8 @@ class RoomAvailabilityService
             return 'Cette chambre est déjà occupée sur cette période.';
         }
 
-        return $this->delaiApresDepart($room, $checkIn, $ignoreBookingId)
-            ?? $this->remiseEnEtatEnCours($room, $checkIn);
+        return $this->delaiApresDepart($room, $checkIn, $ignoreBookingId, $arrivalTime)
+            ?? $this->remiseEnEtatEnCours($room, $checkIn, $arrivalTime);
     }
 
     private function indisponibiliteCommerciale(Room $room): ?string
@@ -220,7 +220,7 @@ class RoomAvailabilityService
         return null;
     }
 
-    private function delaiApresDepart(Room $room, CarbonInterface $checkIn, ?int $ignoreBookingId): ?string
+    private function delaiApresDepart(Room $room, CarbonInterface $checkIn, ?int $ignoreBookingId, ?string $arrivalTime): ?string
     {
         // Séjour qui s'achève le jour de l'arrivée demandée : reste à savoir
         // si le ménage a le temps de passer dans la journée.
@@ -231,7 +231,7 @@ class RoomAvailabilityService
             ->whereDate('check_out', $checkIn->toDateString())
             ->exists();
 
-        if ($sameDayDeparture && !$this->canTurnOverSameDay($room->roomType)) {
+        if ($sameDayDeparture && !$this->canTurnOverSameDay($room->roomType, $arrivalTime)) {
             $ready = Carbon::parse($this->checkOutTime())
                 ->addMinutes($this->delayMinutesFor($room->roomType))
                 ->format('H\hi');
@@ -243,14 +243,14 @@ class RoomAvailabilityService
         return null;
     }
 
-    private function remiseEnEtatEnCours(Room $room, CarbonInterface $checkIn): ?string
+    private function remiseEnEtatEnCours(Room $room, CarbonInterface $checkIn, ?string $arrivalTime): ?string
     {
         // Arrivée du jour sur une chambre encore en remise en état : ce qui
         // compte est l'heure d'arrivée du client, pas l'instant présent. Une
         // chambre prête à 14 h accepte une arrivée à 14 h.
         if ($checkIn->isToday() && $this->isBeingPrepared($room)) {
             $availableAt = $this->availableAt($room);
-            $arrival = today()->setTimeFromTimeString($this->checkInTime());
+            $arrival = today()->setTimeFromTimeString($arrivalTime ?? $this->checkInTime());
 
             if ($availableAt && $availableAt->greaterThan($arrival)) {
                 return 'Cette chambre est en cours de remise en état, disponible à partir de '

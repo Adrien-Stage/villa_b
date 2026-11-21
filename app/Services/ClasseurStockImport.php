@@ -733,7 +733,9 @@ class ClasseurStockImport
                 ->current_stock + $m['quantite'], 3), $motif, StockMovement::SOURCE_IMPORT, $import->id),
         };
 
-        $mouvement?->update($this->traces($import, $m, true));
+        if ($mouvement !== null) {
+            $this->tracerMouvementCentral($mouvement, $import, $m, true);
+        }
     }
 
     private function mouvementDuDepot(StockImport $import, ServiceStore $depot, StockItem $article, array $m): void
@@ -747,11 +749,11 @@ class ClasseurStockImport
             $entree = $this->stock->recordIn($article, $m['quantite'], (int) (($m['cout'] ?? 0) * 100),
                 $initial ? StockMovement::SOURCE_OPENING : StockMovement::SOURCE_IMPORT, $initial ? null : $import->id,
                 $motif . " — pour le dépôt {$depot->name}");
-            $entree->update($this->traces($import, $m, false));
+            $this->tracerMouvementCentral($entree, $import, $m, false);
 
             $livraison = $this->stock->recordOut($article, $m['quantite'], StockMovement::SOURCE_IMPORT, $import->id,
                 "Livraison au dépôt {$depot->name} — import {$import->reference}");
-            $livraison->update([...$this->traces($import, $m, false), 'details' => ['vers_depot' => $depot->name]]);
+            $this->tracerMouvementCentral($livraison, $import, $m, false, ['vers_depot' => $depot->name]);
 
             $this->depots->receive($depot, $article, $m['quantite'], (int) $livraison->unit_cost,
                 ServiceStoreMovement::SOURCE_IMPORT, $import->id, $motif)->update($traces);
@@ -769,6 +771,14 @@ class ClasseurStockImport
                 ServiceStoreMovement::SOURCE_IMPORT, $import->id, $motif),
         };
 
+        $mouvement->update($traces);
+    }
+
+    private function tracerMouvementCentral(StockMovement $mouvement, StockImport $import, array $ligne,
+        bool $principal, array $details = []): void
+    {
+        $traces = $this->traces($import, $ligne, $principal);
+        $traces['details'] = array_merge($mouvement->details ?? [], $traces['details'], $details);
         $mouvement->update($traces);
     }
 
@@ -875,7 +885,7 @@ class ClasseurStockImport
             return null;
         }
         if (is_int($valeur) || is_float($valeur)) {
-            return CarbonImmutable::instance(DateExcel::excelToDateTimeObject($valeur))->startOfDay();
+            return CarbonImmutable::instance(DateExcel::excelToDateTimeObject($valeur, config('app.timezone')))->startOfDay();
         }
         if ($valeur instanceof \DateTimeInterface) {
             return CarbonImmutable::instance($valeur)->startOfDay();

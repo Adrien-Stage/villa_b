@@ -607,3 +607,38 @@ test('group booking addRoom succeeds when existing standard and demo bookings ar
 
 
 
+
+test('la confirmation refuse une chambre devenue occupée avant tout encaissement', function () {
+    [, $client] = rotationLeJourDuDepart();
+    $this->post(route('bookings.store'), [
+        'customer_id' => $client->id, 'room_id' => Room::where('number', '101')->sole()->id,
+        'check_in' => today()->addDay()->toDateString(), 'check_out' => today()->addDays(3)->toDateString(),
+        'adults_count' => 1, 'custom_price' => 90000, 'payment_amount' => 30000, 'payment_method' => 'cash',
+    ])->assertSessionHasErrors('room_id');
+
+    expect(Booking::count())->toBe(1);
+    $this->assertDatabaseCount('payments', 0);
+    $this->assertDatabaseCount('folio_items', 0);
+});
+
+test('un échec du folio annule réservation et acompte avant notification', function () {
+    [, $client, $arrivee] = rotationLeJourDuDepart();
+    \Illuminate\Support\Facades\Notification::fake();
+    \Illuminate\Support\Facades\Mail::fake();
+    \App\Models\FolioItem::creating(function ($ligne) {
+        if ($ligne->type === \App\Models\FolioItem::TYPE_PAYMENT) {
+            throw new RuntimeException('Échec simulé du folio');
+        }
+    });
+    $this->withoutExceptionHandling();
+    expect(fn () => $this->post(route('bookings.store'), [
+        'customer_id' => $client->id, 'room_id' => Room::where('number', '101')->sole()->id,
+        'check_in' => $arrivee, 'check_out' => today()->addDays(5)->toDateString(), 'check_in_time' => '18:00',
+        'adults_count' => 1, 'custom_price' => 90000, 'payment_amount' => 30000, 'payment_method' => 'cash',
+    ]))->toThrow(RuntimeException::class, 'Échec simulé du folio');
+    expect(Booking::count())->toBe(1);
+    $this->assertDatabaseCount('payments', 0);
+    $this->assertDatabaseCount('folio_items', 0);
+    \Illuminate\Support\Facades\Notification::assertNothingSent();
+    \Illuminate\Support\Facades\Mail::assertNothingSent();
+});
