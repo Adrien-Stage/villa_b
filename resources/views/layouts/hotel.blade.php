@@ -19,9 +19,9 @@
     $activeGroup = \App\Support\Navigation::getActiveGroup();
     $isLauncherRoute = request()->routeIs('dashboard') && request('view') !== 'kpi';
     $hasSidebar = !$isLauncherRoute && $activeGroup && $activeGroup['type'] === \App\Support\Navigation::TYPE_SIDEBAR;
-    $mobileTabs = ($hasSidebar || ($activeGroup && $activeGroup['type'] === \App\Support\Navigation::TYPE_TABS))
-        ? \App\Support\Navigation::getMobileTabs()
-        : [];
+    $hasTabs = ($activeGroup['type'] ?? null) === \App\Support\Navigation::TYPE_TABS;
+    $mobileTabs = $hasSidebar ? \App\Support\Navigation::getMobileTabs() : [];
+    $utilisateur = auth()->user();
 @endphp
 <!DOCTYPE html>
 <html lang="fr" class="h-full lg:overflow-hidden">
@@ -262,6 +262,7 @@
 
 <body class="h-full min-h-screen bg-accent/30 font-body lg:flex lg:h-screen lg:overflow-hidden">
 
+    @unless($hasTabs)
     <div
         id="mobile-sidebar-backdrop"
         class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden print:hidden"
@@ -311,41 +312,6 @@
             @endif
 
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-5">
-            @php
-                // Où loge l'entrée « demandes » ? Un seul endroit la porte.
-                //
-                // Qui gère l'économat la trouve dans la rubrique Économat, avec
-                // le reste du magasin. Qui ne fait qu'y adresser des demandes la
-                // trouve dans sa propre section — le comptable sollicite le
-                // magasin comme n'importe quel service, mais il ne le tient pas.
-                //
-                // Les deux cas s'excluent : la même route inscrite dans deux
-                // rubriques les surlignait toutes les deux, et le menu mentait
-                // sur sa structure.
-                $droits = app(\App\Services\PermissionResolver::class);
-                $utilisateur = auth()->user();
-                // Le comptable n'a rien à faire dans l'Hôtel ; le responsable
-                // financier, qui en détient les droits, y fixe les tarifs.
-                $estComptable = auth()->check() && auth()->user()->exerce(['accountant'])
-                    && ! auth()->user()->exerce([\App\Support\PermissionCatalog::RESPONSABLE_FINANCIER]);
-
-                $peutDemander   = $droits->allows($utilisateur, 'economat.requisitions.voir');
-                $groupeDesDemandes = \App\Support\Navigation::groupeDesDemandes($utilisateur);
-
-                $demandesEnComptabilite = $peutDemander && $groupeDesDemandes === 'accounting';
-                // Le libellé dit l'étendue : qui ne consulte que ses propres
-                // demandes lit « Mes demandes à l'économat ».
-                $libelleDemandes = $droits->scopeFor($utilisateur, 'economat.requisitions.voir') === \App\Support\PermissionScope::PROPRE
-                    ? "Mes demandes à l'économat"
-                    : "Demandes à l'économat";
-                $afficheEconomat = \App\Support\Navigation::tientLEconomat($utilisateur);
-                // Qui a la tuile Achats y trouve demandes, bons et fournisseurs :
-                // l'Économat ne les répète pas.
-                $afficheAchats = \App\Support\Navigation::tientLesAchats($utilisateur);
-
-                $activeGroupId = $activeGroup['id'] ?? null;
-            @endphp
-
                 @if(!$hasSidebar)
                 <div>
                     <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
@@ -374,271 +340,12 @@
                 @endundroit
                 @endif
 
-                @if(!$hasSidebar || $activeGroupId === 'hotel')
-                @unless($estComptable)
-                    @undroit('rooms.voir', 'bookings.voir', 'agenda.voir', 'housekeeping.voir', 'customers.voir')
-                        <div>
-                            <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
-                                tracking-widest mb-2 px-2">Hôtel</p>
-                            <ul class="space-y-0.5">
-                            {{-- Ordre métier Hôtel : Agenda, Réservations, Chambres, Tarifs,
-                                 Demandes à l'économat, Housekeeping, Fiches techniques.
-                                 POS Réception est dans la barre supérieure pour la réception seule. --}}
-                            @pour('manager','reception','finance_manager','controller')
-                                @if(!auth()->check() || auth()->user()->hasModuleAccess('reservations'))
-                                    <x-sidebar-link route="agenda.index" icon="calendar-days">Agenda</x-sidebar-link>
-
-                                    <li>
-                                        <a href="{{ route('bookings.index') }}"
-                                            title="Réservations"
-                                            @if(request()->routeIs('bookings.*') || request()->routeIs('groups.*') || request()->routeIs('restaurant.banquets.*')) aria-current="page" @endif
-                                            class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
-                                            {{ request()->routeIs('bookings.*') || request()->routeIs('groups.*') || request()->routeIs('restaurant.banquets.*')
-                                                ? 'sidebar-lien-active bg-surface-dark text-white font-semibold'
-                                                : 'text-text-on-dark hover:bg-surface-dark/70 hover:text-white' }}">
-                                            <i
-                                                data-lucide="calendar"
-                                                class="w-3.5 h-3.5 flex-shrink-0"
-                                                aria-hidden="true"></i>
-                                            <span class="sidebar-libelle">Réservations</span>
-                                        </a>
-
-                                        @if(request()->routeIs('bookings.*') || request()->routeIs('groups.*') || request()->routeIs('restaurant.banquets.*'))
-                                        <ul class="sidebar-sous-menu mt-0.5 ml-4 space-y-0.5 border-l
-                                            border-text-on-dark/20 pl-3">
-                                            <li>
-                                                <a href="{{ route('bookings.index') }}"
-                                                    @if(request()->routeIs('bookings.*') && !request()->routeIs('bookings.cash_register.*') && !request()->routeIs('bookings.handovers.*')) aria-current="page" @endif
-                                                    class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
-                                                    {{ request()->routeIs('bookings.*') && !request()->routeIs('bookings.cash_register.*') && !request()->routeIs('bookings.handovers.*')
-                                                        ? 'text-white'
-                                                        : 'text-text-on-dark hover:text-white' }}">
-                                                    <i
-                                                        data-lucide="user"
-                                                        class="w-3 h-3 flex-shrink-0"
-                                                        aria-hidden="true"></i>
-                                                    Individuelles
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="{{ route('groups.index') }}"
-                                                    @if(request()->routeIs('groups.*')) aria-current="page" @endif
-                                                    class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
-                                                    {{ request()->routeIs('groups.*')
-                                                        ? 'text-white'
-                                                        : 'text-text-on-dark hover:text-white' }}">
-                                                    <i
-                                                        data-lucide="users"
-                                                        class="w-3 h-3 flex-shrink-0"
-                                                        aria-hidden="true"></i>
-                                                    Groupes
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="{{ route('bookings.cash_register.index') }}"
-                                                    @if(request()->routeIs('bookings.cash_register.*')) aria-current="page" @endif
-                                                    class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
-                                                    {{ request()->routeIs('bookings.cash_register.*')
-                                                        ? 'text-white'
-                                                        : 'text-text-on-dark hover:text-white' }}">
-                                                    <i
-                                                        data-lucide="calculator"
-                                                        class="w-3 h-3 flex-shrink-0"
-                                                        aria-hidden="true"></i>
-                                                    Compta Réception
-                                                </a>
-                                            </li>
-                                            @droit('bookings.handovers.voir')
-                                            <li>
-                                                <a href="{{ route('bookings.handovers.index') }}"
-                                                    @if(request()->routeIs('bookings.handovers.*')) aria-current="page" @endif
-                                                    class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
-                                                    {{ request()->routeIs('bookings.handovers.*')
-                                                        ? 'text-white'
-                                                        : 'text-text-on-dark hover:text-white' }}">
-                                                    <i
-                                                        data-lucide="hand-coins"
-                                                        class="w-3 h-3 flex-shrink-0"
-                                                        aria-hidden="true"></i>
-                                                    Passations
-                                                </a>
-                                            </li>
-                                            @enddroit
-                                            @module('restaurant')
-                                                @droit('restaurant.banquets.voir')
-                                                <li>
-                                                    <a href="{{ route('restaurant.banquets.index') }}"
-                                                        @if(request()->routeIs('restaurant.banquets.*')) aria-current="page" @endif
-                                                        class="flex items-center gap-2 py-1.5 text-xs font-medium transition-all
-                                                        {{ request()->routeIs('restaurant.banquets.*')
-                                                            ? 'text-white'
-                                                            : 'text-text-on-dark hover:text-white' }}">
-                                                        <i
-                                                            data-lucide="party-popper"
-                                                            class="w-3 h-3 flex-shrink-0"
-                                                            aria-hidden="true"></i>
-                                                        Banquets
-                                                    </a>
-                                                </li>
-                                                @enddroit
-                                            @endmodule
-                                        </ul>
-                                        @endif
-                                    </li>
-                                @endif
-                            @endpour
-
-                            {{-- Chambres : plus visible pour le housekeeping, qui pilote les statuts depuis son module.
-                                 Le contrôleur de gestion figure dans chaque bloc : il consulte tous les services. --}}
-                            @pour('manager','reception','finance_manager','controller')
-                                @if(!auth()->check() || auth()->user()->hasModuleAccess('hebergement'))
-                                    <x-sidebar-link route="rooms.index" icon="door">Chambres</x-sidebar-link>
-                                @endif
-                            @endpour
-
-                            {{-- La grille tarifaire : prix de base et tarifs par critère. --}}
-                            @droit('rooms.rates.voir')
-                                <x-sidebar-link route="rooms.rates.index" icon="tags">Tarifs</x-sidebar-link>
-                            @enddroit
-
-                            {{-- La réception et le housekeeping expriment leurs besoins vers
-                                 l'économat ; en cas d'indisponibilité, l'économat crée la demande d'achat. --}}
-                            @if($groupeDesDemandes === 'hotel')
-                                @droit('economat.requisitions.voir')
-                                    <x-sidebar-link route="economat.requisitions.index" icon="inbox">{{ $libelleDemandes }}</x-sidebar-link>
-                                @enddroit
-                            @endif
-
-                            @pour('manager','housekeeping_leader','housekeeping_supervisor','housekeeping_staff','housekeeping','controller')
-                                @module('housekeeping')
-                                    <x-sidebar-link route="housekeeping.index" icon="sparkles">Housekeeping</x-sidebar-link>
-                                    @droit('housekeeping.journal.voir')
-                                        <x-sidebar-link route="housekeeping.journal.index" icon="list-checks">Suivi des chambres</x-sidebar-link>
-                                    @enddroit
-                                    @droit('housekeeping.minibar.voir')
-                                        <x-sidebar-link route="housekeeping.minibar.index" icon="wine">Mini-bars</x-sidebar-link>
-                                    @enddroit
-                                @endmodule
-                            @endpour
-
-                            @pour('manager')
-                                <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>
-                            @endpour
-                            </ul>
-                        </div>
-                    @endundroit
-                @endunless
-                @endif
-
-                @if(!$hasSidebar || $activeGroupId === 'restaurant')
-                @pour('manager','restaurant_chief','restaurant_staff','restaurant_cook','restaurant_barman','restaurant_manager','cashier','finance_manager','controller')
-                    @module('restaurant')
-                    @php
-                        // Un service qu'aucun des restaurants de la personne
-                        // n'exploite n'a pas d'entrée de menu.
-                        $contexteResto = app(\App\Services\RestaurantContext::class);
-                        $serviceOffert = fn (string $service): bool => $contexteResto->offrant(auth()->user(), $service)->isNotEmpty()
-                            || $contexteResto->restaurants()->isEmpty();
-                    @endphp
-                    <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
-                            tracking-widest mb-2 px-2">Restaurant</p>
-                        <ul class="space-y-0.5">
-                            @pour('manager','restaurant_chief','restaurant_staff','controller')
-                                <x-sidebar-link route="restaurant.breakfast.index" icon="coffee">Petits-déjeuners</x-sidebar-link>
-                                @if($serviceOffert(\App\Models\PointOfSale::SERVICE_SALLE))
-                                    <x-sidebar-link route="restaurant.orders.index" icon="receipt">Commandes</x-sidebar-link>
-                                @endif
-                            @endpour
-
-                            @if($serviceOffert(\App\Models\PointOfSale::SERVICE_CUISINE))
-                                @pour('restaurant_chief','restaurant_cook','controller')
-                                    <x-sidebar-link route="restaurant.kitchen.index" icon="cooking-pot">Cuisine</x-sidebar-link>
-                                @endpour
-                            @endif
-
-                            @if($serviceOffert(\App\Models\PointOfSale::SERVICE_BAR) && !$contexteResto->serviceAbsentIci(auth()->user(), \App\Models\PointOfSale::SERVICE_BAR))
-                                @droit('restaurant.bar.voir')
-                                    <x-sidebar-link route="restaurant.bar.index" icon="glass-water">Bar</x-sidebar-link>
-                                @enddroit
-                            @endif
-
-                            {{-- Le buffet au forfait, là où un restaurant sert au buffet, en salle. --}}
-                            @if($contexteResto->offrant(auth()->user(), \App\Models\PointOfSale::SERVICE_SALLE)->contains(fn ($r) => $r->sert(\App\Models\PointOfSale::MODE_BUFFET)))
-                                @pour('manager','restaurant_chief','restaurant_staff','cashier','controller')
-                                    <x-sidebar-link route="restaurant.buffets.index" icon="salad">Buffets</x-sidebar-link>
-                                @endpour
-                            @endif
-
-                            @pour('manager','restaurant_chief','restaurant_manager','cashier','finance_manager','controller')
-                                <x-sidebar-link route="restaurant.banquets.index" icon="party-popper">Banquets</x-sidebar-link>
-                            @endpour
-
-                            @pour('manager','restaurant_chief','restaurant_staff','finance_manager','controller')
-                                {{-- Pour le serveur, « Menus » est l'écran de prise de
-                                     commande ; pour le chef, la carte à administrer. --}}
-                                <x-sidebar-link route="restaurant.menus.index" icon="book">Menus</x-sidebar-link>
-                            @endpour
-
-                            {{-- Coûts, stocks et inventaires relèvent de la gestion :
-                                 la salle n'a pas à les voir. --}}
-                            @pour('manager','restaurant_chief','finance_manager','controller')
-                                <x-sidebar-link route="restaurant.recipes.index" icon="chef-hat">Fiches techniques</x-sidebar-link>
-                                @if($serviceOffert(\App\Models\PointOfSale::SERVICE_STOCK))
-                                    <x-sidebar-link route="restaurant.pantry.index" icon="warehouse">Garde-manger</x-sidebar-link>
-                                    <x-sidebar-link route="restaurant.stock_counts.index" icon="clipboard-list">Inventaires</x-sidebar-link>
-                                @endif
-                            @endpour
-
-                            @if($serviceOffert(\App\Models\PointOfSale::SERVICE_STOCK))
-                                @pour('manager','restaurant_chief','restaurant_cook','finance_manager','controller')
-                                    <x-sidebar-link route="restaurant.waste.index" icon="trash-2">Pertes & Déchets</x-sidebar-link>
-                                @endpour
-                            @endif
-
-                            @pour('manager','restaurant_chief','finance_manager','controller')
-                                <x-sidebar-link route="restaurant.consumption.index" icon="pie-chart">Consommation & Ratios</x-sidebar-link>
-                            @endpour
-
-                            @pour('manager','restaurant_chief','cashier','finance_manager','controller')
-                                <x-sidebar-link route="restaurant.billing.index" icon="credit-card">Facturation</x-sidebar-link>
-                                <x-sidebar-link route="restaurant.cash_register.index" icon="calculator">Caisse</x-sidebar-link>
-                            @endpour
-
-                            {{-- Les restaurants de l'hôtel, leurs services, leurs salles et
-                                 leurs équipes : l'adresse mène à l'onglet Restaurant des paramètres. --}}
-                            @pour('manager','restaurant_manager')
-                                <x-sidebar-link route="restaurant.restaurants.index" icon="store">Restaurants</x-sidebar-link>
-                            @endpour
-                            @if($groupeDesDemandes === 'restaurant')
-                                @droit('economat.requisitions.voir')
-                                    <x-sidebar-link route="economat.requisitions.index" icon="inbox">{{ $libelleDemandes }}</x-sidebar-link>
-                                @enddroit
-                            @endif
-                            @php
-                                $tenantSlug = Auth::user()->tenant?->slug ?? \App\Models\Tenant::first()?->slug;
-                            @endphp
-                            @if($tenantSlug)
-                                <li>
-                                    @php $restaurantQr = app(\App\Services\RestaurantContext::class)->plusieurs() ? app(\App\Services\RestaurantContext::class)->pourCreation(Auth::user()) : null; @endphp
-                                    <a href="{{ route('portal.restaurant.menu', array_filter(['tenant' => $tenantSlug, 'restaurant' => $restaurantQr?->slug])) }}"
-                                       target="_blank"
-                                       rel="noopener"
-                                       title="Portail (QR)"
-                                       class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs
-                                           font-medium transition-all text-text-on-dark hover:bg-surface-dark
-                                           hover:text-white">
-                                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 6v-4h2v4h-2zm4 0v-2h2v2h-2zm-4-6v-2h2v2h-2zm4 2v-2h2v2h-2z"/>
-                                        </svg>
-                                        <span class="sidebar-libelle">Portail (QR)</span>
-                                    </a>
-                                </li>
-                            @endif
-                        </ul>
-                    </div>
-                    @endmodule
-                @endpour
+                @if($hasSidebar)
+                    @include('partials.group-sidebar', ['groupe' => $activeGroup])
+                @else
+                    @foreach(['hotel', 'restaurant'] as $id)
+                        @include('partials.group-sidebar', ['groupe' => \App\Support\Navigation::groupInfo($id)])
+                    @endforeach
                 @endif
 
                 @if(!$hasSidebar)
@@ -659,242 +366,9 @@
                     </div>
                 @endpour
 
-                @pour('shop_manager','shop_cashier','manager','finance_manager','controller')
-                    @module('shop')
-                    <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
-                            tracking-widest mb-2 px-2">Boutique</p>
-                        <ul class="space-y-0.5">
-                            @pour('shop_manager','manager','finance_manager','controller')
-                                <x-sidebar-link route="shop.products.index" icon="package">Articles</x-sidebar-link>
-                            @endpour
-                            <x-sidebar-link route="shop.orders.index" icon="shopping-cart">Commandes</x-sidebar-link>
-                            @pour('shop_manager','manager','finance_manager','controller')
-                                <x-sidebar-link route="shop.cash_register.index" icon="calculator">Compta Boutique</x-sidebar-link>
-                            @endpour
-                        </ul>
-                    </div>
-                    @endmodule
-                @endpour
-                @endif
-
-                @if(!$hasSidebar || $activeGroupId === 'articles')
-                    @php
-                        $liensArticles = \App\Support\Navigation::getGroupTabs('articles', $utilisateur);
-                    @endphp
-                    @if($liensArticles !== [])
-                        <div>
-                            <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
-                                tracking-widest mb-2 px-2">Articles</p>
-                            <ul class="space-y-0.5">
-                                @foreach($liensArticles as $lien)
-                                    <x-sidebar-link :route="$lien['route']" :icon="$lien['icon']">{{ $lien['label'] }}</x-sidebar-link>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-                @endif
-
-                @if(!$hasSidebar || $activeGroupId === 'economat')
-                @if($afficheEconomat)
-                    <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
-                            tracking-widest mb-2 px-2">Économat</p>
-                        <ul class="space-y-0.5">
-                            <x-sidebar-link route="economat.index" icon="warehouse">Vue d'ensemble</x-sidebar-link>
-                            @droit('economat.movements.voir')
-                                <x-sidebar-link route="economat.movements.index" icon="arrow-left-right">Mouvements de stock</x-sidebar-link>
-                            @enddroit
-                            @droit('economat.classeur.voir')
-                                <x-sidebar-link route="economat.classeur.index" icon="file-spreadsheet">Classeur Excel</x-sidebar-link>
-                            @enddroit
-                            @droit('economat.stores.voir')
-                                <x-sidebar-link route="economat.stores.index" icon="warehouse">Dépôts de service</x-sidebar-link>
-                            @enddroit
-                            @unless($afficheAchats)
-                                <x-sidebar-link route="economat.suppliers.index" icon="truck">Fournisseurs</x-sidebar-link>
-                                @droit('economat.purchase_requests.voir')
-                                    <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
-                                @enddroit
-                                <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
-                            @endunless
-                            @droit('economat.receipts.voir')
-                                <x-sidebar-link route="economat.receipts.index" icon="package-check">Bons d'entrée (BR)</x-sidebar-link>
-                            @enddroit
-                            @droit('economat.stock_counts.voir')
-                                <x-sidebar-link route="economat.stock_counts.index" icon="clipboard-check">Inventaires</x-sidebar-link>
-                            @enddroit
-                            @droit('economat.count_sheets.voir')
-                                <x-sidebar-link route="economat.count_sheets.index" icon="printer">Fiches de comptage</x-sidebar-link>
-                            @enddroit
-                            @unless($demandesEnComptabilite)
-                                @php
-                                    // Le libellé dit l'étendue : qui ne consulte
-                                    // que ses propres demandes lit « Mes demandes »,
-                                    // les autres « Bons de réquisition ».
-                                    $porteeDemandes = $droits->scopeFor(auth()->user(), 'economat.requisitions.voir');
-                                @endphp
-                                <x-sidebar-link route="economat.requisitions.index" icon="inbox">
-                                    {{ $porteeDemandes === \App\Support\PermissionScope::PROPRE ? 'Mes demandes' : 'Bons de réquisition' }}
-                                </x-sidebar-link>
-                            @endunless
-                            @droit('economat.external_issues.voir')
-                                <x-sidebar-link route="economat.external_issues.index" icon="log-out">Sorties hors établissement</x-sidebar-link>
-                            @enddroit
-                            @droit('economat.control.voir')
-                                <x-sidebar-link route="economat.control.index" icon="pie-chart">Contrôle & Ratios</x-sidebar-link>
-                            @enddroit
-                            @unless($afficheAchats)
-                                @droit('economat.control.suggestions.voir')
-                                    <x-sidebar-link route="economat.control.suggestions.index" icon="shopping-cart">Propositions d'achat</x-sidebar-link>
-                                @enddroit
-                            @endunless
-                            @droit('economat.control.variances.voir')
-                                <x-sidebar-link route="economat.control.variances.index" icon="git-compare">Écarts d'inventaire</x-sidebar-link>
-                            @enddroit
-                        </ul>
-                    </div>
-                @endif
-                @endif
-
-                {{-- Achats : le circuit d'achat, de la demande approuvée à la livraison. --}}
-                @if(!$hasSidebar || $activeGroupId === 'achats')
-                @if($afficheAchats)
-                    <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
-                            tracking-widest mb-2 px-2">Achats</p>
-                        <ul class="space-y-0.5">
-                            <x-sidebar-link route="achats.index" icon="shopping-cart">Tableau des achats</x-sidebar-link>
-                            @droit('economat.purchase_requests.voir')
-                                <x-sidebar-link route="economat.purchase_requests.index" icon="file-question">Demandes d'achat</x-sidebar-link>
-                            @enddroit
-                            @droit('economat.orders.voir')
-                                <x-sidebar-link route="economat.orders.index" icon="clipboard-list">Bons de commande</x-sidebar-link>
-                            @enddroit
-                            @droit('economat.suppliers.voir')
-                                <x-sidebar-link route="economat.suppliers.index" icon="truck">Fournisseurs</x-sidebar-link>
-                            @enddroit
-                            @droit('economat.control.suggestions.voir')
-                                <x-sidebar-link route="economat.control.suggestions.index" icon="bell-ring">Alertes & réapprovisionnement</x-sidebar-link>
-                            @enddroit
-                            @unless($afficheEconomat)
-                                @droit('economat.receipts.voir')
-                                    <x-sidebar-link route="economat.receipts.index" icon="package-check">Livraisons reçues</x-sidebar-link>
-                                @enddroit
-                            @endunless
-                        </ul>
-                    </div>
-                @endif
-                @endif
-
-                {{-- Technique : le service de maintenance y travaille ; chacun y
-                     suit les demandes d'intervention qu'il a faites. --}}
-                @if(!$hasSidebar || $activeGroupId === 'technique')
-                @module('technique')
-                @undroit('technique.voir', 'technique.demandes.voir')
-                    <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
-                            tracking-widest mb-2 px-2">Technique</p>
-                        <ul class="space-y-0.5">
-                            @droit('technique.voir')
-                                <x-sidebar-link route="technique.index" icon="wrench">Tableau technique</x-sidebar-link>
-                            @enddroit
-                            @droit('technique.demandes.voir')
-                                <x-sidebar-link route="technique.demandes.index" icon="clipboard-list">
-                                    {{ $droits->allows($utilisateur, 'technique.voir') ? "Demandes d'intervention" : "Mes demandes d'intervention" }}
-                                </x-sidebar-link>
-                            @enddroit
-                            @droit('technique.demandes.creer')
-                                @if(!$utilisateur->exerce(\App\Services\MaintenanceService::TECHNICIENS) || $utilisateur->isAdmin() || $utilisateur->exerce([...App\Services\MaintenanceService::RESPONSABLES, 'manager']))
-                                    <x-sidebar-link route="technique.demandes.create" icon="circle-plus">Demander une intervention</x-sidebar-link>
-                                @endif
-                            @enddroit
-                            @droit('technique.equipe.voir')
-                                <x-sidebar-link route="technique.equipe.index" icon="users">Équipe & spécialités</x-sidebar-link>
-                            @enddroit
-                            @droit('technique.depot.voir')
-                                <x-sidebar-link route="technique.depot.index" icon="package">Dépôt technique</x-sidebar-link>
-                            @enddroit
-                            {{-- Le service technique adresse ses demandes à l'économat d'ici. --}}
-                            @if($groupeDesDemandes === 'technique')
-                                @droit('economat.requisitions.voir')
-                                    <x-sidebar-link route="economat.requisitions.index" icon="inbox">{{ $libelleDemandes }}</x-sidebar-link>
-                                @enddroit
-                            @endif
-                        </ul>
-                    </div>
-                @endundroit
-                @endmodule
-                @endif
-
-
-                @if(!$hasSidebar || $activeGroupId === 'pilotage')
-                @droit('pilotage.voir')
-                    <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
-                            tracking-widest mb-2 px-2">Pilotage</p>
-                        <ul class="space-y-0.5">
-                            <x-sidebar-link route="pilotage.index" icon="gauge">Indicateurs de gestion</x-sidebar-link>
-                            @droit('pilotage.budget.voir')
-                                <x-sidebar-link route="pilotage.budget.index" icon="target">Budget</x-sidebar-link>
-                            @enddroit
-                        </ul>
-                    </div>
-                @enddroit
-                @endif
-
-                @if(!$hasSidebar || $activeGroupId === 'accounting')
-                @undroit('accounting.voir', 'accounting.ledger.voir', 'rooms.cost_sheets.voir')
-                    <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
-                            tracking-widest mb-2 px-2">Comptabilité</p>
-                        <ul class="space-y-0.5">
-                            @if(!auth()->check() || auth()->user()->hasModuleAccess('comptabilite'))
-                                <x-sidebar-link route="accounting.index" icon="wallet">Comptabilité</x-sidebar-link>
-                            @endif
-                            @module('ledger')
-                                <x-sidebar-link route="accounting.ledger.index" icon="book-open">Grand livre</x-sidebar-link>
-                            @endmodule
-                            @if($demandesEnComptabilite)
-                                {{-- Le comptable sollicite le magasin comme un
-                                     service, sans le tenir : sa demande part
-                                     d'ici, non de la rubrique Économat. --}}
-                                <x-sidebar-link route="economat.requisitions.index" icon="inbox">Mes demandes</x-sidebar-link>
-                            @endif
-
-                            {{-- Fiche technique : prix de revient d'une nuitée et
-                                  marge par type de chambre. C'est de la
-                                  comptabilité analytique, d'où sa place ici. Le
-                                  manager la voit déjà dans la section Hôtel. --}}
-                            @pour('accountant','admin','controller')
-                                <x-sidebar-link route="rooms.cost_sheets.index" icon="calculator">Fiches techniques</x-sidebar-link>
-                            @endpour
-                        </ul>
-                    </div>
-                @endundroit
-                @endif
-
-                @if(!$hasSidebar)
-                {{-- Administration : le service informatique (rôles et droits,
-                     interventions, journal) ; le manager y suit les interventions
-                     et les sessions du support. Chaque lien pose son droit. --}}
-                @php
-                    $resolveurAdministration = app(\App\Services\PermissionResolver::class);
-                    $administrationVisible = auth()->check() && collect(['droits.voir', 'interventions.voir', 'audit.voir', 'support.sessions.voir'])
-                        ->contains(fn ($droit) => $resolveurAdministration->allows(auth()->user(), $droit));
-                @endphp
-                @if($administrationVisible)
-                    <div>
-                        <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
-                            tracking-widest mb-2 px-2">Administration</p>
-                        <ul class="space-y-0.5">
-                            <x-sidebar-link route="droits.index" icon="shield-check">Rôles &amp; droits</x-sidebar-link>
-                            <x-sidebar-link route="interventions.index" icon="siren">Interventions</x-sidebar-link>
-                            <x-sidebar-link route="audit.index" icon="scroll-text">Journal d'audit</x-sidebar-link>
-                            <x-sidebar-link route="support.sessions.index" icon="life-buoy">Sessions du support</x-sidebar-link>
-                        </ul>
-                    </div>
-                @endif
+                    @foreach(['shop', 'articles', 'economat', 'achats', 'technique', 'pilotage', 'accounting', 'admin'] as $id)
+                        @include('partials.group-sidebar', ['groupe' => \App\Support\Navigation::groupInfo($id)])
+                    @endforeach
 
                 {{-- Les paramètres se règlent par onglet, par la direction et le chef
                      du service concerné ; certains se consultent (les restaurants).
@@ -963,6 +437,7 @@
             </div>
         </div>
     </aside>
+    @endunless
 
     <div class="flex min-h-screen flex-1 flex-col lg:min-h-0 lg:h-full lg:overflow-hidden">
         <header class="bg-accent/30 border-b border-secondary/20 px-4 py-3 lg:px-8 flex items-center justify-between
@@ -982,9 +457,10 @@
                 {{-- Largeur de la barre latérale. Le bouton vit dans l'en-tête
                      plutôt que dans la barre : réduite à 60 px, celle-ci n'a
                      plus la place d'accueillir une commande atteignable. --}}
+                @if($hasSidebar)
                 <button type="button" onclick="basculerSidebar()"
                         aria-controls="mobile-sidebar"
-                        class="{{ $hasSidebar ? 'lg:inline-flex' : 'hidden' }} hidden h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors">
+                        class="lg:inline-flex hidden h-10 w-10 items-center justify-center rounded-lg border border-secondary/20 bg-white text-primary/70 hover:text-primary hover:bg-accent/30 transition-colors">
                     <svg id="sidebar-bascule-fermer" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <title>Réduire la barre latérale</title>
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 5h16v14H4z" />
@@ -996,6 +472,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 5v14M14 10l3 2-3 2" />
                     </svg>
                 </button>
+                @endif
 
                 {{-- Bouton universel Applications (Grille 3x3) sur grand écran --}}
                 <a href="{{ route('dashboard') }}"
@@ -1367,7 +844,9 @@
             </div>
         </header>
 
-        @include('partials.group-tabs')
+        @if($hasTabs)
+            @include('partials.group-tabs', ['groupe' => $activeGroup])
+        @endif
 
         @include('bookings.handovers.partials.bandeau')
 
@@ -1424,7 +903,7 @@
             </div>
         @endif
 
-        <main class="flex-1 overflow-y-auto px-4 py-4 pb-28 lg:px-8 lg:py-6 lg:pb-6">
+        <main class="flex-1 overflow-y-auto px-4 py-4 {{ $mobileTabs === [] ? 'pb-6' : 'pb-28' }} lg:px-8 lg:py-6 lg:pb-6">
             {{-- Plusieurs restaurants : les écrans du restaurant disent lequel. --}}
             @if(request()->routeIs('restaurant.*') && auth()->check())
                 <x-restaurant.courant />
