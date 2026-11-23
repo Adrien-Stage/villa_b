@@ -24,9 +24,10 @@ function utilisateurSidebar(string $role = 'manager'): User
 }
 
 test('la page porte la commande de bascule et rétablit le choix avant peinture', function () {
-    $html = $this->actingAs(utilisateurSidebar())->get('/dashboard')->assertOk()->getContent();
+    activerModules(['hebergement', 'reservations', 'housekeeping']);
+    $html = $this->actingAs(utilisateurSidebar())->get(route('agenda.index'))->assertOk()->getContent();
 
-    expect($html)->toContain('basculerSidebar()')
+    expect($html)->toContain('onclick="basculerSidebar()"')
         ->and($html)->toContain('aria-controls="mobile-sidebar"')
         // Le choix est relu dans le <head> : sans cela, la barre s'afficherait
         // large puis se rétracterait à chaque changement de page.
@@ -65,9 +66,10 @@ test('la règle de repli ne vise que le grand écran', function () {
 });
 
 test('le sous-menu des réservations est masquable', function () {
-    $html = $this->actingAs(utilisateurSidebar('reception'))->get('/bookings')->assertOk()->getContent();
+    activerModules(['hebergement', 'reservations', 'housekeeping', 'economat']);
+    $html = $this->actingAs(utilisateurSidebar())->get('/bookings')->assertOk()->getContent();
 
     // Déplié, le sous-menu n'a pas sa place dans une gouttière de 60 px.
-    expect($html)->toContain('sidebar-sous-menu')
+    expect($html)->toContain('<ul class="sidebar-sous-menu')
         ->and($html)->toContain('<span class="sidebar-libelle">Réservations</span>');
 });

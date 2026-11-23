@@ -75,10 +75,10 @@ test("la barre latérale Hôtel suit l'ordre exact demandé sans POS Réception 
     // La gouvernante / chef des étages reste aussi sur Demandes à l'économat uniquement, jamais Demandes d'achat.
     $chefEtages = User::factory()->create(['role' => 'housekeeping_leader']);
     $htmlEtages = $this->actingAs($chefEtages)->get(route('economat.requisitions.index'))->assertOk()->getContent();
-    $libellesEtages = extraireLibellesSidebar($htmlEtages);
-    expect($libellesEtages)->toContain("Demandes à l'économat")
-        ->and($libellesEtages)->not->toContain("Demandes d'achat")
-        ->and($libellesEtages)->not->toContain('POS Réception');
+    preg_match('#<nav aria-label="Rubriques de la tuile Hôtel".*?</nav>#s', $htmlEtages, $onglets);
+    $navigationEtages = html_entity_decode($onglets[0] ?? '', ENT_QUOTES);
+    expect($navigationEtages)->toContain("Demandes à l'économat")
+        ->not->toContain("Demandes d'achat", 'POS Réception');
 });
 
 test("la tuile Hôtel ouvre l'Agenda en premier pour la réception et la direction", function () {
@@ -342,4 +342,37 @@ test("l'économat dispose d'un raccourci sur une demande interne en rupture pour
         ->get(route('economat.requisitions.show', $demande))
         ->assertOk()
         ->assertDontSee("Créer une demande d'achat", false);
+});
+
+test('le retrait d’une rubrique fait passer la même tuile de cinq liens latéraux à quatre onglets', function () {
+    $chef = User::factory()->create(['role' => 'reception_chief']);
+    $this->actingAs($chef);
+
+    $lanceur = fn () => collect($this->get(route('dashboard'))->assertOk()->viewData('launcherGroups'))->firstWhere('id', 'hotel');
+    expect($lanceur()['type'])->toBe(Navigation::TYPE_SIDEBAR);
+    $page = $this->get(route('agenda.index'))->assertOk()
+        ->assertSee('id="mobile-sidebar"', false)
+        ->assertSee('aria-label="Menu complet"', false);
+    expect(extraireLibellesSidebar($page->getContent()))->toHaveCount(5);
+
+    PermissionGrant::create([
+        'subject_type' => PermissionGrant::SUJET_USER,
+        'subject_id' => (string) $chef->id,
+        'permission' => 'rooms.rates.voir',
+        'effect' => PermissionGrant::EFFET_DENY,
+        'reason' => 'Accès aux tarifs réservé à la direction.',
+    ]);
+    app(PermissionResolver::class)->forget();
+
+    expect($lanceur()['type'])->toBe(Navigation::TYPE_TABS);
+    $page = $this->get(route('bookings.index'))->assertOk()
+        ->assertDontSee('id="mobile-sidebar"', false)
+        ->assertSee('aria-label="Sous-rubriques des réservations"', false)
+        ->assertSee('href="' . route('groups.index') . '"', false);
+
+    preg_match('#<nav aria-label="Rubriques de la tuile Hôtel".*?</nav>#s', $page->getContent(), $onglets);
+    $navigation = $onglets[0] ?? '';
+    expect(substr_count($navigation, '<a href='))->toBe(4);
+    expect($navigation)->toContain(route('bookings.index'))->not->toContain(route('rooms.rates.index'));
+    $this->getJson(route('rooms.rates.index'))->assertForbidden();
 });

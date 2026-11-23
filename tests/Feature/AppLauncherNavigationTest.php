@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Support\Navigation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -65,11 +64,9 @@ test('dans un groupe dense comme l’économat, la barre latérale n’affiche q
     $response->assertOk();
     $html = $response->getContent();
 
-    expect($html)->toContain('Applications')
-        ->and($html)->toContain('Vue d\'ensemble')
-        ->and($html)->toContain('Articles')
-        ->and($html)->not->toContain('>Restaurant<')
-        ->and($html)->not->toContain('>Hôtel<');
+    preg_match('#<aside\b[^>]*id="mobile-sidebar".*?</aside>#s', $html, $sidebar);
+    expect(html_entity_decode($sidebar[0] ?? '', ENT_QUOTES))->toContain('Applications', "Vue d'ensemble")
+        ->not->toContain(route('economat.items.index'), '>Restaurant<', '>Hôtel<');
 });
 
 test('dans un groupe léger comme la gestion, le système d’onglets horizontaux est affiché sans sidebar', function () {
