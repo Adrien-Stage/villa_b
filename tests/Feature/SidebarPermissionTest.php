@@ -45,8 +45,9 @@ function liens(User $utilisateur): array
 }
 
 test("sans droit accordé, le comptable ne voit pas l'économat", function () {
-    expect(liens(User::factory()->create(['role' => 'accountant'])))
-        ->not->toContain("Vue d'ensemble");
+    $comptable = User::factory()->create(['role' => 'accountant']);
+
+    expect(liens($comptable))->not->toContain("Vue d'ensemble", 'Articles', 'Catégories');
 });
 
 test("le droit accordé depuis la matrice fait apparaître son entrée de menu", function () {
@@ -58,19 +59,57 @@ test("le droit accordé depuis la matrice fait apparaître son entrée de menu",
     expect(liens($comptable))->toContain("Vue d'ensemble");
 });
 
-test("le groupe de menu s'ouvre dès qu'une de ses entrées est permise", function () {
+test('un droit de lecture sur les articles ouvre leur tuile et leur menu', function () {
     $comptable = User::factory()->create(['role' => 'accountant']);
 
     accorder('accountant', 'economat.items.voir');
 
-    $page = $this->actingAs($comptable)->get('/dashboard')->getContent();
+    $page = $this->actingAs($comptable)->get('/dashboard')->assertOk();
+    $tuiles = collect($page->viewData('launcherGroups'))->keyBy('id');
 
-    expect($page)->toContain('Économat')
+    expect($tuiles->get('articles')['url'])->toBe(route('economat.items.index'))
+        ->and($tuiles->has('economat'))->toBeFalse()
         ->and(liens($comptable))->toContain('Articles')
-        // Seule l'entrée permise apparaît : le reste du groupe reste fermé.
-        // (Le comptable lit les fournisseurs qu'il paie : les mouvements
-        // de stock, eux, ne le regardent pas.)
-        ->and(liens($comptable))->not->toContain('Mouvements');
+        ->not->toContain('Catégories', 'Mouvements');
+});
+
+test('une autorisation individuelle sur les catégories ouvre le bon écran sur ordinateur et sur mobile', function () {
+    $comptable = User::factory()->create(['role' => 'accountant']);
+    PermissionGrant::create([
+        'subject_type' => PermissionGrant::SUJET_USER,
+        'subject_id' => (string) $comptable->id,
+        'permission' => 'economat.categories.voir',
+        'effect' => PermissionGrant::EFFET_ALLOW,
+        'reason' => 'Consultation des catégories pour la comptabilité.',
+    ]);
+
+    $page = $this->actingAs($comptable)->get('/dashboard')->assertOk();
+    $tuiles = collect($page->viewData('launcherGroups'))->keyBy('id');
+
+    expect($tuiles->get('articles')['url'])->toBe(route('economat.categories.index'))
+        ->and($tuiles->has('economat'))->toBeFalse()
+        ->and(liens($comptable))->toContain('Catégories')->not->toContain('Articles');
+
+    $categories = $this->get(route('economat.categories.index'))->assertOk();
+    preg_match('#<nav aria-label="Navigation mobile".*?</nav>#s', $categories->getContent(), $nav);
+    expect($nav[0] ?? '')->toContain(route('economat.categories.index'))->not->toContain(route('economat.items.index'));
+    $this->getJson(route('economat.items.index'))->assertForbidden();
+});
+
+test('les articles et les dépôts ont chacun leur entrée lorsque les deux accès sont accordés', function () {
+    $comptable = User::factory()->create(['role' => 'accountant']);
+    accorder('accountant', 'economat.items.voir');
+    accorder('accountant', 'economat.stores.voir');
+
+    $page = $this->actingAs($comptable)->get('/dashboard')->assertOk();
+    $tuiles = collect($page->viewData('launcherGroups'))->keyBy('id');
+
+    expect($tuiles->get('articles')['url'])->toBe(route('economat.items.index'))
+        ->and($tuiles->get('economat')['url'])->toBe(route('economat.stores.index'));
+
+    $depots = $this->get($tuiles->get('economat')['url'])->assertOk();
+    preg_match('#<nav class="flex-1 overflow-y-auto.*?</nav>#s', $depots->getContent(), $nav);
+    expect($nav[0] ?? '')->toContain('Dépôts de service')->not->toContain(route('economat.items.index'));
 });
 
 test("un droit retiré fait disparaître son entrée", function () {
@@ -87,6 +126,9 @@ test("un droit retiré fait disparaître son entrée", function () {
 
     // Un lien qui mène à un refus est pire qu'un lien absent.
     expect(liens($econome))->not->toContain('Articles');
+    $tuiles = collect($this->get('/dashboard')->viewData('launcherGroups'))->keyBy('id');
+    expect($tuiles->has('articles'))->toBeFalse()
+        ->and($tuiles->has('economat'))->toBeTrue();
 });
 
 test("le libellé Hôtel disparaît pour le comptable", function () {

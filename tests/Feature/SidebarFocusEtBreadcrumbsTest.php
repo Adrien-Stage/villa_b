@@ -81,6 +81,7 @@ test('Breadcrumbs::shouldShow masque le fil d\'Ariane sur le lanceur d\'applicat
 });
 
 test('Breadcrumbs::generate résout la hiérarchie et le nom du modèle pour le dernier élément', function () {
+    $this->actingAs(creerAdminTest());
     $item = StockItem::create([
         'name' => 'Savon liquide 5L',
         'unit' => 'pcs',
@@ -95,12 +96,12 @@ test('Breadcrumbs::generate résout la hiérarchie et le nom du modèle pour le 
 
     $crumbs = Breadcrumbs::generate();
 
-    expect($crumbs)->toHaveCount(4)
+    expect($crumbs)->toHaveCount(3)
         ->and($crumbs[0]['label'])->toBe('Accueil')
-        ->and($crumbs[1]['label'])->toBe('Économat')
-        ->and($crumbs[2]['label'])->toBe('Articles')
-        ->and($crumbs[3]['label'])->toBe('Savon liquide 5L')
-        ->and($crumbs[3]['url'])->toBeNull();
+        ->and($crumbs[1]['label'])->toBe('Articles')
+        ->and($crumbs[1]['url'])->toBe(route('economat.items.index'))
+        ->and($crumbs[2]['label'])->toBe('Savon liquide 5L')
+        ->and($crumbs[2]['url'])->toBeNull();
 });
 
 test('la page des articles affiche le fil d\'Ariane et le focus actif dans la barre latérale', function () {
@@ -113,8 +114,8 @@ test('la page des articles affiche le fil d\'Ariane et le focus actif dans la ba
     // Widget breadcrumbs présent
     $response->assertSee('breadcrumbs-widget', false);
     $response->assertSee('Accueil');
-    $response->assertSee('Économat');
     $response->assertSee('Articles');
+    $response->assertSee('href="' . route('economat.categories.index') . '"', false);
 
     // Classe active de focus et attribut aria-current présents dans la barre latérale
     $response->assertSee('sidebar-lien-active', false);
@@ -131,4 +132,20 @@ test('le tableau de bord lanceur d\'applications ne montre pas le fil d\'Ariane'
 
     $response->assertOk();
     $response->assertDontSee('breadcrumbs-widget', false);
+});
+
+test('une alerte Économat ouvre la fiche dans Articles et donne accès à la transformation', function () {
+    $article = StockItem::create([
+        'name' => 'Gants de ménage', 'unit' => 'pcs', 'current_stock' => 0, 'min_stock' => 5, 'is_active' => true,
+    ]);
+    $fiche = route('economat.items.show', $article);
+    $transformation = route('economat.items.transformation.show', $article);
+
+    $this->actingAs(User::factory()->create(['role' => 'econome']))
+        ->get(route('economat.index'))->assertOk()->assertSee('href="' . $fiche . '"', false);
+    $this->get($fiche)->assertOk()->assertSee('href="' . $transformation . '"', false);
+    $this->get($transformation)->assertOk();
+
+    expect(Navigation::getActiveGroup('economat.items.show')['id'])->toBe('articles')
+        ->and(Navigation::getActiveGroup('economat.items.transformation.show')['id'])->toBe('articles');
 });

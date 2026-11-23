@@ -678,23 +678,35 @@
                 @endpour
                 @endif
 
+                @if(!$hasSidebar || $activeGroupId === 'articles')
+                    @php
+                        $liensArticles = \App\Support\Navigation::getGroupTabs('articles', $utilisateur);
+                    @endphp
+                    @if($liensArticles !== [])
+                        <div>
+                            <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
+                                tracking-widest mb-2 px-2">Articles</p>
+                            <ul class="space-y-0.5">
+                                @foreach($liensArticles as $lien)
+                                    <x-sidebar-link :route="$lien['route']" :icon="$lien['icon']">{{ $lien['label'] }}</x-sidebar-link>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                @endif
+
                 @if(!$hasSidebar || $activeGroupId === 'economat')
                 @if($afficheEconomat)
-                @undroit('economat.voir', 'economat.items.voir', 'economat.suppliers.voir', 'economat.orders.voir', 'economat.requisitions.voir', 'economat.stock_counts.voir')
                     <div>
                         <p class="sidebar-groupe-titre text-text-on-dark/40 text-[10px] font-semibold uppercase
                             tracking-widest mb-2 px-2">Économat</p>
                         <ul class="space-y-0.5">
                             <x-sidebar-link route="economat.index" icon="warehouse">Vue d'ensemble</x-sidebar-link>
-                            <x-sidebar-link route="economat.items.index" icon="boxes">Articles</x-sidebar-link>
                             @droit('economat.movements.voir')
                                 <x-sidebar-link route="economat.movements.index" icon="arrow-left-right">Mouvements de stock</x-sidebar-link>
                             @enddroit
                             @droit('economat.classeur.voir')
                                 <x-sidebar-link route="economat.classeur.index" icon="file-spreadsheet">Classeur Excel</x-sidebar-link>
-                            @enddroit
-                            @droit('economat.categories.voir')
-                                <x-sidebar-link route="economat.categories.index" icon="tags">Catégories</x-sidebar-link>
                             @enddroit
                             @droit('economat.stores.voir')
                                 <x-sidebar-link route="economat.stores.index" icon="warehouse">Dépôts de service</x-sidebar-link>
@@ -742,7 +754,6 @@
                             @enddroit
                         </ul>
                     </div>
-                @endundroit
                 @endif
                 @endif
 
