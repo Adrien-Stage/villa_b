@@ -28,7 +28,7 @@ function liensSidebar(string $role): array
     preg_match('#<nav class="flex-1 overflow-y-auto.*?</nav>#s', $html, $nav);
     preg_match_all('#<span class="sidebar-libelle">(.*?)</span>#s', $nav[0] ?? '', $libelles);
 
-    return array_map('trim', $libelles[1] ?? []);
+    return array_map(fn ($libelle) => trim(html_entity_decode($libelle, ENT_QUOTES)), $libelles[1] ?? []);
 }
 
 test('aucun rôle ne voit deux fois « Tableau de bord »', function (string $role) {

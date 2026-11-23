@@ -104,7 +104,7 @@ test('Breadcrumbs::generate résout la hiérarchie et le nom du modèle pour le 
         ->and($crumbs[2]['url'])->toBeNull();
 });
 
-test('la page des articles affiche le fil d\'Ariane et le focus actif dans la barre latérale', function () {
+test('la page des articles affiche le fil d\'Ariane et l’onglet actif', function () {
     $admin = creerAdminTest();
 
     $response = $this->actingAs($admin)->get(route('economat.items.index'));
@@ -117,12 +117,12 @@ test('la page des articles affiche le fil d\'Ariane et le focus actif dans la ba
     $response->assertSee('Articles');
     $response->assertSee('href="' . route('economat.categories.index') . '"', false);
 
-    // Classe active de focus et attribut aria-current présents dans la barre latérale
-    $response->assertSee('sidebar-lien-active', false);
-    $response->assertSee('aria-current="page"', false);
-
-    // Script de défilement automatique vers l'élément actif présent
-    $response->assertSee('scrollIntoView({ block: \'nearest\', behavior: \'smooth\' })', false);
+    preg_match('#<nav aria-label="Rubriques de la tuile Articles".*?</nav>#s', $response->getContent(), $nav);
+    $navigation = $nav[0] ?? '';
+    expect(substr_count($navigation, ' aria-current="page"'))->toBe(1);
+    expect($navigation)->toMatch('#<a href="' . preg_quote(route('economat.items.index'), '#') . '"\s+aria-current="page"#')
+        ->toContain(route('economat.categories.index'));
+    $response->assertDontSee('id="mobile-sidebar"', false);
 });
 
 test('le tableau de bord lanceur d\'applications ne montre pas le fil d\'Ariane', function () {

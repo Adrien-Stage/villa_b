@@ -91,7 +91,7 @@ test('une autorisation individuelle sur les catégories ouvre le bon écran sur 
         ->and(liens($comptable))->toContain('Catégories')->not->toContain('Articles');
 
     $categories = $this->get(route('economat.categories.index'))->assertOk();
-    preg_match('#<nav aria-label="Navigation mobile".*?</nav>#s', $categories->getContent(), $nav);
+    preg_match('#<nav aria-label="Rubriques de la tuile Articles".*?</nav>#s', $categories->getContent(), $nav);
     expect($nav[0] ?? '')->toContain(route('economat.categories.index'))->not->toContain(route('economat.items.index'));
     $this->getJson(route('economat.items.index'))->assertForbidden();
 });
@@ -108,7 +108,7 @@ test('les articles et les dépôts ont chacun leur entrée lorsque les deux acc�
         ->and($tuiles->get('economat')['url'])->toBe(route('economat.stores.index'));
 
     $depots = $this->get($tuiles->get('economat')['url'])->assertOk();
-    preg_match('#<nav class="flex-1 overflow-y-auto.*?</nav>#s', $depots->getContent(), $nav);
+    preg_match('#<nav aria-label="Rubriques de la tuile Économat".*?</nav>#s', $depots->getContent(), $nav);
     expect($nav[0] ?? '')->toContain('Dépôts de service')->not->toContain(route('economat.items.index'));
 });
 

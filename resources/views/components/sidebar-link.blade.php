@@ -1,4 +1,4 @@
-@props(['route', 'icon'])
+@props(['route', 'icon', 'url' => null, 'externe' => false, 'reservations' => false])
 
 @php
     $isActive = \App\Support\Navigation::isRouteActive($route);
@@ -24,7 +24,8 @@
 <li>
     {{-- L'infobulle porte le nom de l'entrée : c'est elle qui renseigne
          l'utilisateur quand la barre est réduite à ses icônes. --}}
-    <a href="{{ $route !== '#' ? route($route) : '#' }}"
+    <a href="{{ $url ?? ($route !== '#' ? route($route) : '#') }}"
+       @if($externe) target="_blank" rel="noopener" @endif
        title="{{ trim(strip_tags($slot)) }}"
        @if($isActive) aria-current="page" @endif
        class="sidebar-lien flex items-center gap-2.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all
@@ -88,5 +89,8 @@
 
         <span class="sidebar-libelle">{{ $slot }}</span>
     </a>
+    @if($reservations && $isActive)
+        @include('partials.reservation-links', ['modeSidebar' => true])
+    @endif
 </li>
 @endif

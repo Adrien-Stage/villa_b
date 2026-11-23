@@ -19,10 +19,8 @@ class Navigation
     public const TYPE_TABS       = 'tabs';
     public const TYPE_STANDALONE = 'standalone';
 
-    private const ECRANS_ARTICLES = [
-        'economat.items' => ['Articles', 'boxes'],
-        'economat.categories' => ['Catégories', 'tags'],
-    ];
+    private const SEUIL_NAVIGATION_LATERALE = 5;
+    private const ECRANS_ARTICLES = ['economat.items', 'economat.categories'];
 
     /**
      * Liste des groupes d'applications autorisés pour l'utilisateur connecté.
@@ -68,7 +66,6 @@ class Navigation
                     ? ['rooms.rates.index', 'bookings.index', 'rooms.index']
                     : ['agenda.index', 'bookings.index', 'rooms.index', 'housekeeping.index'],
                 ) ?? route('agenda.index'),
-                'type'        => self::TYPE_SIDEBAR,
             ];
         }
 
@@ -101,7 +98,6 @@ class Navigation
                             'restaurant.restaurants.index',
                     ],
                 ) ?? route('restaurant.orders.index'),
-                'type'        => self::TYPE_SIDEBAR,
             ];
         }
 
@@ -119,13 +115,15 @@ class Navigation
                 'bg_soft'     => 'bg-emerald-50',
                 'border_color'=> 'border-emerald-100',
                 'url'         => $urlEconomat,
-                'type'        => self::TYPE_SIDEBAR,
             ];
         }
 
         $urlArticles = self::urlArticles($user);
         if ($urlArticles !== null) {
-            $groups[] = self::groupInfo('articles') + [
+            $groups[] = [
+                'id'          => 'articles',
+                'title'       => 'Articles',
+                'icon'        => 'boxes',
                 'subtitle'    => 'Catalogue & catégories',
                 'color'       => 'violet',
                 'bg_gradient' => 'from-violet-500 to-indigo-600',
@@ -151,7 +149,6 @@ class Navigation
                 'bg_soft'     => 'bg-orange-50',
                 'border_color'=> 'border-orange-100',
                 'url'         => route('achats.index'),
-                'type'        => self::TYPE_SIDEBAR,
             ];
         }
 
@@ -172,7 +169,6 @@ class Navigation
                 'bg_soft'     => 'bg-orange-50',
                 'border_color'=> 'border-orange-100',
                 'url'         => route('technique.index'),
-                'type'        => self::TYPE_SIDEBAR,
             ];
         }
 
@@ -194,7 +190,6 @@ class Navigation
                 'url'         => self::premiereRoutePermise($user, [
                     'accounting.index', 'accounting.ledger.index', 'rooms.cost_sheets.index',
                 ]) ?? route('accounting.index'),
-                'type'        => self::TYPE_SIDEBAR,
             ];
         }
 
@@ -213,7 +208,6 @@ class Navigation
                 'bg_soft'     => 'bg-indigo-50',
                 'border_color'=> 'border-indigo-100',
                 'url'         => route('pilotage.index'),
-                'type'        => self::TYPE_SIDEBAR,
             ];
         }
 
@@ -232,7 +226,6 @@ class Navigation
                 'bg_soft'     => 'bg-orange-50',
                 'border_color'=> 'border-orange-100',
                 'url'         => route('customers.index'),
-                'type'        => self::TYPE_STANDALONE,
             ];
         }
 
@@ -251,11 +244,10 @@ class Navigation
                 'bg_soft'     => 'bg-sky-50',
                 'border_color'=> 'border-sky-100',
                 'url'         => route('users.index'),
-                'type'        => self::TYPE_STANDALONE,
             ];
         }
 
-        // 6. BOUTIQUE — Groupe léger (Onglets)
+        // 6. BOUTIQUE
         $peutVoirShop = TenantModules::has('shop') && (
             $user->isAdmin() || $user->exerce(['shop_manager', 'shop_cashier', 'manager',
                 PermissionCatalog::RESPONSABLE_FINANCIER, DutySegregation::CONTROLE_DE_GESTION])
@@ -273,7 +265,6 @@ class Navigation
                 'border_color'=> 'border-rose-100',
                 'url'         => self::premiereRoutePermise($user, ['shop.products.index', 'shop.orders.index'])
                     ?? route('shop.products.index'),
-                'type'        => self::TYPE_TABS,
             ];
         }
 
@@ -291,7 +282,6 @@ class Navigation
                 'bg_soft'     => 'bg-cyan-50',
                 'border_color'=> 'border-cyan-100',
                 'url'         => route('editions.index'),
-                'type'        => self::TYPE_STANDALONE,
             ];
         }
 
@@ -307,7 +297,6 @@ class Navigation
             'bg_soft'     => 'bg-sky-50',
             'border_color'=> 'border-sky-100',
             'url'         => route('planning.index'),
-            'type'        => self::TYPE_STANDALONE,
         ];
 
         // 9. ANALYTIQUE (Tour de contrôle) — Pleine page
@@ -326,7 +315,6 @@ class Navigation
                 'bg_soft'     => 'bg-teal-50',
                 'border_color'=> 'border-teal-100',
                 'url'         => route('analytics.index'),
-                'type'        => self::TYPE_STANDALONE,
             ];
         }
 
@@ -346,7 +334,6 @@ class Navigation
                 'bg_soft'     => 'bg-slate-100',
                 'border_color'=> 'border-slate-200',
                 'url'         => route('droits.index'),
-                'type'        => self::TYPE_TABS,
             ];
         }
 
@@ -367,7 +354,6 @@ class Navigation
             'bg_soft'     => 'bg-zinc-100',
             'border_color'=> 'border-zinc-200',
             'url'         => route('settings.index'),
-            'type'        => self::TYPE_STANDALONE,
         ];
 
         // 12. DISCUSSIONS — Pleine page
@@ -383,7 +369,6 @@ class Navigation
                 'bg_soft'     => 'bg-emerald-50',
                 'border_color'=> 'border-emerald-100',
                 'url'         => route('discussions.index'),
-                'type'        => self::TYPE_STANDALONE,
             ];
         }
 
@@ -399,8 +384,11 @@ class Navigation
             'bg_soft'     => 'bg-amber-50',
             'border_color'=> 'border-amber-200',
             'url'         => route('dashboard.overview'),
-            'type'        => self::TYPE_STANDALONE,
         ];
+
+        foreach ($groups as $index => $group) {
+            $groups[$index]['type'] = self::typeNavigation(self::getGroupTabs($group['id'], $user));
+        }
 
         return $groups;
     }
@@ -437,7 +425,7 @@ class Navigation
 
     private static function estUnEcranArticles(string $routeOuDroit): bool
     {
-        foreach (array_keys(self::ECRANS_ARTICLES) as $prefixe) {
+        foreach (self::ECRANS_ARTICLES as $prefixe) {
             if (str_starts_with($routeOuDroit, $prefixe . '.')) {
                 return true;
             }
@@ -448,9 +436,7 @@ class Navigation
 
     private static function urlArticles(?User $user): ?string
     {
-        $premierOnglet = self::getGroupTabs('articles', $user)[0] ?? null;
-
-        return $premierOnglet ? route($premierOnglet['route']) : null;
+        return self::getGroupTabs('articles', $user)[0]['url'] ?? null;
     }
 
     private static function urlEconomat(User $user): ?string
@@ -557,6 +543,14 @@ class Navigation
             return false;
         }
 
+        if ($linkRoute === 'bookings.index') {
+            return request()->routeIs('bookings.*', 'groups.*', 'restaurant.banquets.*');
+        }
+
+        if ($linkRoute === 'technique.demandes.index' && $current === 'technique.demandes.create') {
+            return false;
+        }
+
         if ($current === $linkRoute) {
             return true;
         }
@@ -626,7 +620,7 @@ class Navigation
         $user = Auth::user();
         $estComptable = $user && $user->exerce(['accountant']);
 
-        // Groupes avec Sidebar
+        // Tuiles des services
         if (str_starts_with($routeName, 'achats.')) {
             return self::groupInfo('achats');
         }
@@ -753,49 +747,41 @@ class Navigation
                 'id'       => 'hotel',
                 'title'    => 'Hôtel',
                 'icon'     => 'bed-double',
-                'type'     => self::TYPE_SIDEBAR,
             ],
             'restaurant' => [
                 'id'       => 'restaurant',
                 'title'    => 'Restaurant',
                 'icon'     => 'utensils',
-                'type'     => self::TYPE_SIDEBAR,
             ],
             'economat' => [
                 'id'       => 'economat',
                 'title'    => 'Économat',
                 'icon'     => 'warehouse',
-                'type'     => self::TYPE_SIDEBAR,
             ],
             'articles' => [
                 'id'       => 'articles',
                 'title'    => 'Articles',
                 'icon'     => 'boxes',
-                'type'     => self::TYPE_SIDEBAR,
             ],
             'technique' => [
                 'id'       => 'technique',
                 'title'    => 'Technique',
                 'icon'     => 'wrench',
-                'type'     => self::TYPE_SIDEBAR,
             ],
             'accounting' => [
                 'id'       => 'accounting',
                 'title'    => 'Comptabilité',
                 'icon'     => 'landmark',
-                'type'     => self::TYPE_SIDEBAR,
             ],
             'pilotage' => [
                 'id'       => 'pilotage',
                 'title'    => 'Pilotage',
                 'icon'     => 'gauge',
-                'type'     => self::TYPE_SIDEBAR,
             ],
             'achats' => [
                 'id'       => 'achats',
                 'title'    => 'Achats',
                 'icon'     => 'shopping-cart',
-                'type'     => self::TYPE_SIDEBAR,
             ],
             'clients' => [
                 'id'       => 'clients',
@@ -803,71 +789,62 @@ class Navigation
                 'icon'     => 'users',
                 'url'      => \Illuminate\Support\Facades\Route::has('customers.index') ? route(
                     'customers.index') : null,
-                'type'     => self::TYPE_STANDALONE,
             ],
             'users' => [
                 'id'       => 'users',
                 'title'    => 'Utilisateurs',
                 'icon'     => 'user-cog',
                 'url'      => \Illuminate\Support\Facades\Route::has('users.index') ? route('users.index') : null,
-                'type'     => self::TYPE_STANDALONE,
             ],
             'shop' => [
                 'id'       => 'shop',
                 'title'    => 'Boutique',
                 'icon'     => 'shopping-bag',
-                'type'     => self::TYPE_TABS,
             ],
             'admin' => [
                 'id'       => 'admin',
                 'title'    => 'Administration',
                 'icon'     => 'shield-check',
-                'type'     => self::TYPE_TABS,
             ],
             'editions' => [
                 'id'       => 'editions',
                 'title'    => 'Éditions',
                 'icon'     => 'printer',
-                'type'     => self::TYPE_STANDALONE,
             ],
             'planning' => [
                 'id'       => 'planning',
                 'title'    => 'Planning',
                 'icon'     => 'calendar-clock',
-                'type'     => self::TYPE_STANDALONE,
             ],
             'analytics' => [
                 'id'       => 'analytics',
                 'title'    => 'Analytique',
                 'icon'     => 'bar-chart-2',
-                'type'     => self::TYPE_STANDALONE,
             ],
             'settings' => [
                 'id'       => 'settings',
                 'title'    => 'Paramètres',
                 'icon'     => 'settings',
-                'type'     => self::TYPE_STANDALONE,
             ],
             'discussions' => [
                 'id'       => 'discussions',
                 'title'    => 'Discussions',
                 'icon'     => 'message-circle',
-                'type'     => self::TYPE_STANDALONE,
             ],
             'overview' => [
                 'id'       => 'overview',
                 'title'    => 'Activité & KPI',
                 'icon'     => 'layout-dashboard',
-                'type'     => self::TYPE_STANDALONE,
             ],
         ];
 
-        return $meta[$groupId] ?? [
+        $liens = self::getGroupTabs($groupId);
+
+        return ($meta[$groupId] ?? [
             'id'    => $groupId,
             'title' => ucfirst($groupId),
             'icon'  => 'grid',
-            'type'  => self::TYPE_STANDALONE,
-        ];
+        ]) + ['type' => self::typeNavigation($liens), 'links' => $liens];
     }
 
     /**
@@ -1195,16 +1172,6 @@ class Navigation
                     'active' => request()->routeIs('pilotage.budget.*'),
                 ];
             }
-        } elseif (in_array($groupId, ['articles', 'shop', 'admin'], true)) {
-            $groupTabs = self::getGroupTabs($groupId, $user);
-            foreach ($groupTabs as $gTab) {
-                $tabs[] = [
-                    'label'  => $gTab['label'],
-                    'icon'   => $gTab['icon'],
-                    'url'    => route($gTab['route']),
-                    'active' => $gTab['active'] ?? false,
-                ];
-            }
         }
 
         // Bouton Applications pour revenir au lanceur global
@@ -1219,106 +1186,23 @@ class Navigation
     }
 
     /**
-     * Liste des liens des groupes Articles, Boutique et Administration.
-     *
-     * @return array<int, array<string, mixed>>
+     * Rubriques autorisées d'une tuile, communes aux onglets et à la barre latérale.
      */
     public static function getGroupTabs(string $groupId, ?User $user = null): array
     {
-        $user = $user ?? Auth::user();
-        if (!$user) {
-            return [];
-        }
+        $user ??= Auth::user();
 
-        $tabs = [];
-        $droits = app(PermissionResolver::class);
+        return $user && $user->is_active !== false
+            ? (new RubriquesTuiles($user, app(PermissionResolver::class)))->pourTuile($groupId)
+            : [];
+    }
 
-        if ($groupId === 'articles') {
-            foreach (self::ECRANS_ARTICLES as $prefixe => [$label, $icon]) {
-                if ($droits->allows($user, $prefixe . '.voir')) {
-                    $tabs[] = [
-                        'route'  => $prefixe . '.index',
-                        'label'  => $label,
-                        'icon'   => $icon,
-                        'active' => request()->routeIs($prefixe . '.*'),
-                    ];
-                }
-            }
-        } elseif ($groupId === 'shop') {
-            if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER,
-                DutySegregation::CONTROLE_DE_GESTION])) && $droits->allows($user, 'shop.products.voir')) {
-                $tabs[] = [
-                    'route'  => 'shop.products.index',
-                    'label'  => 'Articles',
-                    'icon'   => 'package',
-                    'active' => request()->routeIs('shop.products.*'),
-                ];
-            }
-            if ($droits->allows($user, 'shop.orders.voir')) {
-                $tabs[] = [
-                    'route'  => 'shop.orders.index',
-                    'label'  => 'Commandes',
-                    'icon'   => 'shopping-cart',
-                    'active' => request()->routeIs('shop.orders.*'),
-                ];
-            }
-            if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER,
-                DutySegregation::CONTROLE_DE_GESTION])) && $droits->allows($user, 'shop.cash_register.voir')) {
-                $tabs[] = [
-                    'route'  => 'shop.cash_register.index',
-                    'label'  => 'Compta Boutique',
-                    'icon'   => 'calculator',
-                    'active' => request()->routeIs('shop.cash_register.*'),
-                ];
-            }
-            // La boutique adresse ses demandes à l'économat depuis chez elle.
-            if (self::groupeDesDemandes($user) === 'shop') {
-                if ($droits->allows($user, 'economat.requisitions.voir')) {
-                    $tabs[] = [
-                        'route'  => 'economat.requisitions.index',
-                        'label'  => $droits->scopeFor($user, 'economat.requisitions.voir') === PermissionScope::PROPRE
-                            ? 'Mes demandes à l’économat'
-                            : 'Demandes à l’économat',
-                        'icon'   => 'inbox',
-                        'active' => request()->routeIs('economat.requisitions.*'),
-                    ];
-                }
-            }
-        } elseif ($groupId === 'admin') {
-            if ($droits->allows($user, 'droits.voir')) {
-                $tabs[] = [
-                    'route'  => 'droits.index',
-                    'label'  => 'Rôles & droits',
-                    'icon'   => 'shield-check',
-                    'active' => request()->routeIs('droits.*'),
-                ];
-            }
-            if ($droits->allows($user, 'interventions.voir')) {
-                $tabs[] = [
-                    'route'  => 'interventions.index',
-                    'label'  => 'Interventions',
-                    'icon'   => 'siren',
-                    'active' => request()->routeIs('interventions.*'),
-                ];
-            }
-            if ($droits->allows($user, 'audit.voir')) {
-                $tabs[] = [
-                    'route'  => 'audit.index',
-                    'label'  => 'Journal d’audit',
-                    'icon'   => 'scroll-text',
-                    'active' => request()->routeIs('audit.*'),
-                ];
-            }
-            if ($droits->allows($user, 'support.sessions.voir')) {
-                $tabs[] = [
-                    'route'  => 'support.sessions.index',
-                    'label'  => 'Sessions support',
-                    'icon'   => 'life-buoy',
-                    'active' => request()->routeIs('support.sessions.*'),
-                ];
-            }
-        }
-
-        return $tabs;
+    private static function typeNavigation(array $liens): string
+    {
+        return match (true) {
+            count($liens) >= self::SEUIL_NAVIGATION_LATERALE => self::TYPE_SIDEBAR,
+            $liens !== [] => self::TYPE_TABS,
+            default => self::TYPE_STANDALONE,
+        };
     }
 }

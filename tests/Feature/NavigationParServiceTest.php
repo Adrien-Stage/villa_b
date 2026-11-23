@@ -144,8 +144,12 @@ test("le bouton de menu n'apparaît que là où il ouvre une barre latérale", f
         $this->get($url)->assertOk()->assertDontSee('onclick="openMobileSidebar()"', false);
     }
 
-    // Application avec barre latérale : le bouton l'ouvre sur petit écran.
-    $this->get(route('housekeeping.index'))->assertOk()->assertSee('onclick="openMobileSidebar()"', false);
+    $this->get(route('housekeeping.index'))->assertOk()
+        ->assertSee('aria-label="Rubriques de la tuile Hôtel"', false)
+        ->assertDontSee('onclick="openMobileSidebar()"', false);
+
+    $this->actingAs(agentNav('manager'))->get(route('economat.index'))->assertOk()
+        ->assertSee('onclick="openMobileSidebar()"', false);
 });
 
 test("la tuile Gestion est remplacée par deux tuiles distinctes : Clients et Utilisateurs", function () {
