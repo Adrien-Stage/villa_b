@@ -1,6 +1,6 @@
 @extends('layouts.hotel')
 
-@section('title', 'Articles — Économat')
+@section('title', 'Articles')
 
 @section('content')
 <div class="max-w-7xl mx-auto"

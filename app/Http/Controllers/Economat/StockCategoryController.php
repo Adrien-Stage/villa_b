@@ -42,12 +42,16 @@ class StockCategoryController extends Controller
 
         $maxOrder = $categories->max('sort_order');
         $nextSortOrder = $maxOrder !== null ? ((int) $maxOrder + 1) : 0;
+        $droits = app(PermissionResolver::class);
+        $user = auth()->user();
 
         return view('economat.categories.index', [
             'categories'    => $categories,
             'valeurs'       => $valeurs,
             'comptes'       => StockCategory::STOCK_ACCOUNTS,
-            'canManage'     => app(PermissionResolver::class)->allows(auth()->user(), 'economat.categories.modifier'),
+            'canCreate'     => $droits->allows($user, 'economat.categories.creer'),
+            'canEdit'       => $droits->allows($user, 'economat.categories.modifier'),
+            'canDelete'     => $droits->allows($user, 'economat.categories.supprimer'),
             'nextSortOrder' => $nextSortOrder,
         ]);
     }

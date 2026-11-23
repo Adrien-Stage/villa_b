@@ -1,6 +1,6 @@
 @extends('layouts.hotel')
 
-@section('title', $item->name . ' — Économat')
+@section('title', $item->name . ' — Articles')
 
 @section('content')
 <div class="max-w-5xl mx-auto">

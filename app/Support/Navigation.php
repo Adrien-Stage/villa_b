@@ -19,6 +19,11 @@ class Navigation
     public const TYPE_TABS       = 'tabs';
     public const TYPE_STANDALONE = 'standalone';
 
+    private const ECRANS_ARTICLES = [
+        'economat.items' => ['Articles', 'boxes'],
+        'economat.categories' => ['Catégories', 'tags'],
+    ];
+
     /**
      * Liste des groupes d'applications autorisés pour l'utilisateur connecté.
      * Alimente la grille du lanceur d'applications (page principale après connexion).
@@ -102,7 +107,7 @@ class Navigation
 
         // 3. ÉCONOMAT — à qui tient le magasin. Les services qui ne font qu'y
         // adresser des demandes les font depuis leur propre application.
-        if (self::tientLEconomat($user)) {
+        if (self::tientLEconomat($user) && ($urlEconomat = self::urlEconomat($user)) !== null) {
             $groups[] = [
                 'id'          => 'economat',
                 'title'       => 'Économat',
@@ -113,11 +118,21 @@ class Navigation
                 'text_color'  => 'text-emerald-600',
                 'bg_soft'     => 'bg-emerald-50',
                 'border_color'=> 'border-emerald-100',
-                'url'         => self::premiereRoutePermise($user, [
-                    'economat.index', 'economat.items.index', 'economat.orders.index', 'economat.receipts.index',
-                    'economat.stock_counts.index', 'economat.suppliers.index', 'economat.movements.index',
-                ]) ?? route('economat.index'),
+                'url'         => $urlEconomat,
                 'type'        => self::TYPE_SIDEBAR,
+            ];
+        }
+
+        $urlArticles = self::urlArticles($user);
+        if ($urlArticles !== null) {
+            $groups[] = self::groupInfo('articles') + [
+                'subtitle'    => 'Catalogue & catégories',
+                'color'       => 'violet',
+                'bg_gradient' => 'from-violet-500 to-indigo-600',
+                'text_color'  => 'text-violet-600',
+                'bg_soft'     => 'bg-violet-50',
+                'border_color'=> 'border-violet-100',
+                'url'         => $urlArticles,
             ];
         }
 
@@ -409,7 +424,7 @@ class Navigation
 
         foreach (PermissionCatalog::droitsDuModule('economat') as $droit) {
             if (str_starts_with($droit, 'economat.requisitions.') || self::estUnEcranDAchat($droit)
-                || !PermissionCatalog::estLecture($droit)) {
+                || self::estUnEcranArticles($droit) || !PermissionCatalog::estLecture($droit)) {
                 continue;
             }
             if ($droits->allows($user, $droit)) {
@@ -418,6 +433,34 @@ class Navigation
         }
 
         return false;
+    }
+
+    private static function estUnEcranArticles(string $routeOuDroit): bool
+    {
+        foreach (array_keys(self::ECRANS_ARTICLES) as $prefixe) {
+            if (str_starts_with($routeOuDroit, $prefixe . '.')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function urlArticles(?User $user): ?string
+    {
+        $premierOnglet = self::getGroupTabs('articles', $user)[0] ?? null;
+
+        return $premierOnglet ? route($premierOnglet['route']) : null;
+    }
+
+    private static function urlEconomat(User $user): ?string
+    {
+        return self::premiereRoutePermise($user, [
+            'economat.index', 'economat.stock_counts.index', 'economat.movements.index', 'economat.stores.index',
+            'economat.count_sheets.index', 'economat.classeur.index', 'economat.external_issues.index',
+            'economat.control.index', 'economat.control.variances.index', 'economat.receipts.index',
+            'economat.requisitions.index', 'economat.orders.index', 'economat.suppliers.index',
+        ]);
     }
 
     /**
@@ -589,6 +632,10 @@ class Navigation
         }
 
         if (str_starts_with($routeName, 'economat.')) {
+            if (self::estUnEcranArticles($routeName)) {
+                return self::groupInfo('articles') + ['url' => self::urlArticles($user)];
+            }
+
             // Les écrans du circuit d'achat vivent dans la tuile Achats pour
             // qui l'a ; les réceptions, dans l'Économat pour qui le tient.
             if (self::estUnEcranDAchat($routeName) && self::tientLesAchats($user)
@@ -601,7 +648,7 @@ class Navigation
             if (str_starts_with($routeName, 'economat.requisitions.')) {
                 return self::groupInfo(self::groupeDesDemandes($user));
             }
-            return self::groupInfo('economat');
+            return self::groupInfo('economat') + ['url' => $user ? self::urlEconomat($user) : null];
         }
 
         if (str_starts_with($routeName, 'technique.')) {
@@ -718,6 +765,12 @@ class Navigation
                 'id'       => 'economat',
                 'title'    => 'Économat',
                 'icon'     => 'warehouse',
+                'type'     => self::TYPE_SIDEBAR,
+            ],
+            'articles' => [
+                'id'       => 'articles',
+                'title'    => 'Articles',
+                'icon'     => 'boxes',
                 'type'     => self::TYPE_SIDEBAR,
             ],
             'technique' => [
@@ -1033,14 +1086,6 @@ class Navigation
                 ];
             }
         } elseif ($groupId === 'economat') {
-            if ($droits->allows($user, 'economat.items.voir')) {
-                $tabs[] = [
-                    'label'  => 'Articles',
-                    'icon'   => 'boxes',
-                    'url'    => route('economat.items.index'),
-                    'active' => request()->routeIs('economat.items.*'),
-                ];
-            }
             if ($droits->allows($user, 'economat.movements.voir')) {
                 $tabs[] = [
                     'label'  => 'Mouvements',
@@ -1150,7 +1195,7 @@ class Navigation
                     'active' => request()->routeIs('pilotage.budget.*'),
                 ];
             }
-        } elseif (in_array($groupId, ['shop', 'admin'], true)) {
+        } elseif (in_array($groupId, ['articles', 'shop', 'admin'], true)) {
             $groupTabs = self::getGroupTabs($groupId, $user);
             foreach ($groupTabs as $gTab) {
                 $tabs[] = [
@@ -1174,7 +1219,7 @@ class Navigation
     }
 
     /**
-     * Liste des onglets horizontaux pour les groupes légers (Boutique, Administration).
+     * Liste des liens des groupes Articles, Boutique et Administration.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -1188,7 +1233,18 @@ class Navigation
         $tabs = [];
         $droits = app(PermissionResolver::class);
 
-        if ($groupId === 'shop') {
+        if ($groupId === 'articles') {
+            foreach (self::ECRANS_ARTICLES as $prefixe => [$label, $icon]) {
+                if ($droits->allows($user, $prefixe . '.voir')) {
+                    $tabs[] = [
+                        'route'  => $prefixe . '.index',
+                        'label'  => $label,
+                        'icon'   => $icon,
+                        'active' => request()->routeIs($prefixe . '.*'),
+                    ];
+                }
+            }
+        } elseif ($groupId === 'shop') {
             if (($user->isAdmin() || $user->exerce(['shop_manager', 'manager', PermissionCatalog::RESPONSABLE_FINANCIER,
                 DutySegregation::CONTROLE_DE_GESTION])) && $droits->allows($user, 'shop.products.voir')) {
                 $tabs[] = [
