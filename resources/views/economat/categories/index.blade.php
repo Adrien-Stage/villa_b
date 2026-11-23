@@ -1,6 +1,6 @@
 @extends('layouts.hotel')
 
-@section('title', 'Catégories — Économat')
+@section('title', 'Catégories — Articles')
 
 @section('content')
 <div
@@ -11,7 +11,7 @@
             <h1 class="text-xl font-heading font-semibold text-primary">Catégories d'articles</h1>
             <p class="text-sm text-primary/60 mt-0.5">Chaque catégorie valorise ses articles sur un compte de stock du grand livre.</p>
         </div>
-        @if($canManage)
+        @if($canCreate)
             <button
                 type="button"
                 @click="openCreate()"
@@ -44,12 +44,13 @@
             <x-table.col hide="xl">Compte de stock</x-table.col>
             <x-table.col align="right" hide="lg">Articles</x-table.col>
             <x-table.col align="right">Valeur en stock</x-table.col>
-            @if($canManage)<x-table.col actions />@endif
+            @if($canEdit || $canDelete)<x-table.col actions />@endif
         </x-slot:head>
 
         @foreach($categories as $category)
             @php
                 $valeur = (int) ($valeurs[$category->id] ?? 0);
+                $peutSupprimer = $canDelete && $category->items_count === 0;
                 $editPayload = [
                     'id' => $category->id, 'name' => $category->name,
                     'stock_account' => $category->stock_account ?? '',
@@ -69,20 +70,24 @@
                 </x-table.cell>
                 <x-table.cell align="right" hide="lg" class="text-primary/70">{{ $category->items_count }}</x-table.cell>
                 <x-table.cell align="right" nowrap class="font-medium">{{ number_format($valeur / 100, 0, ',', ' ') }}</x-table.cell>
-                @if($canManage)
+                @if($canEdit || $peutSupprimer)
                     <x-table.actions :label="'Actions pour la catégorie '.$category->name">
-                        <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})">Modifier</x-table.action>
-                        @if($category->items_count === 0)
+                        @if($canEdit)
+                            <x-table.action icon="pencil" x-on:click="openEdit({{ Js::from($editPayload) }})">Modifier</x-table.action>
+                        @endif
+                        @if($peutSupprimer)
                             <x-table.action :action="route('economat.categories.destroy', $category)" method="DELETE" icon="trash-2" tone="danger"
                                 :confirm="'Supprimer la catégorie « '.$category->name.' » ?'">Supprimer</x-table.action>
                         @endif
                     </x-table.actions>
+                @elseif($canDelete)
+                    <x-table.cell />
                 @endif
             </x-table.row>
         @endforeach
     </x-table>
 
-    @if($canManage)
+    @if($canCreate || $canEdit)
     {{-- Modal création / édition --}}
     <div x-show="open" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(15,2,1,0.5); backdrop-filter:blur(4px);"
          @keydown.escape.window="closeModal()">
@@ -206,6 +211,7 @@
                         </button>
                     </div>
                     <div class="flex items-center gap-2.5">
+                        @if($canCreate)
                         <template x-if="!editing">
                             <button type="button"
                                     @click="saveAndCreate()"
@@ -221,6 +227,7 @@
                                 <span>Enregistrer et créer</span>
                             </button>
                         </template>
+                        @endif
                         <button type="submit"
                                 :disabled="isOrderTaken() || saving"
                                 :class="(isOrderTaken() || saving) ? 'opacity-50 cursor-not-allowed bg-primary/60' : 'bg-primary hover:bg-surface-dark'"

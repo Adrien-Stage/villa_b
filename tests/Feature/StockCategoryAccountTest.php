@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\JournalEntry;
+use App\Models\PermissionGrant;
 use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\StockMovement;
@@ -72,6 +73,30 @@ test('le contrôleur consulte les catégories sans les modifier ; le magasinier 
 
     expect($categorie->fresh()->stock_account)->toBeNull();
 });
+
+test('les actions des catégories suivent chacune leur autorisation individuelle', function (string $permission) {
+    $utilisateur = User::factory()->create(['role' => 'controller']);
+    PermissionGrant::create([
+        'subject_type' => PermissionGrant::SUJET_USER,
+        'subject_id' => (string) $utilisateur->id,
+        'permission' => 'economat.categories.' . $permission,
+        'effect' => PermissionGrant::EFFET_ALLOW,
+        'reason' => 'Autorisation ciblée pour les catégories.',
+    ]);
+    $vide = StockCategory::create(['name' => 'Boissons']);
+    $utilisee = StockCategory::create(['name' => 'Épicerie']);
+    StockItem::create(['stock_category_id' => $utilisee->id, 'name' => 'Riz', 'unit' => 'kg']);
+
+    $page = $this->actingAs($utilisateur)->get(route('economat.categories.index'))->assertOk();
+    $actions = [
+        'creer' => '@click="openCreate()"',
+        'modifier' => 'x-on:click="openEdit(',
+        'supprimer' => 'action="' . route('economat.categories.destroy', $vide) . '"',
+    ];
+    $page->assertSee($actions[$permission], false)
+        ->assertDontSee(array_values(array_diff_key($actions, [$permission => true])), false)
+        ->assertDontSee('action="' . route('economat.categories.destroy', $utilisee) . '"', false);
+})->with(['creer', 'modifier', 'supprimer']);
 
 test('changer le compte d’une catégorie reclasse son stock sans toucher aux charges', function () {
     $this->actingAs(economeCategories());
